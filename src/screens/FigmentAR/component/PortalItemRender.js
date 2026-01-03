@@ -238,9 +238,10 @@ var PortalItemRender = createReactClass({
    */
   _renderPortalInside(portalItem) {
     var portalSource = (this.props.portalIDProps.portal360Image != undefined && this.props.portalIDProps.portal360Image != null) ? this.props.portalIDProps.portal360Image : portalItem.portal360Image;
-    console.log('[PortalItemRender] portalSource:', JSON.stringify(portalSource));
-    console.log('[PortalItemRender] type:', portalSource.type);
-    console.log('[PortalItemRender] _is360Photo result:', this._is360Photo(portalSource, portalSource.width, portalSource.height));
+    // DEBUG: Uncomment to debug portal rendering issues (causes log spam)
+    // console.log('[PortalItemRender] portalSource:', JSON.stringify(portalSource));
+    // console.log('[PortalItemRender] type:', portalSource.type);
+    // console.log('[PortalItemRender] _is360Photo result:', this._is360Photo(portalSource, portalSource.width, portalSource.height));
     if (this._is360Photo(portalSource, portalSource.width, portalSource.height)) {
       if (portalSource.type == PSConstants.PS_TYPE_360_VIDEO) {
         // Match reference implementation exactly
@@ -270,7 +271,8 @@ var PortalItemRender = createReactClass({
           />
         );
       } else {
-        console.log('[PortalItemRender] Rendering Viro360Image with source:', portalSource.source);
+        // DEBUG: Uncomment to debug 360 image rendering
+        // console.log('[PortalItemRender] Rendering Viro360Image with source:', portalSource.source);
         return (
           <Viro360Image key="background_portal" source={portalSource.source} />
         );

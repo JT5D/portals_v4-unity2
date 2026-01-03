@@ -23,6 +23,25 @@ var MediaItemRender = createReactClass({
         onTransformUpdate: PropTypes.func, // Callback to sync transforms back to Redux
     },
 
+    // Click state handler - returns a function that captures the uuid
+    _onClickState(uuid) {
+        return (clickState, position, source) => {
+            console.log('[MediaItemRender] _onClickState:', {
+                uuid,
+                clickState,
+                position,
+                source,
+            });
+
+            // clickState 1 = down, 2 = up, 3 = clicked
+            // Only trigger selection on click-up (state 2) or click (state 3)
+            if ((clickState === 2 || clickState === 3) && this.props.onClickStateCallback) {
+                console.log('[MediaItemRender] Calling onClickStateCallback with uuid:', uuid);
+                this.props.onClickStateCallback(uuid, clickState, UIConstants.LIST_MODE_MODEL);
+            }
+        };
+    },
+
     getInitialState() {
         // Use saved values from mediaItem if loading from draft
         const mediaItem = this.props.mediaItem || {};
@@ -201,6 +220,7 @@ var MediaItemRender = createReactClass({
 
         return (
             <ViroNode
+                ref={(component) => { this.arNodeRef = component; }}
                 key={mediaItem.uuid}
                 position={this.state.position}
                 rotation={this.state.rotation}
@@ -208,6 +228,7 @@ var MediaItemRender = createReactClass({
                 onDrag={this._onDrag}
                 onPinch={this._onPinch}
                 onRotate={this._onRotate}
+                onClickState={this._onClickState(mediaItem.uuid)}
                 dragType="FixedToWorld">
 
                 {mediaItem.type === 'VIDEO' ? (

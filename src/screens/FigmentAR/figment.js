@@ -93,7 +93,8 @@ export class figment extends Component {
       );
     }
 
-    console.log('[Figment] Loading lighting setup:', setup.name);
+    // DEBUG: Uncomment to debug lighting setup issues
+    // console.log('[Figment] Loading lighting setup:', setup.name);
 
     const lights = [];
 
@@ -183,7 +184,6 @@ export class figment extends Component {
   }
 
   render() {
-    console.log('[Figment] render start');
     // the starting bitmask is 2 because the default is 1 (2^0 = 1)
     let startingBitMask = 2;
     // fetch models
@@ -196,7 +196,6 @@ export class figment extends Component {
     let effects = this._renderEffects(this.props.effectItems);
     // fetch audio items
     let audioItems = this._renderAudioItems(this.props.audioItems);
-    console.log('[Figment] render end - Models count:', models.length, 'Audio count:', audioItems.length);
 
     return (
       <ViroARScene ref={component => { this.arSceneRef = component }} physicsWorld={{ gravity: [0, -9.81, 0] }} postProcessEffects={[this.props.postProcessEffects]}
@@ -243,15 +242,6 @@ export class figment extends Component {
         {audioItems}
 
         {/* AR Paint Strokes */}
-        {(() => {
-          console.log('[figment.js] PaintRenderer props:', {
-            strokesLength: this.props.paintStrokes?.length || 0,
-            activePointsLength: this.props.activePaintPoints?.length || 0,
-            paintColor: this.props.paintColor,
-            paintBrushType: this.props.paintBrushType,
-          });
-          return null;
-        })()}
         <PaintRenderer
           strokes={this.props.paintStrokes || []}
           activePoints={this.props.activePaintPoints || []}
@@ -354,7 +344,7 @@ export class figment extends Component {
             key={mediaItem.uuid}
             mediaItem={mediaItem}
             onTransformUpdate={root.props.arSceneNavigator?.viroAppProps?.onMediaTransformUpdate}
-          // Add callbacks if needed, e.g. for selection
+            onClickStateCallback={root._onModelsClickStateCallback}
           />
         ));
       }
@@ -511,7 +501,9 @@ function selectProps(store) {
     activePaintPoints: store.arobjects.activePaintPoints,
     paintColor: store.arobjects.paintColor,
     paintBrushType: store.arobjects.paintBrushType,
-    cameraTransform: store.arobjects.cameraTransform,
+    // NOTE: cameraTransform intentionally NOT included here to prevent render loops
+    // figment.js dispatches camera updates but does not read them as props
+    // Components that need cameraTransform should read directly from store
   };
 }
 

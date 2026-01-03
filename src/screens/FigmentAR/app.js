@@ -1349,10 +1349,13 @@ export class App extends Component {
       // If a valid object (or portal) was clicked, reset the items "click state" after 3.5 seconds 
       // So that the item can "clicked" again.
       // IMPORTANT: Do NOT reset if the user has the properties panel open (showContextualMenu)
-      // This prevents deselection while editing artifact details
-      if (!this.state.showContextualMenu) {
+      // ALSO: Only set ONE timer per selection (prevents timer stacking on re-renders)
+      if (!this.state.showContextualMenu && this._lastAutoDeselectTarget !== selectedItemIndex) {
+        this._lastAutoDeselectTarget = selectedItemIndex;
         TimerMixin.setTimeout(
           () => {
+            // Clear the guard so future selections can create timers
+            this._lastAutoDeselectTarget = null;
             // Double-check the panel isn't open when the timer fires
             if (!this.state.showContextualMenu) {
               console.log('[App] Auto-deselecting after 3.5s timeout');
