@@ -353,6 +353,11 @@ var ModelItemRender = createReactClass({
     this._isMounted = false;
     // Clean up animation loop
     this._stopAnimationLoop();
+    // Clean up drag timeout if pending
+    if (this._dragEndTimeout) {
+      clearTimeout(this._dragEndTimeout);
+      this._dragEndTimeout = null;
+    }
   },
 
   // ===== JS-DRIVEN ANIMATION SYSTEM =====
@@ -972,7 +977,6 @@ var ModelItemRender = createReactClass({
         onPinch={this._onPinch}
         onRotate={this._onRotate}
         onDrag={this._onDrag}
-        onClickState={this._onClickState(this.props.modelIDProps.uuid)}
         dragType="FixedToWorld">
 
         {/* This SpotLight is placed directly above the 3D Object, directed straight down,
@@ -1258,29 +1262,19 @@ var ModelItemRender = createReactClass({
    - source: drag event source (ViroNode always sends 1, not distinct start/drag/end states)
    
    Since ViroNode doesn't send distinct drag states, we sync position on every drag event.
-   OPTIMIZATION: Use setNativeProps for real-time updates to avoid React re-renders.
-   Only sync to state/Redux at the end of drag or periodically for persistence.
    */
   _onDrag(dragToPos, source) {
     if (!this._isMounted) return;
     if (!dragToPos || !Array.isArray(dragToPos)) return;
 
-    // Store the latest position for final sync
-    this._lastDragPosition = dragToPos;
+    // Update local state for React consistency
+    this.setState({ position: dragToPos });
 
-    // Use setNativeProps for butter-smooth visual updates (no React re-render)
-    if (this.arNodeRef) {
-      this.arNodeRef.setNativeProps({ position: dragToPos });
-    }
-
-    // Throttle Redux/state updates heavily - only sync every 500ms during drag
-    // Final sync happens when drag ends (detected by no updates for 200ms)
+    // Throttle Redux updates to avoid overwhelming the store
+    // Sync every 150ms at most (balance between performance and responsiveness)
     const now = Date.now();
-    if (!this._lastDragSync || now - this._lastDragSync > 500) {
+    if (!this._lastDragSync || now - this._lastDragSync > 150) {
       this._lastDragSync = now;
-
-      // Update state (less frequently) for React consistency
-      this.setState({ position: dragToPos });
 
       // Sync to Redux for serialization
       if (this.props.onTransformUpdate) {
@@ -1291,30 +1285,12 @@ var ModelItemRender = createReactClass({
         });
       }
     }
-
-    // Set up a debounced final sync when drag ends
-    if (this._dragEndTimeout) {
-      clearTimeout(this._dragEndTimeout);
-    }
-    this._dragEndTimeout = setTimeout(() => {
-      if (this._isMounted && this._lastDragPosition) {
-        this.setState({ position: this._lastDragPosition });
-        if (this.props.onTransformUpdate) {
-          this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
-            scale: this.state.scale,
-            position: this._lastDragPosition,
-            rotation: this.state.rotation,
-          });
-        }
-      }
-    }, 200);
   },
 
   /*
    Rotation should be relative to its current rotation *not* set to the absolute
    value of the given rotationFactor.
    Note: rotationFactor from ViroReact is the cumulative rotation since gesture start.
-   OPTIMIZATION: Use setNativeProps during gesture, only sync state/Redux at the end.
    */
   _onRotate(rotateState, rotationFactor, source) {
     if (!this._isMounted) return;
@@ -1328,15 +1304,27 @@ var ModelItemRender = createReactClass({
     const currentRotationY = (this._initialRotationY || 0) + rotationFactor;
     const newRotation = [this.state.rotation[0], currentRotationY, this.state.rotation[2]];
 
-    // Store for final sync
-    this._lastRotation = newRotation;
-
-    // Use setNativeProps for butter-smooth visual updates (no React re-render)
+    // Use setNativeProps for smooth visual updates
     if (this.arNodeRef) {
       this.arNodeRef.setNativeProps({ rotation: newRotation });
     }
 
-    // State 3: Rotation Ended - final sync (only time we update state/Redux)
+    // Throttle state/Redux updates (ViroNode may not send state 3 reliably)
+    const now = Date.now();
+    if (!this._lastRotateSync || now - this._lastRotateSync > 150) {
+      this._lastRotateSync = now;
+      this.setState({ rotation: newRotation });
+
+      if (this.props.onTransformUpdate) {
+        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
+          scale: this.state.scale,
+          position: this.state.position,
+          rotation: newRotation,
+        });
+      }
+    }
+
+    // State 3: Rotation Ended - final sync
     if (rotateState === 3) {
       this.setState({ rotation: newRotation });
 
@@ -1358,7 +1346,6 @@ var ModelItemRender = createReactClass({
    scale factor. So while the pinching is ongoing set scale through setNativeProps
    and multiply the state by that factor. At the end of a pinch event, set the state
    to the final value and store it in state.
-   OPTIMIZATION: Use setNativeProps during gesture, only sync state/Redux at the end.
    */
   _onPinch(pinchState, scaleFactor, source) {
     if (!this._isMounted) return;
@@ -1371,15 +1358,27 @@ var ModelItemRender = createReactClass({
     // Calculate new scale
     const newScale = this._initialPinchScale.map((x) => x * scaleFactor);
 
-    // Store for final sync
-    this._lastScale = newScale;
-
-    // Use setNativeProps for butter-smooth visual updates (no React re-render)
+    // Use setNativeProps for smooth visual updates
     if (this.arNodeRef) {
       this.arNodeRef.setNativeProps({ scale: newScale });
     }
 
-    // State 3: Pinch Ended - final sync and cleanup (only time we update state/Redux)
+    // Throttle state/Redux updates (ViroNode may not send state 3 reliably)
+    const now = Date.now();
+    if (!this._lastPinchSync || now - this._lastPinchSync > 150) {
+      this._lastPinchSync = now;
+      this.setState({ scale: newScale });
+
+      if (this.props.onTransformUpdate) {
+        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
+          scale: newScale,
+          position: this.state.position,
+          rotation: this.state.rotation,
+        });
+      }
+    }
+
+    // State 3: Pinch Ended - final sync and cleanup
     if (pinchState === 3) {
       this.setState({ scale: newScale });
 
