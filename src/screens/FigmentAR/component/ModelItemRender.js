@@ -324,26 +324,51 @@ var ModelItemRender = createReactClass({
     const positionChanged = JSON.stringify(prevPosition) !== JSON.stringify(newPosition);
     const scaleChanged = JSON.stringify(prevScale) !== JSON.stringify(newScale);
 
-    if ((positionChanged || scaleChanged) && !isNowFromDraft) {
-      console.log('[ModelItemRender] Redux position/scale changed for:', this.props.modelIDProps.uuid, {
-        prevPosition,
-        newPosition,
-        prevScale,
-        newScale,
-      });
+    // GUARD: Skip Redux sync during active gestures to prevent snap/jump on gesture end
+    // When a pinch or rotate gesture is active, we're using setNativeProps for visuals
+    // and will sync to state at gesture end ourselves
+    const gestureActive = this._initialPinchScale || this._initialRotationY !== null;
 
-      // Update React state
-      this.setState({
-        position: newPosition || this.state.position,
-        scale: newScale || this.state.scale,
-      });
+    // GUARD: Also skip sync if Redux value matches our pending gesture value
+    // This prevents snap after gesture ends - we just synced this value to Redux ourselves
+    const scaleMatchesPending = this._pendingScale &&
+      JSON.stringify(newScale) === JSON.stringify(this._pendingScale);
+    const positionMatchesPending = this._pendingPosition &&
+      JSON.stringify(newPosition) === JSON.stringify(this._pendingPosition);
 
-      // Force ViroReact native component to update
-      if (this.arNodeRef) {
-        const nativeUpdate = {};
-        if (positionChanged && newPosition) nativeUpdate.position = newPosition;
-        if (scaleChanged && newScale) nativeUpdate.scale = newScale;
-        this.arNodeRef.setNativeProps(nativeUpdate);
+    // Skip if both position and scale are from our gesture handlers
+    if (positionMatchesPending && (scaleMatchesPending || !scaleChanged)) {
+      // Skip entirely - we just synced these values ourselves
+      return;
+    }
+
+    if ((positionChanged || scaleChanged) && !isNowFromDraft && !gestureActive) {
+      // Skip scale sync if it matches what we just sent from gesture handler
+      if (scaleChanged && scaleMatchesPending && !positionChanged) {
+        console.log('[ModelItemRender] Skipping Redux scale sync - matches pending gesture value');
+      } else if (!positionMatchesPending && (positionChanged || (scaleChanged && !scaleMatchesPending))) {
+        console.log('[ModelItemRender] Redux position/scale changed for:', this.props.modelIDProps.uuid, {
+          prevPosition,
+          newPosition,
+          prevScale,
+          newScale,
+        });
+
+        // Update React state (only for non-gesture changes)
+        this.setState({
+          position: positionMatchesPending ? this.state.position : (newPosition || this.state.position),
+          scale: scaleMatchesPending ? this.state.scale : (newScale || this.state.scale),
+        });
+
+        // Force ViroReact native component to update (only for non-gesture changes)
+        if (this.arNodeRef && !scaleMatchesPending && !positionMatchesPending) {
+          const nativeUpdate = {};
+          if (positionChanged && newPosition && !positionMatchesPending) nativeUpdate.position = newPosition;
+          if (scaleChanged && newScale && !scaleMatchesPending) nativeUpdate.scale = newScale;
+          if (Object.keys(nativeUpdate).length > 0) {
+            this.arNodeRef.setNativeProps(nativeUpdate);
+          }
+        }
       }
     }
   },
@@ -974,9 +999,6 @@ var ModelItemRender = createReactClass({
         position={this.state.position}
         scale={this.state.scale}
         rotation={this.state.rotation}
-        onPinch={this._onPinch}
-        onRotate={this._onRotate}
-        onDrag={this._onDrag}
         dragType="FixedToWorld">
 
         {/* This SpotLight is placed directly above the 3D Object, directed straight down,
@@ -1076,7 +1098,12 @@ var ModelItemRender = createReactClass({
                   materials={isCustom ? ["pbr"] : (modelItem.type === 'GLB' ? [this.state.materialName] : modelItem.materials)}
                   scale={this.state.scale}
                   animation={animationConfig}
+                  highAccuracyEvents={true}
                   onClickState={this._onClickState(this.props.modelIDProps.uuid)}
+                  onPinch={this._onPinch}
+                  onRotate={this._onRotate}
+                  onDrag={this._onDrag}
+                  dragType="FixedToWorld"
                   onError={this._onError(this.props.modelIDProps.uuid)}
                   onLoadStart={this._onObjectLoadStart(this.props.modelIDProps.uuid)}
                   onLoadEnd={this._onObjectLoadEnd(this.props.modelIDProps.uuid)}
@@ -1264,11 +1291,17 @@ var ModelItemRender = createReactClass({
    Since ViroNode doesn't send distinct drag states, we sync position on every drag event.
    */
   _onDrag(dragToPos, source) {
+    console.log('[ModelItemRender] _onDrag:', { position: dragToPos, uuid: this.props.modelIDProps.uuid });
     if (!this._isMounted) return;
     if (!dragToPos || !Array.isArray(dragToPos)) return;
 
-    // Update local state for React consistency
-    this.setState({ position: dragToPos });
+    // Store pending position for consistency with other gestures
+    this._pendingPosition = dragToPos;
+
+    // Use setNativeProps for smooth visual updates (no React re-render)
+    if (this.arNodeRef) {
+      this.arNodeRef.setNativeProps({ position: dragToPos });
+    }
 
     // Throttle Redux updates to avoid overwhelming the store
     // Sync every 150ms at most (balance between performance and responsiveness)
@@ -1276,12 +1309,16 @@ var ModelItemRender = createReactClass({
     if (!this._lastDragSync || now - this._lastDragSync > 150) {
       this._lastDragSync = now;
 
+      // IMPORTANT: Use pending values for scale/rotation to prevent resetting them
+      const currentScale = this._pendingScale || this.state.scale;
+      const currentRotation = this._pendingRotation || this.state.rotation;
+
       // Sync to Redux for serialization
       if (this.props.onTransformUpdate) {
         this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
-          scale: this.state.scale,
+          scale: currentScale,
           position: dragToPos,
-          rotation: this.state.rotation,
+          rotation: currentRotation,
         });
       }
     }
@@ -1293,51 +1330,50 @@ var ModelItemRender = createReactClass({
    Note: rotationFactor from ViroReact is the cumulative rotation since gesture start.
    */
   _onRotate(rotateState, rotationFactor, source) {
+    console.log('[ModelItemRender] _onRotate:', { rotateState, rotationFactor, uuid: this.props.modelIDProps.uuid });
     if (!this._isMounted) return;
 
     // State 1 or first event: Capture initial rotation
+    // Use pending value if available (React state might be stale after previous gesture)
     if (rotateState === 1 || this._initialRotationY === null || this._initialRotationY === undefined) {
-      this._initialRotationY = this.state.rotation[1];
+      const currentRotation = this._pendingRotation || this.state.rotation;
+      this._initialRotationY = currentRotation[1];
     }
 
-    // Calculate current rotation
+    // State 3: Rotation Ended - just sync to Redux for data, don't touch visual
+    if (rotateState === 3) {
+      // Use the last visual value we showed, or fall back to current state
+      const finalRotation = this._pendingRotation || this.state.rotation;
+      // IMPORTANT: Use pending scale if a pinch is in progress
+      const currentScale = this._pendingScale || this.state.scale;
+
+      // Just sync to Redux for data persistence - NO setState, visual is already correct
+      if (this.props.onTransformUpdate) {
+        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
+          scale: currentScale,
+          position: this.state.position,
+          rotation: finalRotation,
+        });
+      }
+
+      this._initialRotationY = null;
+      // Keep _pendingRotation for next gesture start and overlapping gesture handlers
+      this._pendingRotation = finalRotation;
+      this.props.onClickStateCallback(this.props.modelIDProps.uuid, rotateState, UIConstants.LIST_MODE_MODEL);
+      return;
+    }
+
+    // Calculate current rotation for ongoing gesture (states 1 and 2)
     const currentRotationY = (this._initialRotationY || 0) + rotationFactor;
-    const newRotation = [this.state.rotation[0], currentRotationY, this.state.rotation[2]];
+    const baseRotation = this._pendingRotation || this.state.rotation;
+    const newRotation = [baseRotation[0], currentRotationY, baseRotation[2]];
+
+    // Store the visual value we're showing
+    this._pendingRotation = newRotation;
 
     // Use setNativeProps for smooth visual updates
     if (this.arNodeRef) {
       this.arNodeRef.setNativeProps({ rotation: newRotation });
-    }
-
-    // Throttle state/Redux updates (ViroNode may not send state 3 reliably)
-    const now = Date.now();
-    if (!this._lastRotateSync || now - this._lastRotateSync > 150) {
-      this._lastRotateSync = now;
-      this.setState({ rotation: newRotation });
-
-      if (this.props.onTransformUpdate) {
-        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
-          scale: this.state.scale,
-          position: this.state.position,
-          rotation: newRotation,
-        });
-      }
-    }
-
-    // State 3: Rotation Ended - final sync
-    if (rotateState === 3) {
-      this.setState({ rotation: newRotation });
-
-      if (this.props.onTransformUpdate) {
-        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
-          scale: this.state.scale,
-          position: this.state.position,
-          rotation: newRotation,
-        });
-      }
-
-      this._initialRotationY = null; // Reset for next gesture
-      this.props.onClickStateCallback(this.props.modelIDProps.uuid, rotateState, UIConstants.LIST_MODE_MODEL);
     }
   },
 
@@ -1348,50 +1384,52 @@ var ModelItemRender = createReactClass({
    to the final value and store it in state.
    */
   _onPinch(pinchState, scaleFactor, source) {
+    console.log('[ModelItemRender] _onPinch:', { pinchState, scaleFactor, uuid: this.props.modelIDProps.uuid });
     if (!this._isMounted) return;
 
     // State 1 or first event: Capture initial scale
+    // Use pending value if available (React state might be stale after previous gesture)
     if (pinchState === 1 || !this._initialPinchScale) {
-      this._initialPinchScale = this.state.scale;
+      this._initialPinchScale = this._pendingScale || this.state.scale;
     }
 
-    // Calculate new scale
-    const newScale = this._initialPinchScale.map((x) => x * scaleFactor);
-
-    // Use setNativeProps for smooth visual updates
-    if (this.arNodeRef) {
-      this.arNodeRef.setNativeProps({ scale: newScale });
-    }
-
-    // Throttle state/Redux updates (ViroNode may not send state 3 reliably)
-    const now = Date.now();
-    if (!this._lastPinchSync || now - this._lastPinchSync > 150) {
-      this._lastPinchSync = now;
-      this.setState({ scale: newScale });
-
-      if (this.props.onTransformUpdate) {
-        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
-          scale: newScale,
-          position: this.state.position,
-          rotation: this.state.rotation,
-        });
-      }
-    }
-
-    // State 3: Pinch Ended - final sync and cleanup
+    // State 3: Pinch Ended - just sync to Redux for data, don't touch visual
     if (pinchState === 3) {
-      this.setState({ scale: newScale });
+      // Use the last visual value we showed, or fall back to current state
+      const finalScale = this._pendingScale || this.state.scale;
+      // IMPORTANT: Use pending rotation if a rotate is in progress
+      const currentRotation = this._pendingRotation || this.state.rotation;
 
+      console.log('[ModelItemRender] Pinch ENDED - syncing to Redux:', {
+        uuid: this.props.modelIDProps.uuid,
+        finalScale: finalScale,
+      });
+
+      // Just sync to Redux for data persistence - NO setState, visual is already correct
       if (this.props.onTransformUpdate) {
         this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
-          scale: newScale,
+          scale: finalScale,
           position: this.state.position,
-          rotation: this.state.rotation,
+          rotation: currentRotation,
         });
       }
 
       this._initialPinchScale = null;
+      // Keep _pendingScale for next gesture start and overlapping gesture handlers
+      this._pendingScale = finalScale;
       this.props.onClickStateCallback(this.props.modelIDProps.uuid, pinchState, UIConstants.LIST_MODE_MODEL);
+      return;
+    }
+
+    // Calculate new scale for ongoing gesture (states 1 and 2)
+    const newScale = this._initialPinchScale.map((x) => x * scaleFactor);
+
+    // Store the visual value we're showing
+    this._pendingScale = newScale;
+
+    // Use setNativeProps for smooth visual updates
+    if (this.arNodeRef) {
+      this.arNodeRef.setNativeProps({ scale: newScale });
     }
   },
 
