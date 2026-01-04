@@ -999,6 +999,9 @@ var ModelItemRender = createReactClass({
         position={this.state.position}
         scale={this.state.scale}
         rotation={this.state.rotation}
+        onPinch={this._onPinch}
+        onRotate={this._onRotate}
+        onDrag={this._onDrag}
         dragType="FixedToWorld">
 
         {/* This SpotLight is placed directly above the 3D Object, directed straight down,
@@ -1100,10 +1103,6 @@ var ModelItemRender = createReactClass({
                   animation={animationConfig}
                   highAccuracyEvents={true}
                   onClickState={this._onClickState(this.props.modelIDProps.uuid)}
-                  onPinch={this._onPinch}
-                  onRotate={this._onRotate}
-                  onDrag={this._onDrag}
-                  dragType="FixedToWorld"
                   onError={this._onError(this.props.modelIDProps.uuid)}
                   onLoadStart={this._onObjectLoadStart(this.props.modelIDProps.uuid)}
                   onLoadEnd={this._onObjectLoadEnd(this.props.modelIDProps.uuid)}
