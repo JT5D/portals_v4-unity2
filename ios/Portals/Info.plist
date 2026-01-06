@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>portals</string>
-          <string>com.h3m.portals</string>
+          <string>com.h3mai.portals</string>
         </array>
       </dict>
       <dict>
@@ -40,8 +40,6 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>GARAPIKey</key>
-    <string>AQ.Ab8RN6KGfX_x0kf5ob_SIXlrmk_3DqGQwr5kZUBFewMjsnPpaQ</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -60,7 +58,7 @@
     <key>NSLocationAlwaysUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to use your location for AR experiences</string>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>The app uses your microphone for recording AR videos.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>

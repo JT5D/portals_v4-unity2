@@ -7,7 +7,7 @@ podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties
 def ccache_enabled?(podfile_properties)
   # Environment variable takes precedence
   return ENV['USE_CCACHE'] == '1' if ENV['USE_CCACHE']
-
+  
   # Fall back to Podfile properties
   podfile_properties['apple.ccacheEnabled'] == 'true'
 end
@@ -19,9 +19,6 @@ ENV['RCT_USE_PREBUILT_RNCORE'] ||= '1' if podfile_properties['ios.buildReactNati
 platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
-# ARCore and ViroKit require dynamic frameworks to load their binary dependencies (like FBLPromises)
-use_frameworks! :linkage => :dynamic
-
 
 target 'Portals' do
   use_expo_modules!
@@ -52,15 +49,12 @@ target 'Portals' do
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
   # ViroReact with integrated New Architecture (Fabric) support
+  # Automatically includes Fabric components when RCT_NEW_ARCH_ENABLED=1
   pod 'ViroReact', :path => '../node_modules/@reactvision/react-viro/ios'
   pod 'ViroKit', :path => '../node_modules/@reactvision/react-viro/ios/dist/ViroRenderer/'
 
-  # ARCore SDK
-  pod 'ARCore/CloudAnchors', '~> 1.51.0'
-  pod 'ARCore/Geospatial', '~> 1.51.0'
-  pod 'ARCore/Semantics', '~> 1.51.0'
-
   # Enforce New Architecture requirement
+  # ViroReact 2.43.1+ requires React Native New Architecture
   if ENV['RCT_NEW_ARCH_ENABLED'] != '1'
     raise "ViroReact requires New Architecture to be enabled. Please set RCT_NEW_ARCH_ENABLED=1 in ios/.xcode.env"
   end
@@ -72,30 +66,5 @@ target 'Portals' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
-
-    # Professional Automation Block for Portals Developers
-    # This section ensures that every 'pod install' results in a buildable project
-
-    # 1. Set the correct Development Team for all targets (Z8622973EB)
-    # 2. Fix Xcode 16 Swift Explicit Modules build order issue
-    # 3. Resolve 'Undefined symbols' for New Arch + Dynamic Frameworks
-
-    installer.generated_projects.each do |project|
-      project.targets.each do |target|
-        target.build_configurations.each do |config|
-          # Set Development Team
-          config.build_settings['DEVELOPMENT_TEAM'] = 'Z8622973EB'
-
-          # Fix Swift Explicit Modules ('no such module Expo')
-          config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'
-
-          # Fix 'Undefined symbols' in community modules (react-native-maps, etc.)
-          if ['react-native-maps', 'RNSVG', 'react-native-safe-area-context', 'RNShare', 'react-native-screens'].include?(target.name)
-            config.build_settings['OTHER_LDFLAGS'] ||= ['$(inherited)']
-            config.build_settings['OTHER_LDFLAGS'] << '-undefined dynamic_lookup'
-          end
-        end
-      end
-    end
   end
 end

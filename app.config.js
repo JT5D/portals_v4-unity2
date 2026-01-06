@@ -17,7 +17,7 @@ export default {
         },
         ios: {
             supportsTablet: true,
-            bundleIdentifier: "com.h3m.portals",
+            bundleIdentifier: "com.h3mai.portals",
             deploymentTarget: "17.0",
             infoPlist: {
                 NSPhotoLibraryUsageDescription: "The app accesses your photos to let you import media into the AR scene.",
@@ -26,7 +26,7 @@ export default {
             }
         },
         android: {
-            package: "com.h3m.portals",
+            package: "com.h3mai.portals",
             adaptiveIcon: {
                 foregroundImage: "./assets/adaptive-icon.png",
                 backgroundColor: "#ffffff"
