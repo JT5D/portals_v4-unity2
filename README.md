@@ -1,6 +1,6 @@
 # Portals
 
-**Portals** is a social AR platform that combines TikTok-style video feeds with immersive augmented reality experiences. Users can discover, create, and share AR content while earning FUEL rewards through engagement.
+**Portals** is a social AI + AR platform for creation of immersive AI-driven augented reality experiences. It is like TikTok for AI + spatial content creation. Users can collaborate, discover, create, and share location based AI+AR content -- earning FUEL rewards via engagement, connecting with communities & monetizing their creations.
 
 ![React Native](https://img.shields.io/badge/React%20Native-0.81-blue?logo=react)
 ![Expo](https://img.shields.io/badge/Expo-54-black?logo=expo)
@@ -45,16 +45,16 @@ Portals merges social media with augmented reality, allowing users to:
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **Framework** | React Native 0.81 + Expo 54 |
-| **AR Engine** | ViroReact 2.50 |
-| **State** | Zustand |
-| **Auth** | Firebase Authentication |
-| **Database** | Firebase Firestore |
-| **Storage** | Cloudflare R2 (S3-compatible) |
-| **Maps** | react-native-maps (Google/Apple) |
-| **Video** | expo-video |
+| Layer               | Technology                       |
+| ------------------- | -------------------------------- |
+| **Framework** | React Native 0.81 + Expo 54      |
+| **AR Engine** | ViroReact 2.50                   |
+| **State**     | Zustand                          |
+| **Auth**      | Firebase Authentication          |
+| **Database**  | Firebase Firestore               |
+| **Storage**   | Cloudflare R2 (S3-compatible)    |
+| **Maps**      | react-native-maps (Google/Apple) |
+| **Video**     | expo-video                       |
 
 ### Directory Structure
 
@@ -319,6 +319,7 @@ eas build --platform android --profile production
 ### LocationService
 
 High-precision GPS tracking with:
+
 - 1-second update interval
 - 1-meter distance filter
 - Heading/compass support
@@ -327,6 +328,7 @@ High-precision GPS tracking with:
 ### FuelService
 
 FUEL token accumulation:
+
 - Distance-based rewards
 - Claim mechanics
 - Balance tracking
@@ -334,6 +336,7 @@ FUEL token accumulation:
 ### VoiceService
 
 AI voice commands via Gemini:
+
 - Natural language scene editing
 - Navigation commands
 - Content discovery
@@ -350,11 +353,12 @@ Copyright © 2024 Portals. All rights reserved.
 
 To maintain stability, we use a simple branching model:
 
-1.  **`main`**: Production-ready code. Only merged from `dev` after testing.
-2.  **`dev`**: The primary integration branch. **All developers should push their code here.**
-3.  **Feature branches**: Created from `dev` for individual tasks (e.g., `feature/amazing-ar`).
+1. **`main`**: Production-ready code. Only merged from `dev` after testing.
+2. **`dev`**: The primary integration branch. **All developers should push their code here.**
+3. **Feature branches**: Created from `dev` for individual tasks (e.g., `feature/amazing-ar`).
 
 ### Workflow for Contributors:
+
 1. Fork the repository.
 2. Create your feature branch from the **`dev`** branch:
    ```bash
@@ -367,6 +371,7 @@ To maintain stability, we use a simple branching model:
 ---
 
 ---
+
 ---
 
 ## Next Steps
@@ -375,7 +380,7 @@ To maintain stability, we use a simple branching model:
 
 We follow a **Spec-Driven Development** methodology. All major architectural decisions and feature plans are documented here:
 
-* **[🎯 Strategy & Roadmap](STRATEGY.md)** (Start Here)
+* **[🎯 Strategy &amp; Roadmap](STRATEGY.md)** (Start Here)
   * [Tech Stack Integration Matrix](specs/tech-stack-integration.md)
   * [Unity Integration Spec](specs/unity-integration.md)
   * [Needle Engine Spec](specs/needle-integration.md)
