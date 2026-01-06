@@ -23,6 +23,8 @@ A unified, automated, and powerful AR platform where users can **upload any asse
 *   **Budget:** Willing to invest in specific paid tools (`TriLib 2`, Cloudflare R2) to solve hard problems ("buy vs build").
 *   **Quality Bar:** "State of the Art" (SOTA). Solutions must match industry leaders (like Sketchfab) in performance and UX.
 *   **Anti-Goal:** Do NOT rebuild the entire app in Unity immediately. We must maintain the React Native shell and migrate features incrementally.
+*   **XR Strategy (VisionOS/Quest):** For immersive headsets, we will NOT wrap React Native. We will deploy **Pure Unity** builds sharing the same C# logic.
+*   **Legacy EOL:** `ViroReact` is strictly maintenance-only and will be removed by **Q3 2026**.
 
 ---
 
@@ -73,6 +75,7 @@ A unified, automated, and powerful AR platform where users can **upload any asse
 ---
 
 ## 6. Implementation Plan (Specs)
+*   [ ] **Spec 0**: [Tech Stack Integration Matrix (The Constitution)](./specs/tech-stack-integration.md)
 *   [ ] **Spec 1**: [Setup Unity Integration & Bridge](./specs/unity-integration.md)
 *   [ ] **Spec 2**: [Needle Engine Screensharing](./specs/needle-integration.md)
 *   [ ] **Spec 3**: [Cloud Asset Pipeline (Worker)](./specs/asset-pipeline.md)
