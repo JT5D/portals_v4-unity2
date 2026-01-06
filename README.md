@@ -188,18 +188,15 @@ npm run setup
 npm install
 cd ios && pod install && cd ..
 
-# Start development server (tunnel)
-npm run tunnel
+# Start development server
+npx expo start --dev-client --tunnel
 ```
 
 ### Running on Device
 
 ```bash
-# iOS (auto tunnel + device launch)
-npm run ios
-
-# iOS (raw, no tunnel helper)
-npm run ios:raw -- --device
+# iOS
+npx expo run:ios --device
 
 # Android
 npx expo run:android --device

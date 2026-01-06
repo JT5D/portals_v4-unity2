@@ -27,10 +27,6 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
     set +o allexport
 fi
 
-# Ensure UTF-8 locale for CocoaPods and tooling.
-export LANG="${LANG:-en_US.UTF-8}"
-export LC_ALL="${LC_ALL:-en_US.UTF-8}"
-
 # Settings with defaults
 [ -z "${UNITY_VERSION:-}" ] && UNITY_VERSION="6000.2.14f1"
 UNITY_HUB_PATH="/Applications/Unity/Hub/Editor/${UNITY_VERSION}/Unity.app/Contents/MacOS/Unity"
@@ -40,8 +36,6 @@ if [ -n "${IOS_DEVICE_NAME:-}" ]; then
     DEVICE_NAME="$IOS_DEVICE_NAME"
 fi
 SCHEME="${SCHEME:-Portals}"
-URL_SCHEME="${EXPO_URL_SCHEME:-portals}"
-BUNDLE_ID="${IOS_BUNDLE_ID:-com.h3mai.portals}"
 PORT="${PORT:-8081}"
 
 BUILD_ONLY=false
@@ -347,22 +341,5 @@ echo $! > "$LOG_DIR/metro.pid"
 log "Installing and Running on Device: $DEVICE_NAME..."
 # We use a subshell to capture exit code properly if needed
 bash -c "${METRO_ENV} npx expo run:ios --device \"$DEVICE_NAME\" --scheme \"$SCHEME\" --configuration Release"
-
-URL_RANDOMNESS=""
-if [ -f "$PROJECT_ROOT/.expo/settings.json" ]; then
-    URL_RANDOMNESS=$(node -e "const s=require('./.expo/settings.json'); process.stdout.write(s.urlRandomness || '')" || true)
-fi
-
-if [ -n "$URL_RANDOMNESS" ]; then
-    TUNNEL_URL="https://${URL_RANDOMNESS}-${PORT}.exp.direct"
-    log "Opening dev client tunnel: $TUNNEL_URL"
-    xcrun devicectl device process launch \
-        --device "$DEVICE_NAME" \
-        --payload-url "${URL_SCHEME}://expo-development-client/?url=${TUNNEL_URL}" \
-        --terminate-existing \
-        "$BUNDLE_ID" || warn "devicectl launch failed; open the dev client manually."
-else
-    warn "No tunnel URL found. Open the dev client manually."
-fi
 
 log "Done!"

@@ -12,11 +12,6 @@
 - Unity bridge: Open `UnityTestScene`, press the Unity test button, confirm JS log `The button has been tapped!`
 - Navigation: Switch tabs and return to Unity screen without crash
 - Networking: Run via `npm run tunnel` to validate remote device connectivity
-- Unity batchmode: `npm run unity:validate` before device testing
-
-## Secrets & .env
-- Ensure `.env` exists locally (copy from `.env.example`)
-- Never commit `.env` or share real API keys in logs, screenshots, or builds
 
 ## Acceptance criteria
 - No crashes during smoke tests
