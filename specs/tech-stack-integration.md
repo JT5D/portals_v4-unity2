@@ -63,7 +63,7 @@ We are transitioning from ViroReact to Unity, while adding Needle Engine for web
 ### `ARFoundation` vs. Viro Components
 *   **Viro**: `ViroARScene` (Deprecated).
 *   **Unity**: `ARSessionOrigin` + `ARCamera`.
-*   **Migration**: We do not "convert" Viro code. We **rewrite** the logic in C# for Unity, using the `specs/unity-integration.md` bridge pattern.
+*   **Migration**: We do not "convert" Viro code. We **rewrite** the logic in C# for Unity, using the [`unity-integration.md`](./unity-integration.md) bridge pattern.
 
 ### `glTF-Transform` vs. `gltf-pipeline`
 *   **Standard**: We strictly use `glTF-Transform` for our Cloud Asset Pipeline because it works in **Serverless/Edge** environments (Cloudflare Workers) where Node.js `fs` is unavailable.
