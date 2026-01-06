@@ -25,13 +25,13 @@ public class IOSBuildPostProcessor
         pbxProject.SetBuildProperty(unityFrameworkTargetGuid, "ENABLE_BITCODE", "NO");
 
         // 2. Linker flags are handled by build_and_run_ios.sh to force Classic Linker via Environment Variables.
-        // This is more reliable than pbxproj flags for Xcode 16.1.
+        // This is more reliable than pbxproj flags for Xcode 16.4.
 
         // 3. Ensure Always Embed Swift Standard Libraries (for plugins)
         pbxProject.SetBuildProperty(mainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
 
         // 4. CRITICAL FIX: Explicitly link GameAssembly (which contains il2cpp.a)
-        // Unity 6 + Xcode 16.1 bug: GameAssembly dependency not properly set for UnityFramework
+        // Unity 6 + Xcode 16.4 bug: GameAssembly dependency not properly set for UnityFramework
         string gameAssemblyTargetGuid = pbxProject.TargetGuidByName("GameAssembly");
         if (!string.IsNullOrEmpty(gameAssemblyTargetGuid))
         {
@@ -63,12 +63,9 @@ public class IOSBuildPostProcessor
             dataGuid = pbxProject.AddFolderReference(dataPath, dataProjectPath, PBXSourceTree.Source);
         }
 
-        if (pbxProject.BuildFilesGetForSourceFile(unityFrameworkTargetGuid, dataGuid) == null)
-        {
-            string resourcesPhase = pbxProject.GetResourcesBuildPhaseByTarget(unityFrameworkTargetGuid);
-            pbxProject.AddFileToBuildSection(unityFrameworkTargetGuid, resourcesPhase, dataGuid);
-            Debug.Log("[IOSBuildPostProcessor] Added Data folder to UnityFramework resources.");
-        }
+        string resourcesPhase = pbxProject.GetResourcesBuildPhaseByTarget(unityFrameworkTargetGuid);
+        pbxProject.AddFileToBuildSection(unityFrameworkTargetGuid, resourcesPhase, dataGuid);
+        Debug.Log("[IOSBuildPostProcessor] Added Data folder to UnityFramework resources.");
     }
 
     private static void EnsureNativeCallProxyHeaderIsPublic(PBXProject pbxProject, string unityFrameworkTargetGuid)
@@ -79,11 +76,6 @@ public class IOSBuildPostProcessor
         {
             Debug.LogWarning("[IOSBuildPostProcessor] NativeCallProxy.h not found in Xcode project. Did you copy the react-native-unity unity/ folder into the Unity project?");
             return;
-        }
-
-        if (pbxProject.BuildFilesGetForSourceFile(unityFrameworkTargetGuid, nativeCallProxyGuid) != null)
-        {
-            pbxProject.BuildFilesRemove(unityFrameworkTargetGuid, nativeCallProxyGuid);
         }
 
         pbxProject.AddPublicHeaderToBuild(unityFrameworkTargetGuid, nativeCallProxyGuid);

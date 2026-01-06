@@ -120,7 +120,7 @@ log "Using Unity: $UNITY_BIN"
 
 # 1b. Find Xcode
 if [ -z "${DEVELOPER_DIR:-}" ]; then
-    warn "Looking for preferred Xcode version (${PREFERRED_XCODE_VERSION:-26.1})..."
+    warn "Looking for preferred Xcode version (${PREFERRED_XCODE_VERSION:-16.4})..."
     if [ -f "$PROJECT_ROOT/scripts/find_xcode.py" ]; then
         DEVELOPER_DIR=$(python3 "$PROJECT_ROOT/scripts/find_xcode.py")
         export DEVELOPER_DIR

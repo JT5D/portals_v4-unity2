@@ -39,8 +39,13 @@ def find_best_xcode():
     # Sort by version descending
     xcode_versions.sort(key=lambda x: parse_version(x['version']), reverse=True)
 
-    # Prefer Unity-compatible Sequoia linker stability: Xcode 26.1 (16.1) first.
-    preferred_prefixes = ["26.1", "16.1"]
+    preferred_prefixes = []
+    env_preferred = os.environ.get("PREFERRED_XCODE_VERSION")
+    if env_preferred:
+        preferred_prefixes.append(env_preferred)
+
+    # Prefer Unity-compatible Sequoia linker stability: Xcode 16.4 first.
+    preferred_prefixes.extend(["16.4", "16.1"])
     for prefix in preferred_prefixes:
         for xcode in xcode_versions:
             if xcode['version'].startswith(prefix):

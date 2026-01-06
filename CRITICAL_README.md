@@ -122,7 +122,7 @@ The `patches/` directory now includes a comprehensive fix for `@reactvision/reac
 - **Bridge validation**: After a fresh export, run `npm run tunnel` then `npx expo run:ios --device` and open the Unity test route (`UnityTestScene`). Expect Unity to send `The button has been tapped!` (logged in JS) when the test button is pressed in the Unity view.
 - **One-command automation**: `./scripts/build_and_run_ios.sh` kills stale Metro, runs Unity export + UnityFramework build, copies the framework, runs pods, starts Metro on 8081, and installs to the device (`IMClab 15` by default).
 - **Unity ready ping**: On scene load, Unity sends `{"type":"unity_ready","scene":"<name>"}` to React Native (see `unity/Assets/Scripts/UnityReadyNotifier.cs`). Look for this in JS logs to confirm the scene is alive before testing messaging.
-- **Xcode version (Sequoia)**: Use Xcode 26.1 (aka 16.1) on macOS 15; set `DEVELOPER_DIR=/Applications/Xcode-261.app/Contents/Developer`. Our build script forces the classic linker (`LD_CLASSIC/LD_USE_CLASSIC_LINKER` + `-Wl,-ld_classic`) to avoid the ld64 assertion seen on Xcode 16+. If Xcode 26.1 is not installed, download from Apple: https://developer.apple.com/download/all/?q=Xcode%2026.1
+- **Xcode version (Sequoia)**: Use Xcode 16.4 on macOS 15; set `DEVELOPER_DIR=/Applications/Xcode-164.app/Contents/Developer`. Our build script forces the classic linker (`LD_CLASSIC/LD_USE_CLASSIC_LINKER` + `-Wl,-ld_classic`) to avoid the ld64 assertion seen on Xcode 16+. If Xcode 16.4 is not installed, download from Apple: https://developer.apple.com/download/all/?q=Xcode%2016.4
 
 ### 5. Testing & CI (NEW)
 - **Local gate**: Run `npm test` (Jest) before any native build or export. See `BUILD_CHECKLIST.md` for the pre-build gate steps.
