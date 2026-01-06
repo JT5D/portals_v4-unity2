@@ -40,7 +40,53 @@ public class IOSBuildPostProcessor
             Debug.Log("[IOSBuildPostProcessor] Added GameAssembly as UnityFramework dependency");
         }
 
+        AddDataFolderToUnityFramework(pbxProject, buildPath, unityFrameworkTargetGuid);
+        EnsureNativeCallProxyHeaderIsPublic(pbxProject, unityFrameworkTargetGuid);
+
         pbxProject.WriteToFile(projectPath);
-        Debug.Log("[IOSBuildPostProcessor] Fixes applied: Bitcode disabled, ld_classic linker, GameAssembly dependency added.");
+        Debug.Log("[IOSBuildPostProcessor] Fixes applied: Bitcode disabled, GameAssembly dependency added, UnityFramework resources + headers updated.");
+    }
+
+    private static void AddDataFolderToUnityFramework(PBXProject pbxProject, string buildPath, string unityFrameworkTargetGuid)
+    {
+        string dataPath = Path.Combine(buildPath, "Data");
+        if (!Directory.Exists(dataPath))
+        {
+            Debug.LogWarning($"[IOSBuildPostProcessor] Unity Data folder missing at {dataPath}. Framework will be missing assets.");
+            return;
+        }
+
+        const string dataProjectPath = "Data";
+        string dataGuid = pbxProject.FindFileGuidByProjectPath(dataProjectPath);
+        if (string.IsNullOrEmpty(dataGuid))
+        {
+            dataGuid = pbxProject.AddFolderReference(dataPath, dataProjectPath, PBXSourceTree.Source);
+        }
+
+        if (pbxProject.BuildFilesGetForSourceFile(unityFrameworkTargetGuid, dataGuid) == null)
+        {
+            string resourcesPhase = pbxProject.GetResourcesBuildPhaseByTarget(unityFrameworkTargetGuid);
+            pbxProject.AddFileToBuildSection(unityFrameworkTargetGuid, resourcesPhase, dataGuid);
+            Debug.Log("[IOSBuildPostProcessor] Added Data folder to UnityFramework resources.");
+        }
+    }
+
+    private static void EnsureNativeCallProxyHeaderIsPublic(PBXProject pbxProject, string unityFrameworkTargetGuid)
+    {
+        const string nativeCallProxyPath = "Libraries/Plugins/iOS/NativeCallProxy.h";
+        string nativeCallProxyGuid = pbxProject.FindFileGuidByProjectPath(nativeCallProxyPath);
+        if (string.IsNullOrEmpty(nativeCallProxyGuid))
+        {
+            Debug.LogWarning("[IOSBuildPostProcessor] NativeCallProxy.h not found in Xcode project. Did you copy the react-native-unity unity/ folder into the Unity project?");
+            return;
+        }
+
+        if (pbxProject.BuildFilesGetForSourceFile(unityFrameworkTargetGuid, nativeCallProxyGuid) != null)
+        {
+            pbxProject.BuildFilesRemove(unityFrameworkTargetGuid, nativeCallProxyGuid);
+        }
+
+        pbxProject.AddPublicHeaderToBuild(unityFrameworkTargetGuid, nativeCallProxyGuid);
+        Debug.Log("[IOSBuildPostProcessor] Marked NativeCallProxy.h as Public in UnityFramework target.");
     }
 }

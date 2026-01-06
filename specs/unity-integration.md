@@ -24,7 +24,8 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 
 ## 4. Implementation Steps
 - [x] **Infrastructure**: Install `@azesmway/react-native-unity` (pinned for patch compatibility).
-- [x] **Expo Plugin**: Create `plugins/withUnity.js` to automate iOS Data resources + Android gradle modifications.
+- [x] **Expo Plugin**: Create `plugins/withUnity.js` to automate Android gradle modifications + iOS UnityFramework sanity checks.
+- [x] **iOS Export Fixups**: `unity/Assets/Editor/IOSBuildPostProcessor.cs` adds Unity Data to UnityFramework resources and marks `NativeCallProxy.h` as Public.
 - [x] **Unity Project**: Set up Unity 6 (6000.2.14f1) project in `unity/` folder.
 - [x] **Unity Scenes**: Create UnityTestScene.unity and configure build settings.
 - [x] **Native Bridge**: Copy Plugins/iOS from @azesmway package for RN communication.
@@ -53,13 +54,13 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 - `@azesmway/react-native-unity` v1.0.11 installed (pinned)
 - `UnityArView` component wraps UnityView with type safety
 - `UnityTestScene` ready for testing; Unity sends a ready ping via `UnityReadyNotifier` on scene load
-- Expo plugin configured for Android gradle setup + iOS Data resources
+- Expo plugin configured for Android gradle setup + iOS UnityFramework checks
 
 ## 6. Next Steps
 1. **Export Fresh Unity Builds** (see unity/UNITY_BUILD_EXPORT_GUIDE.md)
    - iOS: Build UnityFramework.framework with new scenes
    - Android: Export unityLibrary with new scenes
-2. **Rebuild iOS project** after Unity export (`npm run setup` or `npx expo prebuild --platform ios --clean`)
+2. **Refresh iOS pods** after Unity export (`npm run setup` or `cd ios && pod install`)
 3. **Test on Physical Devices**
    - iOS: `npx expo run:ios --device`
    - Android: `npx expo run:android --device`

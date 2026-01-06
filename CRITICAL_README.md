@@ -117,7 +117,7 @@ The `patches/` directory now includes a comprehensive fix for `@reactvision/reac
 - **Re-export builds after scene changes**: Follow `unity/UNITY_BUILD_EXPORT_GUIDE.md` to regenerate:
   - iOS: `UnityFramework.framework` to `unity/builds/ios`
   - Android: `unityLibrary` export to `unity/builds/android` (with `Export Project` checked)
-- **iOS Data bundling**: `plugins/withUnity.js` adds `unity/builds/ios/Data` into the iOS app resources. Re-run `npx expo prebuild --platform ios --clean` (or `npm run setup`) after new Unity exports to refresh Xcode references.
+- **iOS Data + NativeCallProxy automation**: `unity/Assets/Editor/IOSBuildPostProcessor.cs` adds `Data` to the UnityFramework target and marks `NativeCallProxy.h` as Public during Unity export. Rebuild the framework and run `pod install` (or `npm run setup`) after new Unity exports.
 - **Unity MCP verify**: After opening Unity, run `MCP/Verify Tools` (Unity menu) to confirm the custom MCP tooling is active before running automated scripts.
 - **Bridge validation**: After a fresh export, run `npm run tunnel` then `npx expo run:ios --device` and open the Unity test route (`UnityTestScene`). Expect Unity to send `The button has been tapped!` (logged in JS) when the test button is pressed in the Unity view.
 - **One-command automation**: `./scripts/build_and_run_ios.sh` kills stale Metro, runs Unity export + UnityFramework build, copies the framework, runs pods, starts Metro on 8081, and installs to the device (`IMClab 15` by default).
@@ -163,7 +163,8 @@ No manual intervention needed for CI/CD builds.
 | `package.json` | ViroReact version + postinstall script |
 | `patches/@reactvision+react-viro+2.43.6.patch` | AssetRegistry fix |
 | `plugins/withPodfileFixes.js` | Podfile automation |
-| `plugins/withUnity.js` | Unity iOS/Android integration |
+| `plugins/withUnity.js` | Unity Android integration + iOS framework checks |
+| `unity/Assets/Editor/IOSBuildPostProcessor.cs` | Unity iOS export fixups (Data + NativeCallProxy) |
 
 ---
 

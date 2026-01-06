@@ -1,5 +1,4 @@
 const { withProjectBuildGradle, withAppBuildGradle, withSettingsGradle, withAndroidManifest, withXcodeProject } = require('@expo/config-plugins');
-const { addResourceFileToGroup, getProjectName } = require('@expo/config-plugins/build/ios/utils/Xcodeproj');
 const fs = require('fs');
 const path = require('path');
 
@@ -59,28 +58,20 @@ project(':unityLibrary').projectDir = new File(rootProject.projectDir, '../unity
 
 const withIosUnity = (config) => {
   return withXcodeProject(config, (config) => {
-    const project = config.modResults;
     const projectRoot = config.modRequest.projectRoot;
-    const iosProjectRoot = path.join(projectRoot, 'ios');
-    const unityDataPath = path.join(projectRoot, 'unity', 'builds', 'ios', 'Data');
-    const unityDataRelativePath = path.relative(iosProjectRoot, unityDataPath);
-    const projectName = getProjectName(projectRoot);
+    const unityFrameworkPath = path.join(projectRoot, 'unity', 'builds', 'ios', 'UnityFramework.framework');
+    const unityFrameworkDataPath = path.join(unityFrameworkPath, 'Data');
 
-    if (!fs.existsSync(unityDataPath)) {
+    if (!fs.existsSync(unityFrameworkPath)) {
       console.warn(
-        `[withUnity] Unity iOS Data folder not found at ${unityDataPath}. ` +
-        `Export Unity (BuildScript.PerformIOSBuild) and re-run prebuild to include it.`
+        `[withUnity] UnityFramework.framework not found at ${unityFrameworkPath}. ` +
+        `Export Unity (BuildScript.PerformIOSBuild) and rebuild the framework.`
       );
-    }
-
-    if (!project.hasFile(unityDataRelativePath)) {
-      addResourceFileToGroup({
-        filepath: unityDataRelativePath,
-        groupName: `${projectName}/Unity`,
-        project,
-        isBuildFile: true,
-        verbose: true,
-      });
+    } else if (!fs.existsSync(unityFrameworkDataPath)) {
+      console.warn(
+        `[withUnity] UnityFramework Data folder missing at ${unityFrameworkDataPath}. ` +
+        `Ensure the Unity iOS export adds Data to the UnityFramework target and rebuild the framework.`
+      );
     }
 
     return config;
