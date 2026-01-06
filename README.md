@@ -11,9 +11,9 @@
 
 ## 📱 Overview
 
-Portals merges social media with augmented reality, allowing users to:
+Portals merges AI tools, social media & augmented reality, allowing users to:
 
-- **Explore** AR experiences pinned to real-world locations
+- **Explore** AI+AR experiences pinned to real-world locations
 - **Create** immersive 3D scenes with an intuitive editor
 - **Share** video recordings &  explorable AI + AR experiences
 - **Collect** rare "Artifacts" by physically visiting locations
