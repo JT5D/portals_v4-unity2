@@ -427,6 +427,22 @@ var PortalItemRender = createReactClass({
   _onObjectLoadEnd(uuid) {
     return () => {
       this.props.onLoadCallback(uuid, LoadConstants.LOADED);
+
+      // Check if portal is loaded from draft - if so, skip hit test placement
+      const isLoadedFromDraft = this.props.portalIDProps.isFromDraft === true;
+
+      if (isLoadedFromDraft) {
+        // Draft-loaded portals already have their position/scale set from getInitialState
+        // Just make them visible without running hit test placement
+        console.log('[PortalItemRender] Draft-loaded portal, skipping hit test placement');
+        this.setState({
+          shouldBillboard: false,
+          nodeIsVisible: true,
+        });
+        return;
+      }
+
+      // Only do hit test placement for NEW portals
       this.props.hitTestMethod(this._onARHitTestResults);
     };
   },
