@@ -1,0 +1,132 @@
+{
+    "name": "AR Foundation Input Actions",
+    "maps": [
+        {
+            "name": "Pointer",
+            "id": "10e27884-5a7a-46c9-925c-37ae8b8a8294",
+            "actions": [
+                {
+                    "name": "Press",
+                    "type": "Button",
+                    "id": "190ad64b-721e-4a04-946c-322fba863a6b",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Position",
+                    "type": "Value",
+                    "id": "595656a9-608e-4a95-ad22-ef5fc68ee688",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "356a3ed1-ce11-42c7-b8b9-a63b0653663c",
+                    "path": "<Pointer>/Press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Press",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bfabf671-5180-4532-a8e1-ac475aa9e9fd",
+                    "path": "<Pointer>/Position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Position",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "ARFoundation Left Input",
+            "id": "d9b37871-628a-48f3-b95d-7b526bd04b4f",
+            "actions": [
+                {
+                    "name": "Activate",
+                    "type": "Button",
+                    "id": "6c0b5248-d448-4885-884e-c521d8a20d7a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "0a509963-cc6a-4eae-abc2-6ad6075055eb",
+                    "path": "<XRController>{LeftHand}/{TriggerButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Activate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "22e6f149-1b14-4000-966c-d2d2e234247a",
+                    "path": "<XRController>{LeftHand}/{PinchTouched}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Activate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "ARFoundation Right Input",
+            "id": "ad3a160f-aaef-4b49-9991-7ec34db3f715",
+            "actions": [
+                {
+                    "name": "Activate",
+                    "type": "Button",
+                    "id": "113345af-4bf7-4f4f-9427-201265317355",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f054ed02-820d-4979-9d01-069d3f6d21e0",
+                    "path": "<XRController>{RightHand}/{TriggerButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Activate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "48d5d68b-0969-4e47-aa03-46233a0240dc",
+                    "path": "<XRController>{RightHand}/{PinchTouched}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Activate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

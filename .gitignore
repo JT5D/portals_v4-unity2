@@ -42,3 +42,33 @@ yarn-error.*
 # /ios
 /android
 src/screens/FigmentAR/res/360/*.mp4
+
+# Unity Builds
+unity/builds/
+
+# Unity temporary and cache files
+unity/[Ll]ibrary/
+unity/[Tt]emp/
+unity/[Oo]bj/
+unity/[Bb]uild/
+unity/[Ll]ogs/
+unity/[Mm]emoryCaptures/
+#unity/UserSettings/
+unity/*.csproj
+#unity/*.unitypackage
+unity/*.sln
+unity/*.suo
+unity/*.tmp
+unity/*.user
+#unity/*.userprefs
+unity/*.pidb
+unity/*.booproj
+unity/*.svd
+unity/*.pdb
+unity/*.mdb
+unity/*.opendb
+unity/*.db
+
+# Build Logs
+.logs/
+logs/

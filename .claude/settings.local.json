@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open:*)",
+      "Bash(cat:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(osascript:*)",
+      "Bash(cd:*)",
+      "Bash(python server.py:*)",
+      "Bash(\"/Users/jamestunick/Library/Application Support/UnityMCP/UnityMcpServer/src/.venv/bin/python\" \"/Users/jamestunick/Library/Application Support/UnityMCP/UnityMcpServer/src/server.py\" --help)",
+      "Bash(killall:*)",
+      "Bash(pkill:*)",
+      "Bash(find:*)",
+      "Bash(for i in {1..30})",
+      "Bash(do if lsof -i :8080)",
+      "Bash(then echo \"✅ MCP Server detected on port 8080!\" curl -s http://localhost:8080/mcp)",
+      "Bash(then echo \"MCP Server detected on port 8080!\" curl -s http://localhost:8080/mcp)",
+      "Bash(xcrun xctrace:*)",
+      "Bash(xcrun devicectl:*)",
+      "Bash(instruments -s devices:*)",
+      "Bash(if [ -f /tmp/iphone_deploy.log ])",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(npx pod-install)",
+      "Bash(pod install:*)",
+      "Bash(rg:*)",
+      "Bash(./scripts/build_and_run_ios.sh:*)",
+      "Bash(tee:*)",
+      "Bash(nm:*)",
+      "Bash(ls:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(ps:*)",
+      "Bash(/Applications/Xcode-164.app/Contents/Developer/usr/bin/xcodebuild -version:*)",
+      "Bash(/Applications/Xcode-262.app/Contents/Developer/usr/bin/xcodebuild:*)",
+      "Bash(DEVELOPER_DIR=\"/Applications/Xcode-164.app/Contents/Developer\" ./scripts/build_and_run_ios.sh:*)",
+      "Bash(du:*)",
+      "Bash(security find-identity:*)",
+      "Bash(DEVELOPER_DIR=\"/Applications/Xcode-164.app/Contents/Developer\" xcodebuild:*)"
+    ]
+  }
+}

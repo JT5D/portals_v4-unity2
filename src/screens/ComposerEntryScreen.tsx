@@ -335,15 +335,19 @@ export const ComposerEntryScreen = () => {
                             renderItem={({ item }) => {
                                 if (item.id === 'new') {
                                     return (
-                                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        <View style={{ alignItems: 'center', gap: 8 }}>
                                             <TouchableOpacity style={styles.newButton} onPress={() => navigation.navigate('Figment')}>
                                                 <View style={styles.addCircle}>
                                                     <Ionicons name="add" size={28} color="#000" />
                                                 </View>
-                                                <Text style={styles.cardText}>New</Text>
+                                                <Text style={styles.cardText}>New draft</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={styles.unityButton} onPress={() => navigation.navigate('UnityTestScene')}>
+                                                <Ionicons name="cube-outline" size={20} color="#fff" />
+                                                <Text style={styles.unityButtonText}>Open Unity scene</Text>
                                             </TouchableOpacity>
                                         </View>
-                                    )
+                                    );
                                 }
                                 return renderDraft({ item });
                             }}
@@ -449,8 +453,8 @@ const styles = StyleSheet.create({
         borderStyle: 'dashed',
     },
     newButton: {
-        width: 80,
-        height: 180,
+        width: 120,
+        height: 140,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -483,5 +487,22 @@ const styles = StyleSheet.create({
         color: theme.colors.white,
         marginTop: 8,
         fontWeight: '600',
-    }
+    },
+    unityButton: {
+        width: 140,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.25)',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    unityButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 14,
+    },
 });

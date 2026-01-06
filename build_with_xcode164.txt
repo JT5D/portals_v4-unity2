@@ -1,0 +1,35 @@
+[0;32m[BuildScript] Starting consolidated iOS build process...[0m
+[0;32m[BuildScript] Mode: Build Only[0m
+[0;32m[BuildScript] Using Unity: /Applications/Unity/Hub/Editor/6000.2.14f1/Unity.app/Contents/MacOS/Unity[0m
+[0;32m[BuildScript] Using system default Xcode...[0m
+[0;32m[BuildScript] Running Preflight Checks...[0m
+[1;33m[BuildScript] Unity Editor is running. Force-closing due to --force-close-unity.[0m
+[0;32m[BuildScript] Cleaning stuck processes...[0m
+[0;32m[BuildScript] Running Unity MCPTools.VerifyAndAutoFix...[0m
+[0;32m[BuildScript] Checking for missing scripts...[0m
+[0;32m[BuildScript] Cleaning up previous processes...[0m
+[0;32m[BuildScript] running Unity export...[0m
+[0;32m[BuildScript] Unity export successful.[0m
+[0;32m[BuildScript] Building UnityFramework (Release)...[0m
+[0;32m[BuildScript] Found Classic Linker at: /Applications/Xcode-261.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-classic[0m
+[0;31m[BuildScript] Framework build failed. Check /Users/jamestunick/Documents/GitHub/portals_v4/logs/xcodebuild_framework.log[0m
+      scripting_liveness_allocate_struct(ScriptingClassPtr, int, void (*)(Il2CppObject**, int, void*), void*, void* (*)(void*, unsigned long, void*)) in libiPhone-lib.a(Runtime_ScriptingBackend_Il2Cpp_0_4ia5l.o)
+  "_il2cpp_unity_liveness_calculation_from_root", referenced from:
+      scripting_liveness_calculation_from_root(ScriptingObjectPtr, void*) in libiPhone-lib.a(Runtime_ScriptingBackend_Il2Cpp_0_4ia5l.o)
+  "_il2cpp_unity_liveness_calculation_from_statics", referenced from:
+      scripting_liveness_calculation_from_statics(void*) in libiPhone-lib.a(Runtime_ScriptingBackend_Il2Cpp_0_4ia5l.o)
+  "_il2cpp_unity_liveness_finalize", referenced from:
+      scripting_liveness_finalize(void*) in libiPhone-lib.a(Runtime_ScriptingBackend_Il2Cpp_0_4ia5l.o)
+  "_il2cpp_unity_liveness_free_struct", referenced from:
+      scripting_liveness_free_struct(void*) in libiPhone-lib.a(Runtime_ScriptingBackend_Il2Cpp_0_4ia5l.o)
+ld: symbol(s) not found for architecture arm64
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+
+warning: Run script build phase 'Run Script' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'GameAssembly' from project 'Unity-iPhone')
+** BUILD FAILED **
+
+
+The following build commands failed:
+	Ld /Users/jamestunick/Documents/GitHub/portals_v4/unity/builds/ios/DerivedData/Build/Products/Release-iphoneos/UnityFramework.framework/UnityFramework normal (in target 'UnityFramework' from project 'Unity-iPhone')
+	Building project Unity-iPhone with scheme UnityFramework and configuration Release
+(2 failures)

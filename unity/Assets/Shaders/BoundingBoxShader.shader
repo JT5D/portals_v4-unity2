@@ -1,0 +1,106 @@
+Shader "Custom/BoundingBoxShader"
+{
+    // URP SubShader
+    SubShader
+    {
+        PackageRequirements
+        {
+            "com.unity.render-pipelines.universal": "12.0"
+        }
+
+        Tags { "RenderType"="Opaque" "Queue"="AlphaTest" }
+        Pass
+        {
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
+
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            v2f vert (appdata v)
+            {
+                v2f o;
+
+                UNITY_SETUP_INSTANCE_ID(v);
+                ZERO_INITIALIZE(v2f, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+
+                o.vertex = mul(UNITY_MATRIX_MVP, float4(v.vertex.xyz, 1.0));
+                o.uv = float2(0, 0);
+                return o;
+            }
+
+            float4 frag (const v2f i) : SV_Target
+            {
+                clip(-1);
+                return float4(1, 1, 1, 1);
+            }
+            ENDHLSL
+        }
+    }
+    // Built-in Render Pipeline SubShader
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "Queue"="AlphaTest" }
+        Pass
+        {
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #include "UnityCG.cginc"
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
+
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            v2f vert (appdata v)
+            {
+                v2f o;
+
+                UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_INITIALIZE_OUTPUT(v2f, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+
+                o.vertex = mul(UNITY_MATRIX_MVP, float4(v.vertex.xyz, 1.0));
+                o.uv = float2(0, 0);
+                return o;
+            }
+
+            float4 frag (const v2f i) : SV_Target
+            {
+                clip(-1);
+                return float4(1, 1, 1, 1);
+            }
+            ENDHLSL
+        }
+    }
+}

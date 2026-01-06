@@ -1,4 +1,7 @@
-const { withProjectBuildGradle, withAppBuildGradle, withSettingsGradle, withAndroidManifest } = require('@expo/config-plugins');
+const { withProjectBuildGradle, withAppBuildGradle, withSettingsGradle, withAndroidManifest, withXcodeProject } = require('@expo/config-plugins');
+const { addResourceFileToGroup, getProjectName } = require('@expo/config-plugins/build/ios/utils/Xcodeproj');
+const fs = require('fs');
+const path = require('path');
 
 const withAndroidUnity = (config) => {
   // 1. Update settings.gradle to include unityLibrary
@@ -54,8 +57,39 @@ project(':unityLibrary').projectDir = new File(rootProject.projectDir, '../unity
   return config;
 };
 
+const withIosUnity = (config) => {
+  return withXcodeProject(config, (config) => {
+    const project = config.modResults;
+    const projectRoot = config.modRequest.projectRoot;
+    const iosProjectRoot = path.join(projectRoot, 'ios');
+    const unityDataPath = path.join(projectRoot, 'unity', 'builds', 'ios', 'Data');
+    const unityDataRelativePath = path.relative(iosProjectRoot, unityDataPath);
+    const projectName = getProjectName(projectRoot);
+
+    if (!fs.existsSync(unityDataPath)) {
+      console.warn(
+        `[withUnity] Unity iOS Data folder not found at ${unityDataPath}. ` +
+        `Export Unity (BuildScript.PerformIOSBuild) and re-run prebuild to include it.`
+      );
+    }
+
+    if (!project.hasFile(unityDataRelativePath)) {
+      addResourceFileToGroup({
+        filepath: unityDataRelativePath,
+        groupName: `${projectName}/Unity`,
+        project,
+        isBuildFile: true,
+        verbose: true,
+      });
+    }
+
+    return config;
+  });
+};
+
 const withUnity = (config) => {
   config = withAndroidUnity(config);
+  config = withIosUnity(config);
   return config;
 };
 

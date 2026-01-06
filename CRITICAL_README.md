@@ -109,6 +109,25 @@ The `patches/` directory now includes a comprehensive fix for `@reactvision/reac
 - **AssetRegistry**: Fixes the `getAssetByID` crash in React Native 0.81.
 - **GoogleKitHUD**: `scripts/patch-virokit.sh` automatically creates missing localization files.
 
+### 4. Unity Scene & Build Workflow (NEW)
+- **Scene location**: Keep Unity scenes under `unity/Assets/Scenes/`. The primary test scene is `UnityTestScene.unity`.
+- **Build Settings**: Open `File > Build Settings` and ensure `UnityTestScene` (and any active scenes) are added. This keeps `unity/ProjectSettings/EditorBuildSettings.asset` in sync.
+- **Re-export builds after scene changes**: Follow `unity/UNITY_BUILD_EXPORT_GUIDE.md` to regenerate:
+  - iOS: `UnityFramework.framework` to `unity/builds/ios`
+  - Android: `unityLibrary` export to `unity/builds/android` (with `Export Project` checked)
+- **Unity MCP verify**: After opening Unity, run `MCP/Verify Tools` (Unity menu) to confirm the custom MCP tooling is active before running automated scripts.
+- **Bridge validation**: After a fresh export, run `npm run tunnel` then `npx expo run:ios --device` and open the Unity test route (`UnityTestScene`). Expect Unity to send `The button has been tapped!` (logged in JS) when the test button is pressed in the Unity view.
+- **One-command automation**: `./scripts/build_and_run_ios.sh` kills stale Metro, runs Unity export + UnityFramework build, copies the framework, runs pods, starts Metro on 8081, and installs to the device (`IMClab 15` by default).
+- **Unity ready ping**: On scene load, Unity sends `{"type":"unity_ready","scene":"<name>"}` to React Native (see `unity/Assets/Scripts/UnityReadyNotifier.cs`). Look for this in JS logs to confirm the scene is alive before testing messaging.
+- **Xcode version (Sequoia)**: Use Xcode 26.1 (aka 16.1) on macOS 15; set `DEVELOPER_DIR=/Applications/Xcode-261.app/Contents/Developer`. Our build script forces the classic linker (`LD_CLASSIC/LD_USE_CLASSIC_LINKER` + `-Wl,-ld_classic`) to avoid the ld64 assertion seen on Xcode 16+. If Xcode 26.1 is not installed, download from Apple: https://developer.apple.com/download/all/?q=Xcode%2026.1
+
+### 5. Testing & CI (NEW)
+- **Local gate**: Run `npm test` (Jest) before any native build or export. See `BUILD_CHECKLIST.md` for the pre-build gate steps.
+- **CI**: `.github/workflows/ci.yml` runs `npm ci` + `npm test -- --runInBand` on PRs and on pushes to `dev`/`main`.
+- **Expo tunnel for validation**: Always validate Unity ↔ RN after exports using `npm run tunnel` + `npx expo run:ios --device` to catch bridge regressions early.
+- **E2E**: Plan to evaluate Detox or Expo EAS E2E for smoke flows (auth + UnityTestScene launch) to raise pre-TestFlight confidence.
+- **Manual QA**: See `QA_PROCESS.md` for device matrix and acceptance criteria after Unity exports.
+
 ---
 
 ## 🔧 Manual Troubleshooting

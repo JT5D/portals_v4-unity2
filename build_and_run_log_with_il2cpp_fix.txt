@@ -1,0 +1,7 @@
+[0;32m[BuildScript] Starting consolidated iOS build process...[0m
+[0;32m[BuildScript] Mode: Build Only[0m
+[0;32m[BuildScript] Using Unity: /Applications/Unity/Hub/Editor/6000.2.14f1/Unity.app/Contents/MacOS/Unity[0m
+[1;33m[BuildScript] Looking for preferred Xcode version (26.1)...[0m
+[0;32m[BuildScript] Selected Xcode: /Applications/Xcode-261.app/Contents/Developer[0m
+[0;32m[BuildScript] Running Preflight Checks...[0m
+[0;32m[BuildScript] Cleaning stuck processes...[0m

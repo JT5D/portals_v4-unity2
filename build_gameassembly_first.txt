@@ -1,0 +1,16 @@
+[0;32m[BuildScript] Starting consolidated iOS build process...[0m
+[0;32m[BuildScript] Mode: Build Only[0m
+[0;32m[BuildScript] Using Unity: /Applications/Unity/Hub/Editor/6000.2.14f1/Unity.app/Contents/MacOS/Unity[0m
+[1;33m[BuildScript] Looking for preferred Xcode version (26.1)...[0m
+[0;32m[BuildScript] Selected Xcode: /Applications/Xcode-261.app/Contents/Developer[0m
+[0;32m[BuildScript] Running Preflight Checks...[0m
+[0;32m[BuildScript] Cleaning stuck processes...[0m
+[0;32m[BuildScript] Running Unity MCPTools.VerifyAndAutoFix...[0m
+[0;32m[BuildScript] Checking for missing scripts...[0m
+[0;32m[BuildScript] Cleaning up previous processes...[0m
+[0;32m[BuildScript] running Unity export...[0m
+[0;32m[BuildScript] Unity export successful.[0m
+[0;32m[BuildScript] Building GameAssembly first (contains il2cpp.a)...[0m
+[0;31m[BuildScript] GameAssembly build failed. Check /Users/jamestunick/Documents/GitHub/portals_v4/logs/xcodebuild_gameassembly.log[0m
+2026-01-06 15:13:54.928 xcodebuild[80271:6462159] Writing error result bundle to /var/folders/g8/lq3hx0kx6bsgz3sb9p9_kff80000gn/T/ResultBundle_2026-06-01_15-13-0054.xcresult
+xcodebuild: error: The flag -scheme, -testProductsPath, or -xctestrun is required when specifying -derivedDataPath.

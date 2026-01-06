@@ -1,13 +1,14 @@
 import UnityView, { UnityViewMessage } from '@azesmway/react-native-unity';
-import React, { useRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
 
 export interface UnityArViewProps extends ViewProps {
     onUnityMessage?: (message: any) => void;
 }
 
-export const UnityArView: React.FC<UnityArViewProps> = ({ onUnityMessage, style, ...props }) => {
+export const UnityArView = forwardRef<UnityView, UnityArViewProps>(({ onUnityMessage, style, ...props }, ref) => {
     const unityRef = useRef<UnityView>(null);
+    useImperativeHandle(ref, () => unityRef.current as UnityView);
 
     const handleMessage = (message: UnityViewMessage) => {
         if (onUnityMessage && message.message) {
@@ -44,7 +45,7 @@ export const UnityArView: React.FC<UnityArViewProps> = ({ onUnityMessage, style,
             />
         </View>
     );
-};
+});
 
 const styles = StyleSheet.create({
     container: {

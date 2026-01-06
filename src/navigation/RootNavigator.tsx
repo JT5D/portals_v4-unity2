@@ -1,37 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
-import { LoginScreen } from '../screens/LoginScreen';
-import { RegisterScreen } from '../screens/RegisterScreen';
-import { OnboardingScreen, checkOnboardingComplete } from '../screens/OnboardingScreen';
-import { BottomTabNavigator } from './BottomTabNavigator';
-import { PeopleScreen } from '../screens/PeopleScreen';
-import { SearchScreen } from '../screens/SearchScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
-import { ProfileGalleryScreen } from '../screens/ProfileGalleryScreen';
-import { ProfileSettingsScreen } from '../screens/ProfileSettingsScreen';
-import { ActivityScreen } from '../screens/ActivityScreen';
-import { PostFeedScreen } from '../screens/PostFeedScreen';
-import { ChatScreen } from '../screens/ChatScreen';
-import { TagPeopleScreen } from '../screens/TagPeopleScreen';
-import { LocationPickerScreen } from '../screens/LocationPickerScreen';
-import { useAppStore } from '../store';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
-import { User } from '../types';
-import { theme } from '../theme/theme';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { VoiceOverlay } from '../components/VoiceOverlay';
+import { auth, db } from '../config/firebase';
+import { ActivityScreen } from '../screens/ActivityScreen';
+import { ChatScreen } from '../screens/ChatScreen';
+import { LocationPickerScreen } from '../screens/LocationPickerScreen';
+import { LoginScreen } from '../screens/LoginScreen';
+import { OnboardingScreen, checkOnboardingComplete } from '../screens/OnboardingScreen';
+import { PeopleScreen } from '../screens/PeopleScreen';
+import { PostFeedScreen } from '../screens/PostFeedScreen';
+import { ProfileGalleryScreen } from '../screens/ProfileGalleryScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+import { ProfileSettingsScreen } from '../screens/ProfileSettingsScreen';
+import { RegisterScreen } from '../screens/RegisterScreen';
+import { SearchScreen } from '../screens/SearchScreen';
+import { TagPeopleScreen } from '../screens/TagPeopleScreen';
+import { useAppStore } from '../store';
+import { theme } from '../theme/theme';
+import { User } from '../types';
+import { BottomTabNavigator } from './BottomTabNavigator';
 
-import { PostDetailsScreen } from '../screens/PostDetailsScreen';
-import { ComposerEntryScreen } from '../screens/ComposerEntryScreen';
-import { ComposerEditorScreen } from '../screens/Composer/ComposerEditorScreen';
-import { ComposerPublishScreen } from '../screens/Composer/ComposerPublishScreen';
 import { ARViewerScreen } from '../screens/AR/ARViewerScreen';
-import FigmentScreenWrapper from '../screens/FigmentAR/FigmentScreenWrapper';
 import { ARNavigationScreen } from '../screens/ARNavigationScreen';
 import { ArtifactViewerScreen } from '../screens/ArtifactViewerScreen';
+import { ComposerEditorScreen } from '../screens/Composer/ComposerEditorScreen';
+import { ComposerPublishScreen } from '../screens/Composer/ComposerPublishScreen';
+import { ComposerEntryScreen } from '../screens/ComposerEntryScreen';
+import FigmentScreenWrapper from '../screens/FigmentAR/FigmentScreenWrapper';
+import { PostDetailsScreen } from '../screens/PostDetailsScreen';
+import { UnityTestScene } from '../screens/UnityTestScene';
 
 // Stub or Reuse Screen
 const UserProfileScreen = ProfileScreen; // Reuse for now, ideally refactor later
@@ -69,6 +70,8 @@ const MainStackScreen = () => (
         <MainStack.Screen name="LocationPicker" component={LocationPickerScreen} options={{ presentation: 'fullScreenModal' }} />
         <MainStack.Screen name="ARNavigation" component={ARNavigationScreen} options={{ headerShown: false, orientation: 'portrait' }} />
         <MainStack.Screen name="ArtifactViewer" component={ArtifactViewerScreen} options={{ headerShown: false }} />
+        {/* Unity test route */}
+        <MainStack.Screen name="UnityTestScene" component={UnityTestScene} options={{ headerShown: false }} />
     </MainStack.Navigator>
 );
 
@@ -162,4 +165,3 @@ export const RootNavigator = () => {
         </View>
     );
 };
-
