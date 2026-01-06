@@ -15,8 +15,11 @@ A "Cloud-First" pipeline. Users upload raw files to Cloudflare R2, and a serverl
 - **Trigger**: File upload triggers a Cloudflare Worker / AWS Lambda.
 
 ### B. The Optimizers (The "Black Box")
-- **Geometry**: `gltf-pipeline` with Draco compression (-90% size).
-- **Textures**: `ktx2-encoder` (BasisU) for GPU-ready textures.
+- **Library**: `glTF-Transform` (Web/Worker compatible) instead of `gltf-pipeline` (Node.js only).
+- **Operations**:
+  - `draco()`: Apply Draco compression.
+  - `resize()`: Downscale textures to 2K/1K.
+  - `ktx()`: Convert textures to KTX2 (BasisU) for GPU optimization.
 - **Rigging**: API call to *Tripo AI* or *DeepMotion* to auto-rig static humanoid meshes.
 
 ### C. Consumption
