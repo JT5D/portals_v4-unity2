@@ -110,44 +110,17 @@ export const LocationPickerScreen = () => {
     };
 
     const handleAddCurrentLocation = async () => {
-        try {
-            // Get high-accuracy GPS position including altitude
-            const gpsLoc = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.BestForNavigation
-            });
+        // Use the map's current center position (where the crosshairs are)
+        // NOT the user's GPS location - this allows dropping pins anywhere on the map
+        const newLoc = {
+            latitude: region.latitude,
+            longitude: region.longitude,
+            name: searchQuery || 'Pinned Location'
+        };
 
-            const newLoc = {
-                latitude: gpsLoc.coords.latitude,
-                longitude: gpsLoc.coords.longitude,
-                altitude: gpsLoc.coords.altitude ?? undefined, // WGS84 altitude
-                accuracy: gpsLoc.coords.accuracy ?? undefined,
-                name: searchQuery || 'GPS Location'
-            };
-
-            console.log('[LocationPicker] Captured geospatial location:', newLoc);
-            setSelectedLocations([...selectedLocations, newLoc]);
-            setSearchQuery('');
-
-            // Update map to the captured position
-            const capturedRegion = {
-                latitude: newLoc.latitude,
-                longitude: newLoc.longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
-            };
-            setRegion(capturedRegion);
-            mapRef.current?.animateToRegion(capturedRegion, 500);
-        } catch (error) {
-            console.error('[LocationPicker] GPS error, falling back to map region:', error);
-            // Fallback to map region if GPS fails
-            const newLoc = {
-                latitude: region.latitude,
-                longitude: region.longitude,
-                name: searchQuery || 'Pinned Location'
-            };
-            setSelectedLocations([...selectedLocations, newLoc]);
-            setSearchQuery('');
-        }
+        console.log('[LocationPicker] Dropping pin at map center:', newLoc);
+        setSelectedLocations([...selectedLocations, newLoc]);
+        setSearchQuery('');
     };
 
     const handleRemoveLocation = (index: number) => {

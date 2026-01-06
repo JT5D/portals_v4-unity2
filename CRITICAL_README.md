@@ -57,7 +57,29 @@ TypeError: Cannot read property 'getAssetByID' of undefined
 npx expo start --dev-client --tunnel
 ```
 
-Then enter the tunnel URL manually on device (e.g., `https://xxxxx-anonymous-8081.exp.direct`).
+The tunnel URL will be displayed (e.g., `portals://expo-development-client/?url=https://xxxxx-8081.exp.direct`). Scan the QR code or enter the URL manually on device.
+
+**If tunnel shows localhost instead of the ngrok URL:**
+
+1. Ensure `@expo/ngrok` is installed locally:
+   ```bash
+   npm install --save-dev @expo/ngrok@^4.1.0
+   ```
+
+2. Copy the global install to local node_modules if needed:
+   ```bash
+   cp -r $(npm root -g)/@expo/ngrok node_modules/@expo/
+   ```
+
+3. Kill stale ngrok processes:
+   ```bash
+   pkill -f ngrok
+   ```
+
+4. Ensure the Android directory has the matching URI scheme:
+   ```bash
+   npx expo prebuild --platform android --clean
+   ```
 
 ---
 
@@ -123,7 +145,7 @@ No manual intervention needed for CI/CD builds.
 
 ---
 
-*Last updated: December 19, 2024*
+*Last updated: January 5, 2026*
 
 ---
 
