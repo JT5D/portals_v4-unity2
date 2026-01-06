@@ -3,7 +3,7 @@ import 'dotenv/config';
 export default {
     expo: {
         name: "Portals",
-        slug: "Portals_Raw",
+        slug: "Portals",
         scheme: "portals",
         version: "1.0.0",
         orientation: "portrait",

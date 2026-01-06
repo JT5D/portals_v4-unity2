@@ -54,50 +54,38 @@ Then enter the tunnel URL manually on device (e.g., `https://xxxxx-anonymous-808
 
 ---
 
-## 📋 Development Setup Checklist
+## 📋 Automation & Setup (NEW)
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-   (This automatically applies patches via postinstall)
+We have automated the most common fixes to ensure a "one-click" build experience for team members.
 
-2. **Install CocoaPods**:
-   ```bash
-   cd ios && pod install && cd ..
-   ```
+### 1. The "Magic" Setup Command
+If you are setting up for the first time or after a major update, just run:
+```bash
+npm run setup
+```
+This command performs:
+- `npm install` (and applies all patches)
+- `npx expo prebuild` (refreshes native files cleanly)
+- `pod install` (with custom automation for New Arch, Maps, and Teams)
 
-3. **Build & Run**:
-   ```bash
-   # Option A: Build via Expo (recommended)
-   npx expo run:ios --device
-   
-   # Option B: Open in Xcode
-   open ios/PortalsRaw.xcworkspace
-   ```
+### 2. Native Automation (Podfile)
+The `ios/Podfile` now automatically:
+- Sets the **Development Team** to `Z8622973EB`.
+- Corrects **Swift Explicit Modules** (prevents "no such module Expo").
+- Fixes **react-native-maps** and **RNSVG** "Undefined symbols" at runtime.
 
-4. **Start Metro with tunnel** (if device can't find server):
-   ```bash
-   npx expo start --dev-client --tunnel
-   ```
+### 3. Critical Patches
+The `patches/` directory now includes a comprehensive fix for `@reactvision/react-viro@2.43.6`:
+- **PromisesObjC**: Adds the missing dependency to `ViroKit.podspec`.
+- **AssetRegistry**: Fixes the `getAssetByID` crash in React Native 0.81.
+- **GoogleKitHUD**: `scripts/patch-virokit.sh` automatically creates missing localization files.
 
 ---
 
-## 🔧 Troubleshooting
-
-### App crashes immediately on launch
-- Verify ViroReact version is exactly `2.43.6`
-- Run `npm install` to ensure patches are applied
-- Run `pod install` in `ios/` directory
-
-### "Cannot read property 'getAssetByID' of undefined"
-- Check that `patches/@reactvision+react-viro+2.43.6.patch` exists
-- Run `npm install` to apply the patch
-- Restart Metro with `--clear` flag: `npx expo start --clear`
-
-### "No development servers found"
-- Use tunnel mode: `npx expo start --dev-client --tunnel`
-- Manually enter the tunnel URL on device
+## 🔧 Manual Troubleshooting
+If the app still fails:
+1. **App crashes on launch**: Run `npm run setup` to ensure all native code and API keys are correctly injected.
+2. **"No development servers found"**: Use tunnel mode: `npx expo start --dev-client --tunnel`
 
 ### Videos/content not loading
 - Ensure device has internet connectivity
