@@ -469,10 +469,12 @@ export class App extends Component {
   }
 
   componentWillUnmount() {
-    // Clear all scene assets when leaving the Figment screen
-    // This ensures audio, models, portals, etc. are properly cleaned up
-    console.log('[App] componentWillUnmount - clearing all scene assets');
-    this.props.dispatchRemoveAll();
+    // IMPORTANT: Do NOT call dispatchRemoveAll() here!
+    // ViroReact native components are already being deallocated during unmount.
+    // Triggering Redux state updates that try to remove AR objects causes a race condition
+    // where the native components crash during deallocation.
+    // The AR scene cleanup happens automatically when ViroARSceneNavigator unmounts.
+    console.log('[App] componentWillUnmount - AR scene will clean up automatically');
   }
 
   _onBackgroundTap() {
