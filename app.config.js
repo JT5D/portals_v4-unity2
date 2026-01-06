@@ -72,7 +72,8 @@ export default {
                     }
                 }
             ],
-            "./plugins/withPodfileFixes"
+            "./plugins/withPodfileFixes",
+            "./plugins/withUnity"
         ],
         extra: {
             firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
