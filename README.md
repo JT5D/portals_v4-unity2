@@ -39,16 +39,6 @@ Portals merges social media with augmented reality, allowing users to:
 
 ---
 
-## 📚 Documentation & Strategy
-
-We follow a **Spec-Driven Development** methodology. All major architectural decisions and feature plans are documented here:
-
-*   **[🎯 Strategy & Roadmap](./STRATEGY.md)** (Start Here)
-    *   [Tech Stack Integration Matrix](./specs/tech-stack-integration.md)
-    *   [Unity Integration Spec](./specs/unity-integration.md)
-    *   [Needle Engine Spec](./specs/needle-integration.md)
-    *   [Cloud Asset Pipeline Spec](./specs/asset-pipeline.md)
-
 ---
 
 ## 🏗️ Architecture
@@ -375,6 +365,21 @@ To maintain stability, we use a simple branching model:
 4. Open a Pull Request targeting the **`dev`** branch of the main repository.
 
 ---
+
+---
+---
+
+## Next Steps
+
+### Documentation & Strategy
+
+We follow a **Spec-Driven Development** methodology. All major architectural decisions and feature plans are documented here:
+
+* **[🎯 Strategy & Roadmap](./STRATEGY.md)** (Start Here)
+  * [Tech Stack Integration Matrix](./specs/tech-stack-integration.md)
+  * [Unity Integration Spec](./specs/unity-integration.md)
+  * [Needle Engine Spec](./specs/needle-integration.md)
+  * [Cloud Asset Pipeline Spec](./specs/asset-pipeline.md)
 
 ---
 
