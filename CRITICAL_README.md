@@ -6,6 +6,13 @@ This document outlines critical issues with the iOS build and how they are manag
 
 ---
 
+## 🌳 Branching Strategy (IMPORTANT)
+
+- **`dev`**: The new primary development branch. This is where active development happens and where developers should push/PR their code.
+- **`main`**: Reserved for stable, tested releases. Merges into `main` only happen from `dev`.
+
+---
+
 ## 🚨 Known Issues & Fixes
 
 ### 1. ViroReact Version (CRITICAL)

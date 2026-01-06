@@ -175,10 +175,14 @@ Gamified engagement through:
 git clone https://github.com/ryanjbrant/portals_v4.git
 cd portals_v4
 
-# Install dependencies
-npm install
+# Switch to dev branch (CRITICAL)
+git checkout dev
 
-# iOS: Install pods
+# Automated Setup (Recommended)
+npm run setup
+
+# Alternative: Manual Installation
+npm install
 cd ios && pod install && cd ..
 
 # Start development server
@@ -340,13 +344,25 @@ Copyright © 2024 Portals. All rights reserved.
 
 ---
 
-## 🤝 Contributing
+## 🌳 Branching Strategy
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open Pull Request
+To maintain stability, we use a simple branching model:
+
+1.  **`main`**: Production-ready code. Only merged from `dev` after testing.
+2.  **`dev`**: The primary integration branch. **All developers should push their code here.**
+3.  **Feature branches**: Created from `dev` for individual tasks (e.g., `feature/amazing-ar`).
+
+### Workflow for Contributors:
+1. Fork the repository.
+2. Create your feature branch from the **`dev`** branch:
+   ```bash
+   git checkout dev
+   git checkout -b feature/amazing-feature
+   ```
+3. Commit and push to your fork.
+4. Open a Pull Request targeting the **`dev`** branch of the main repository.
+
+---
 
 ---
 
