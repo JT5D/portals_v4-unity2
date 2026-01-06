@@ -1,0 +1,41 @@
+import { Behaviour } from "../Component.js";
+export declare enum XRStateFlag {
+    Never = 0,
+    Browser = 1,
+    AR = 2,
+    VR = 4,
+    FirstPerson = 8,
+    ThirdPerson = 16,
+    All = 4294967295
+}
+export declare class XRState {
+    static Global: XRState;
+    Mask: XRStateFlag;
+    Has(state: XRStateFlag): boolean;
+    Set(state: number): void;
+    Enable(state: number): void;
+    Disable(state: number): void;
+    Toggle(state: number): void;
+    EnableAll(): void;
+    DisableAll(): void;
+}
+/**
+ * Use the XRFlag component to show or hide objects based on the current XR state or session.
+ * This means you can show or hide objects based on if the user is in VR, AR, using first person view or third person view.
+ *
+ * @category XR
+ * @category Utilities
+ * @group Components
+ */
+export declare class XRFlag extends Behaviour {
+    private static registry;
+    static Apply(): void;
+    private static firstApply;
+    private static buffer;
+    visibleIn: number;
+    awake(): void;
+    onEnable(): void;
+    onDestroy(): void;
+    get isOn(): boolean;
+    UpdateVisible(state?: XRState | XRStateFlag | null): void;
+}

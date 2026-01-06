@@ -1,0 +1,6 @@
+import { Behaviour } from "../../engine-components/Component.js";
+/** @internal */
+export declare class LogStats extends Behaviour {
+    onEnable(): void;
+    run(): Generator<undefined, void, unknown>;
+}

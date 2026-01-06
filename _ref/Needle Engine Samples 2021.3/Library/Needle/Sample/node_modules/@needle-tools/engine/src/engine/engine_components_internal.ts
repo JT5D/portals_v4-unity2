@@ -1,0 +1,41 @@
+import { type IComponent } from "./engine_types.js";
+import { getParam } from "./engine_utils.js";
+
+
+type ComponentLifecycleEvent = "component-added" | "removing-component";
+
+const debug = getParam("debugcomponentevents");
+
+export class ComponentLifecycleEvents {
+
+    private static eventListeners = new Map<string, ((data: IComponent) => void)[]>();
+
+    static addComponentLifecylceEventListener(evt: ComponentLifecycleEvent | (string & {}), cb: (data: IComponent) => void) {
+        if (this.eventListeners.has(evt)) {
+            this.eventListeners.set(evt, []);
+        }
+        let arr = this.eventListeners.get(evt);
+        if (!arr) arr = [];
+        arr.push(cb);
+        this.eventListeners.set(evt, arr);
+        if(debug) console.log("Added event listener for " + evt, this.eventListeners)
+    }
+
+    static removeComponentLifecylceEventListener(evt: ComponentLifecycleEvent | (string & {}), cb: (data: IComponent) => void) {
+        const listeners = this.eventListeners.get(evt);
+        if (!listeners) return;
+        const index = listeners.indexOf(cb);
+        if (index < 0) return;
+        listeners.splice(index, 1);
+        
+    }
+
+    static dispatchComponentLifecycleEvent(evt: ComponentLifecycleEvent, data: IComponent) {
+        const listeners = this.eventListeners.get(evt);
+        if(debug) console.log("Dispatching event " + evt, listeners)
+        if (!listeners) return;
+        for (const listener of listeners) {
+            listener(data);
+        }
+    }
+}

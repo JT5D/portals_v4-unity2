@@ -1,0 +1,17 @@
+import { type EffectProviderResult, PostProcessingEffect } from "../PostProcessingEffect.js";
+import { VolumeParameter } from "../VolumeParameter.js";
+export declare enum QualityLevel {
+    LOW = 0,
+    MEDIUM = 1,
+    HIGH = 2,
+    ULTRA = 3
+}
+/**
+ * @category Effects
+ * @group Components
+ */
+export declare class Antialiasing extends PostProcessingEffect {
+    get typeName(): string;
+    readonly preset: VolumeParameter;
+    onCreateEffect(): EffectProviderResult;
+}

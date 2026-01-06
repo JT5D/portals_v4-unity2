@@ -66,5 +66,25 @@ target 'Portals' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # --- AUTO-INJECTED BY withPodfileFixes PLUGIN ---
+    # Use environment variable if set, otherwise fallback to the ID detected during prebuild
+    development_team = ENV['EXPO_PUBLIC_DEVELOPMENT_TEAM'] || 'MLQ2WENHNW'
+
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        if !development_team.empty?
+          config.build_settings['DEVELOPMENT_TEAM'] = development_team
+        end
+        config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+      end
+      if target.name == 'react-native-maps' || target.name == 'RNSVG'
+        target.build_configurations.each do |config|
+          config.build_settings['OTHER_LDFLAGS'] = ['-undefined', 'dynamic_lookup']
+        end
+      end
+    end
+    # --- END AUTO-INJECTION ---
   end
 end

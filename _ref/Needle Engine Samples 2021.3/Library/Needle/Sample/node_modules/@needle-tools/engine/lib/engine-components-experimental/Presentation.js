@@ -1,0 +1,11 @@
+import { Behaviour } from "../engine-components/Component.js";
+/** @internal */
+export class PresentationMode extends Behaviour {
+    toggleKey = "KeyP";
+    update() {
+        if (this.context.input.isKeyDown(this.toggleKey)) {
+            this.context.domElement.classList.toggle("presentation-mode");
+        }
+    }
+}
+//# sourceMappingURL=Presentation.js.map

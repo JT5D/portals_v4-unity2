@@ -1,4 +1,17 @@
 import 'dotenv/config';
+import { execSync } from 'child_process';
+
+// Auto-detect Team ID if not provided in .env
+let detectedTeamId = process.env.EXPO_PUBLIC_DEVELOPMENT_TEAM;
+if (!detectedTeamId) {
+    try {
+        detectedTeamId = execSync('security find-identity -v -p codesigning | grep "Apple Development" | head -1 | grep -o "(.*)" | tr -d "()"')
+            .toString()
+            .trim();
+    } catch (e) {
+        // Fallback to empty if detection fails
+    }
+}
 
 export default {
     expo: {
@@ -19,6 +32,7 @@ export default {
             supportsTablet: true,
             bundleIdentifier: "com.h3mai.portals",
             deploymentTarget: "17.0",
+            developmentTeam: detectedTeamId,
             infoPlist: {
                 NSPhotoLibraryUsageDescription: "The app accesses your photos to let you import media into the AR scene.",
                 NSCameraUsageDescription: "The app uses your camera for AR.",
@@ -57,7 +71,8 @@ export default {
                         "xRMode": ["AR"]
                     }
                 }
-            ]
+            ],
+            "./plugins/withPodfileFixes"
         ],
         extra: {
             firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,

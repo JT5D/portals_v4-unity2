@@ -1,0 +1,595 @@
+import { AxesHelper, Box3, BoxGeometry, BufferAttribute, BufferGeometry, Color, type ColorRepresentation, CylinderGeometry, EdgesGeometry, Line, LineBasicMaterial, LineSegments, Material, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, SphereGeometry, Vector3 } from 'three';
+import ThreeMeshUI, { Inline, Text } from "three-mesh-ui"
+import { type Options } from 'three-mesh-ui/build/types/core/elements/MeshUIBaseElement.js';
+
+import { isDestroyed } from './engine_gameobject.js';
+import { Context, FrameEvent } from './engine_setup.js';
+import { getTempVector, getWorldPosition, lookAtObject, setWorldPositionXYZ } from './engine_three_utils.js';
+import type { Vec3, Vec4 } from './engine_types.js';
+import { getParam } from './engine_utils.js';
+import { NeedleXRSession } from './engine_xr.js';
+import { RGBAColor } from './js-extensions/RGBAColor.js';
+
+const _tmp = new Vector3();
+const _tmp2 = new Vector3();
+const _quat = new Quaternion();
+
+const debug = getParam("debuggizmos");
+const defaultColor: ColorRepresentation = 0x888888;
+
+const circleSegments: number = 32;
+
+export type LabelHandle = {
+    setText(str: string);
+}
+type GizmoColor = ColorRepresentation | (Color & { a: number }) | RGBAColor;
+
+/** Gizmos are temporary objects that are drawn in the scene for debugging or visualization purposes  
+ * They are automatically removed after a given duration and cached internally to reduce overhead.  
+ * Use the static methods of this class to draw gizmos in the scene.
+ */
+export class Gizmos {
+
+    private constructor() { }
+
+    /**
+     * Allow creating gizmos   
+     * If disabled then no gizmos will be added to the scene anymore
+     */
+    static enabled = true;
+
+    /** 
+     * Returns true if a given object is a gizmo
+     */
+    static isGizmo(obj: Object3D) {
+        return obj[$cacheSymbol] !== undefined;
+    }
+
+    /** Set visibility of all currently rendered gizmos */
+    static setVisible(visible: boolean) {
+        for (const obj of Internal.timedObjectsBuffer) {
+            obj.visible = visible;
+        }
+    }
+
+    /**
+     * Draw a label in the scene or attached to an object (if a parent is provided)
+     * @param position the position of the label in world space
+     * @param text the text of the label
+     * @param size the size of the label in world space
+     * @param duration the duration in seconds the label will be rendered. If 0 it will be rendered for one frame
+     * @param color the color of the label
+     * @param backgroundColor the background color of the label
+     * @param parent the parent object to attach the label to. If no parent is provided the label will be attached to the scene
+     * @returns a handle to the label that can be used to update the text
+     */
+    static DrawLabel(position: Vec3, text: string, size: number = .05, duration: number = 0, color?: ColorRepresentation, backgroundColor?: ColorRepresentation | GizmoColor, parent?: Object3D,) {
+        if (!Gizmos.enabled) return null;
+        if (!color) color = defaultColor;
+        const rigScale = NeedleXRSession.active?.rigScale ?? 1;
+        const element = Internal.getTextLabel(duration, text, size * rigScale, color, backgroundColor);
+        if (parent instanceof Object3D) parent.add(element as any);
+        element.position.x = position.x;
+        element.position.y = position.y;
+        element.position.z = position.z;
+        return element as LabelHandle;
+    }
+
+    /**
+     * Draw a ray gizmo in the scene
+     * @param origin the origin of the ray in world space
+     * @param dir the direction of the ray in world space
+     * @param color the color of the ray
+     * @param duration the duration in seconds the ray will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the ray will be rendered with depth test
+     */
+    static DrawRay(origin: Vec3, dir: Vec3, color: GizmoColor = defaultColor, duration: number = 0, depthTest: boolean = true) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getLine(duration);
+        const positions = obj.geometry.getAttribute("position");
+        positions.setXYZ(0, origin.x, origin.y, origin.z);
+        _tmp.set(dir.x, dir.y, dir.z).multiplyScalar(999999999);
+        positions.setXYZ(1, origin.x + _tmp.x, origin.y + _tmp.y, origin.z + _tmp.z);
+        positions.needsUpdate = true;
+        obj.material["depthTest"] = depthTest;
+        obj.material["depthWrite"] = false;
+        obj.material["fog"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    /**
+     * Draw a line gizmo in the scene
+     * @param pt0 the start point of the line in world space
+     * @param pt1 the end point of the line in world space
+     * @param color the color of the line
+     * @param duration the duration in seconds the line will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the line will be rendered with depth test
+     * @param lengthFactor the length of the line. Default is 1
+     */
+    static DrawDirection(pt: Vec3, direction: Vec3 | Vec4, color: GizmoColor = defaultColor, duration: number = 0, depthTest: boolean = true, lengthFactor: number = 1) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getLine(duration);
+        const positions = obj.geometry.getAttribute("position");
+        positions.setXYZ(0, pt.x, pt.y, pt.z);
+        if (direction["w"] !== undefined) {
+            _tmp.set(0, 0, -lengthFactor);
+            _quat.set(direction["x"], direction["y"], direction["z"], direction["w"]);
+            _tmp.applyQuaternion(_quat);
+        }
+        else {
+            _tmp.set(direction.x, direction.y, direction.z);
+            _tmp.multiplyScalar(lengthFactor);
+        }
+        positions.setXYZ(1, pt.x + _tmp.x, pt.y + _tmp.y, pt.z + _tmp.z);
+        positions.needsUpdate = true;
+        obj.material["depthTest"] = depthTest;
+        obj.material["depthWrite"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    /**
+     * Draw a line gizmo in the scene
+     * @param pt0 the start point of the line in world space
+     * @param pt1 the end point of the line in world space
+     * @param color the color of the line
+     * @param duration the duration in seconds the line will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the line will be rendered with depth test
+     */
+    static DrawLine(pt0: Vec3, pt1: Vec3, color: GizmoColor = defaultColor, duration: number = 0, depthTest: boolean = true) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getLine(duration);
+        const positions = obj.geometry.getAttribute("position");
+        positions.setXYZ(0, pt0.x, pt0.y, pt0.z);
+        positions.setXYZ(1, pt1.x, pt1.y, pt1.z);
+        positions.needsUpdate = true;
+        obj.material["depthTest"] = depthTest;
+        obj.material["depthWrite"] = false;
+        obj.material["fog"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    /**
+     * Draw a 2D circle gizmo in the scene
+     * @param pt0 the center of the circle in world space
+     * @param normal the normal of the circle in world space
+     * @param radius the radius of the circle in world space
+     * @param color the color of the circle
+     * @param duration the duration in seconds the circle will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the circle will be rendered with depth test
+     */
+    static DrawCircle(pt0: Vec3, normal: Vec3, radius: number, color: ColorRepresentation = defaultColor, duration: number = 0, depthTest: boolean = true) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getCircle(duration);
+        obj.position.set(pt0.x, pt0.y, pt0.z);
+        obj.scale.set(radius, radius, radius);
+        obj.quaternion.setFromUnitVectors(this._up, _tmp.set(normal.x, normal.y, normal.z).normalize());
+        obj.material["depthTest"] = depthTest;
+        obj.material["depthWrite"] = false;
+        obj.material["fog"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    /**
+     * Draw a 3D wiremesh sphere gizmo in the scene
+     * @param center the center of the sphere in world space
+     * @param radius the radius of the sphere in world space
+     * @param color the color of the sphere
+     * @param duration the duration in seconds the sphere will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the sphere will be rendered with depth test
+     */
+    static DrawWireSphere(center: Vec3, radius: number, color: GizmoColor = defaultColor, duration: number = 0, depthTest: boolean = true) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getSphere(radius, duration, true);
+        setWorldPositionXYZ(obj, center.x, center.y, center.z);
+        obj.material["depthTest"] = depthTest;
+        obj.material["depthWrite"] = false;
+        obj.material["fog"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    /**
+     * Draw a 3D sphere gizmo in the scene
+     * @param center the center of the sphere in world space
+     * @param radius the radius of the sphere in world space
+     * @param color the color of the sphere
+     * @param duration the duration in seconds the sphere will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the sphere will be rendered with depth test
+     */
+    static DrawSphere(center: Vec3, radius: number, color: GizmoColor = defaultColor, duration: number = 0, depthTest: boolean = true) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getSphere(radius, duration, false);
+        setWorldPositionXYZ(obj, center.x, center.y, center.z);
+        obj.material["depthTest"] = depthTest;
+        obj.material["depthWrite"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    /**
+     * Draw a 3D wiremesh box gizmo in the scene
+     * @param center the center of the box in world space
+     * @param size the size of the box in world space
+     * @param rotation the rotation of the box in world space
+     * @param color the color of the box
+     * @param duration the duration in seconds the box will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the box will be rendered with depth test
+     */
+    static DrawWireBox(center: Vec3, size: Vec3, color: GizmoColor = defaultColor, duration: number = 0, depthTest: boolean = true, rotation: Quaternion | undefined = undefined) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getBox(duration);
+        obj.position.set(center.x, center.y, center.z);
+        obj.scale.set(size.x, size.y, size.z);
+        if (rotation) obj.quaternion.copy(rotation);
+        else obj.quaternion.identity();
+        obj.material["depthTest"] = depthTest;
+        obj.material["wireframe"] = true;
+        obj.material["depthWrite"] = false;
+        obj.material["fog"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    /**
+     * Draw a 3D wiremesh box gizmo in the scene
+     * @param box the box in world space
+     * @param color the color of the box
+     * @param duration the duration in seconds the box will be rendered. If 0 it will be rendered for one frame. Default: 0
+     * @param depthTest if true the box will be rendered with depth test. Default: true
+     */
+    static DrawWireBox3(box: Box3, color: GizmoColor = defaultColor, duration: number = 0, depthTest: boolean = true) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getBox(duration);
+        obj.position.copy(box.getCenter(_tmp));
+        obj.scale.copy(box.getSize(_tmp));
+        obj.material["depthTest"] = depthTest;
+        obj.material["wireframe"] = true;
+        obj.material["depthWrite"] = false;
+        obj.material["fog"] = false;
+        applyGizmoColor(obj.material, color);
+    }
+
+    private static _up = new Vector3(0, 1, 0);
+    /**
+     * Draw an arrow gizmo in the scene
+     * @param pt0 the start point of the arrow in world space
+     * @param pt1 the end point of the arrow in world space
+     * @param color the color of the arrow
+     * @param duration the duration in seconds the arrow will be rendered. If 0 it will be rendered for one frame
+     * @param depthTest if true the arrow will be rendered with depth test
+     * @param wireframe if true the arrow will be rendered as wireframe
+     */
+    static DrawArrow(pt0: Vec3, pt1: Vec3, color: ColorRepresentation = defaultColor, duration: number = 0, depthTest: boolean = true, wireframe: boolean = false) {
+        if (!Gizmos.enabled) return;
+        const obj = Internal.getArrowHead(duration);
+        obj.position.set(pt1.x, pt1.y, pt1.z);
+        obj.quaternion.setFromUnitVectors(this._up.set(0, 1, 0), _tmp.set(pt1.x, pt1.y, pt1.z).sub(_tmp2.set(pt0.x, pt0.y, pt0.z)).normalize());
+        const dist = _tmp.set(pt1.x, pt1.y, pt1.z).sub(_tmp2.set(pt0.x, pt0.y, pt0.z)).length();
+        const scale = dist * 0.1;
+        obj.scale.set(scale, scale, scale);
+        obj.material["depthTest"] = depthTest;
+        obj.material["wireframe"] = wireframe;
+        applyGizmoColor(obj.material, color);
+        this.DrawLine(pt0, pt1, color, duration, depthTest);
+    }
+
+    /**
+     * Render a wireframe mesh in the scene. The mesh will be removed after the given duration (if duration is 0 it will be rendered for one frame).   
+     * If a mesh object is provided then the mesh's matrixWorld and geometry will be used. Otherwise, the provided matrix and geometry will be used.
+     * @param options the options for the wire mesh
+     * @param options.duration the duration in seconds the mesh will be rendered. If 0 it will be rendered for one frame
+     * @param options.color the color of the wire mesh
+     * @param options.depthTest if true the wire mesh will be rendered with depth test
+     * @param options.mesh the mesh object to render (if it is provided the matrix and geometry will be used)
+     * @param options.matrix the matrix of the mesh to render
+     * @param options.geometry the geometry of the mesh to render
+     * @example
+     * ```typescript
+     * Gizmos.DrawWireMesh({ duration: 1, color: 0xff0000, mesh: myMesh });
+     * ```
+     */
+    static DrawWireMesh(options: { duration?: number, color?: ColorRepresentation, depthTest?: boolean } & ({ mesh: Mesh } | { matrix: Matrix4, geometry: BufferGeometry })) {
+        const mesh = Internal.getMesh(options.duration ?? 0);
+        if ("mesh" in options) {
+            mesh.geometry = options.mesh.geometry;
+            mesh.matrixWorld.copy(options.mesh.matrixWorld);
+        }
+        else {
+            mesh.geometry = options.geometry;
+            mesh.matrixWorld.copy(options.matrix);
+        }
+        mesh.matrixAutoUpdate = false;
+        mesh.matrixWorldAutoUpdate = false;
+        mesh.material["depthTest"] = options.depthTest ?? true;
+        mesh.material["wireframe"] = true;
+        applyGizmoColor(mesh.material, options.color ?? defaultColor);
+    }
+}
+
+const box: BoxGeometry = new BoxGeometry(1, 1, 1);
+export function CreateWireCube(col: ColorRepresentation | null = null): LineSegments {
+    const color = new Color(col ?? 0xdddddd);
+    // const material = new MeshBasicMaterial();
+    // material.color = new Color(col ?? 0xdddddd);
+    // material.wireframe = true;
+    // const box = new Mesh(box, material);
+    // box.name = "BOX_GIZMO";
+    const edges = new EdgesGeometry(box);
+    const line = new LineSegments(edges, new LineBasicMaterial({ color: color }));
+    return line;
+}
+
+
+function applyGizmoColor(material: Material | Material[], color: GizmoColor) {
+    if (Array.isArray(material)) {
+        for (const mat of material) {
+            applyGizmoColor(mat, color);
+        }
+        return;
+    }
+    const alpha = (color instanceof RGBAColor) ? color.a : 1.0;
+    material["color"].set(color);
+    material["opacity"] = alpha;
+    material["transparent"] = alpha < 1.0;
+}
+
+
+const $cacheSymbol = Symbol("GizmoCache");
+class Internal {
+    // private static createdLines: number = 0;
+
+    private static readonly familyName = "needle-gizmos";
+    private static ensureFont() {
+        let fontFamily = ThreeMeshUI.FontLibrary.getFontFamily(this.familyName);
+
+        if (!fontFamily) {
+            fontFamily = ThreeMeshUI.FontLibrary.addFontFamily(this.familyName);
+            const variant = fontFamily.addVariant("normal", "normal", "https://uploads.needle.tools/include/font-msdf.json", "https://uploads.needle.tools/include/font.png") as any as ThreeMeshUI.FontVariant;
+            /** @ts-ignore */
+            variant?.addEventListener('ready', () => {
+                ThreeMeshUI.update();
+            });
+        }
+    }
+
+    static getTextLabel(duration: number, text: string, size: number, color: ColorRepresentation, backgroundColor?: ColorRepresentation | GizmoColor): Text & LabelHandle {
+        this.ensureFont();
+        let element = this.textLabelCache.pop();
+
+        let opacity = 1;
+        if (backgroundColor && typeof backgroundColor === "string" && backgroundColor?.length >= 8 && backgroundColor.startsWith("#")) {
+            opacity = parseInt(backgroundColor.substring(7), 16) / 255;
+            backgroundColor = backgroundColor.substring(0, 7);
+            if (debug)
+                console.log(backgroundColor, opacity);
+        }
+        else if (typeof backgroundColor === "object" && backgroundColor["a"] !== undefined) {
+            opacity = backgroundColor["a"]
+        }
+
+        const props: Options = {
+            boxSizing: 'border-box',
+            fontFamily: this.familyName,
+            width: "auto",
+            fontSize: size,
+            color: color,
+            lineHeight: 1,
+            backgroundColor: backgroundColor ?? undefined,
+            backgroundOpacity: opacity,
+            textContent: text,
+            borderRadius: .5 * size,
+            padding: .8 * size,
+            whiteSpace: 'pre',
+            offset: 0.05 * size,
+        };
+
+        if (!element) {
+            element = new Text(props);
+            const global = this;
+            const labelHandle = element as LabelHandle & Text;
+            labelHandle.setText = function (str: string) {
+                this.set({ textContent: str });
+                global.tmuiNeedsUpdate = true;
+            };
+        }
+        else {
+            element.set(props);
+            // const handle = element as any as LabelHandle;
+            // handle.setText(text);
+        }
+        this.tmuiNeedsUpdate = true;
+        this.registerTimedObject(Context.Current, element as any, duration, this.textLabelCache as any);
+        return element as Text & LabelHandle;
+    }
+
+    static getBox(duration: number): Mesh {
+        let box = this.boxesCache.pop();
+        if (!box) {
+            const geo: BoxGeometry = new BoxGeometry(1, 1, 1);
+            box = new Mesh(geo);
+        }
+        this.registerTimedObject(Context.Current, box, duration, this.boxesCache);
+        return box;
+    }
+
+    static getLine(duration: number): Line {
+        let line = this.linesCache.pop();
+        if (!line) {
+            line = new Line();
+            let positions = line.geometry.getAttribute("position");
+            if (!positions) {
+                positions = new BufferAttribute(new Float32Array(2 * 3), 3);
+                line.geometry.setAttribute("position", positions);
+            }
+        }
+        line.frustumCulled = false;
+        this.registerTimedObject(Context.Current, line, duration, this.linesCache);
+        return line;
+    }
+
+    static getCircle(duration: number): Line {
+        let circle = this.circlesCache.pop();
+        if (!circle) {
+            circle = new Line();
+            let positions = circle.geometry.getAttribute("position");
+            if (!positions) {
+                positions = new BufferAttribute(new Float32Array(circleSegments * 3), 3);
+                circle.geometry.setAttribute("position", positions);
+
+                // calculate directional vectors
+                const calcVec1 = getTempVector(0, 1, 0);
+                const up = getTempVector(0, 0, 1);
+                const calcVec2 = getTempVector(up);
+                calcVec2.cross(calcVec1).normalize();
+                const right = getTempVector(calcVec2);
+                const angleStep = Math.PI * 2 / (circleSegments - 1); // offset the period to close the circle
+
+                // + closing
+                for (let i = 0; i < circleSegments + 1; i++) {
+                    const angle = angleStep * i;
+
+                    calcVec1.copy(right).multiplyScalar(Math.cos(angle) * 1);
+                    calcVec2.copy(up).multiplyScalar(Math.sin(angle) * 1);
+                    const pos = calcVec1.add(calcVec2);
+                    positions.setXYZ(i, pos.x, pos.y, pos.z);
+                }
+            }
+        }
+        circle.frustumCulled = false;
+        this.registerTimedObject(Context.Current, circle, duration, this.circlesCache);
+        return circle;
+    }
+
+    static getSphere(radius: number, duration: number, wireframe: boolean): Mesh {
+        let sphere = this.spheresCache.pop();
+        if (!sphere) {
+            sphere = new Mesh(new SphereGeometry(1, 8, 8));
+        }
+        sphere.scale.set(radius, radius, radius);
+        sphere.material["wireframe"] = wireframe;
+        this.registerTimedObject(Context.Current, sphere, duration, this.spheresCache);
+        return sphere;
+    }
+
+    static getArrowHead(duration: number): Mesh {
+        let arrowHead = this.arrowHeadsCache.pop();
+        if (!arrowHead) {
+            arrowHead = new Mesh(new CylinderGeometry(0, .5, 1, 8));
+        }
+        this.registerTimedObject(Context.Current, arrowHead, duration, this.arrowHeadsCache);
+        return arrowHead;
+    }
+
+    static getMesh(duration: number): Mesh {
+        let mesh = this.mesh.pop();
+        if (!mesh) {
+            mesh = new Mesh();
+            mesh.material = new MeshBasicMaterial();
+        }
+        this.registerTimedObject(Context.Current, mesh, duration, this.mesh);
+        return mesh;
+    }
+
+    private static linesCache: Array<Line> = [];
+    private static circlesCache: Array<Line> = [];
+    private static spheresCache: Mesh[] = [];
+    private static boxesCache: Mesh[] = [];
+    private static arrowHeadsCache: Mesh[] = [];
+    private static mesh: Mesh[] = [];
+    private static textLabelCache: Array<Text> = [];
+
+    private static registerTimedObject(context: Context, object: Object3D, duration: number, cache: Array<Object3D>) {
+        if (!context) {
+            console.error("No Needle Engine context available. Did you call a Gizmos function in global scope?");
+            return;
+        }
+
+        const beforeRender = this.contextBeforeRenderCallbacks.get(context);
+        const postRender = this.contextPostRenderCallbacks.get(context);
+
+        if (!beforeRender) {
+            const cb = () => { this.onBeforeRender(context, this.timedObjectsBuffer) };
+            this.contextBeforeRenderCallbacks.set(context, cb);
+            context.pre_render_callbacks.push(cb);
+        }
+        // make sure gizmo pre render is the last one being called
+        else if (context.pre_render_callbacks[context.pre_render_callbacks.length - 1] !== beforeRender) {
+            const index = context.pre_render_callbacks.indexOf(beforeRender);
+            if (index >= 0) {
+                context.pre_render_callbacks.splice(index, 1);
+            }
+            context.pre_render_callbacks.push(beforeRender);
+        }
+
+        if (!postRender) {
+            const cb = () => { this.onPostRender(context, this.timedObjectsBuffer, this.timesBuffer) };
+            this.contextPostRenderCallbacks.set(context, cb);
+            context.post_render_callbacks.push(cb);
+        }
+        // make sure gizmo post render is the last one being called
+        else if (context.post_render_callbacks[context.post_render_callbacks.length - 1] !== postRender) {
+            const index = context.post_render_callbacks.indexOf(postRender);
+            if (index >= 0) {
+                context.post_render_callbacks.splice(index, 1);
+            }
+            context.post_render_callbacks.push(postRender);
+        }
+
+        object.traverse(obj => {
+            obj.layers.disableAll();
+            obj.layers.enable(2);
+        });
+
+        object.renderOrder = 999999;
+        object[$cacheSymbol] = cache;
+        object.castShadow = false;
+        object.receiveShadow = false;
+        object["isGizmo"] = true;
+        this.timedObjectsBuffer.push(object);
+
+        this.timesBuffer.push(Context.Current.time.realtimeSinceStartup + duration);
+        context.scene.add(object);
+    }
+
+
+    public static readonly timedObjectsBuffer = new Array<Object3D>();
+    private static readonly timesBuffer = new Array<number>();
+    private static readonly contextPostRenderCallbacks = new Map<Context, () => void>();
+    private static readonly contextBeforeRenderCallbacks = new Map<Context, () => void>();
+    private static tmuiNeedsUpdate = false;
+
+    private static onBeforeRender(ctx: Context, objects: Array<Object3D>) {
+        // const cameraWorldPosition = getWorldPosition(ctx.mainCamera!, _tmp);
+        if (this.tmuiNeedsUpdate) {
+            this.tmuiNeedsUpdate = false;
+            ThreeMeshUI.update();
+        }
+        for (let i = 0; i < objects.length; i++) {
+            const obj = objects[i];
+            if (ctx.mainCamera && obj instanceof ThreeMeshUI.MeshUIBaseElement) {
+                if (isDestroyed(obj as any)) {
+                    continue;
+                }
+                const isInXR = ctx.isInVR;
+                const keepUp = false;
+                const copyRotation = !isInXR;
+                lookAtObject(obj as any, ctx.mainCamera, keepUp, copyRotation);
+            }
+        }
+    }
+
+    private static onPostRender(ctx: Context, objects: Array<Object3D>, times: Array<number>) {
+        const time = ctx.time.realtimeSinceStartup;
+        for (let i = objects.length - 1; i >= 0; i--) {
+            const obj = objects[i];
+            // floating point comparison, so we subtract a small epsilon
+            if (time >= times[i] - 0.000001) {
+                objects.splice(i, 1);
+                times.splice(i, 1);
+                obj.removeFromParent();
+                if (isDestroyed(obj) != true) {
+                    const cache = obj[$cacheSymbol];
+                    cache.push(obj);
+                }
+            }
+        }
+    }
+
+}

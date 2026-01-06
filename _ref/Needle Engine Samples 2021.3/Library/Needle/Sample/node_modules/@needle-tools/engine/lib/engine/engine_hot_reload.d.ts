@@ -1,0 +1,8 @@
+/** @internal true during hot reload, can be used to modify behaviour in onEnable and onDisable */
+export declare function isHotReloading(): boolean;
+export declare function isHotReloadEnabled(): boolean;
+/** @internal */
+export declare function registerHotReloadType(instance: object): void;
+/** @internal */
+export declare function unregisterHotReloadType(instance: object): void;
+export declare function applyHMRChanges(newModule: any): boolean;

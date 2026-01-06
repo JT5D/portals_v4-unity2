@@ -1,0 +1,107 @@
+import { existsSync, readFileSync } from 'fs';
+import path from 'path';
+
+let didLogCanNotFindConfig = false;
+
+/**  the codegen meta file
+ * @param {string | null} path
+ * @returns {Promise<import("../types/needleConfig").needleMeta | null>}
+ */
+export async function loadConfig(path = null) {
+    try {
+        // First try to get the path from the config
+        if (!path) {
+            const configJson = tryLoadProjectConfig();
+            if (configJson?.codegenDirectory) {
+                path = configJson.codegenDirectory + "/meta.json";
+            }
+        }
+        // If that fails, try the default path
+        if (!path)
+            path = './src/generated/meta.json';
+
+        if (existsSync(path)) {
+            const text = readFileSync(path, 'utf8');
+            if (!text) return null;
+            /**@type {import("../types/needleConfig").needleMeta} */
+            const meta = JSON.parse(text);
+            return meta;
+        }
+        else {
+            if (!didLogCanNotFindConfig) {
+                didLogCanNotFindConfig = true;
+                console.error("Could not find config file at " + path);
+            }
+        }
+        return null;
+    }
+    catch (err) {
+        console.error("ERR: Error loading config file");
+        console.error(err);
+        return null;
+    }
+}
+
+/** get the needle.config.json
+ * @returns {import("../types/needleConfig").needleConfig | null}
+ */
+export function tryLoadProjectConfig() {
+    try {
+        const root = process.cwd();
+        const path = root + '/needle.config.json';
+        if (existsSync(path)) {
+            const text = readFileSync(path);
+            if (!text) return null;
+            const json = JSON.parse(text.toString());
+            return json;
+        }
+    }
+    catch (err) {
+        console.error("Error loading config file");
+        console.error(err);
+    }
+
+    return null;
+}
+
+
+/** "assets" -> the directory name inside the output directory to put e.g. glb files into */
+export function builtAssetsDirectory() {
+    return "assets";
+}
+
+/** @returns the fullpath of the build */
+export function getOutputDirectory() {
+    const projectConfig = tryLoadProjectConfig();
+    if (projectConfig?.buildDirectory) {
+        return path.join(process.cwd(), projectConfig.buildDirectory);
+    }
+
+    // if it's a sveltekit project
+    try {
+        const sveltekitConfig = path.join(process.cwd(), 'svelte.config.js');
+        if (existsSync(sveltekitConfig)) {
+            const regex = /outDir\s?:\s?\"(.*?)\"/g;
+            const content = readFileSync(sveltekitConfig, 'utf8');
+            const match = regex.exec(content);
+            if (match) {
+                const outputPath = path.join(process.cwd(), match[1]);
+                if (existsSync(outputPath)) {
+                    return outputPath;
+                }
+            }
+            else {
+                // default output directory
+                const outputPath = path.join(process.cwd(), 'build');
+                if (existsSync(outputPath)) {
+                    return outputPath;
+                }
+            }
+        }
+    }
+    catch {
+        // ignore
+    }
+
+    return path.join(process.cwd(), 'dist');
+}

@@ -1,0 +1,316 @@
+import { EquirectangularReflectionMapping, LightProbe, Source, SphericalHarmonics3, SRGBColorSpace, Texture, Vector4, WebGLCubeRenderTarget } from "three";
+
+import { AssetReference } from "./engine_addressables.js";
+import { Context } from "./engine_setup.js";
+import { createFlatTexture, createTrilightTexture } from "./engine_shaders.js";
+import { type SourceIdentifier } from "./engine_types.js";
+import { getParam } from "./engine_utils.js";
+import { SceneLightSettings } from "./extensions/NEEDLE_lighting_settings.js";
+// import { LightProbeGenerator } from "three/examples/jsm/lights/LightProbeGenerator.js"
+
+const debug = getParam("debugenvlight");
+
+/** @internal */
+export declare type SphericalHarmonicsData = {
+    array: number[],
+    texture: WebGLCubeRenderTarget | Texture,
+    lightProbe?: LightProbe
+}
+
+/** @internal */
+export enum AmbientMode {
+    Skybox = 0,
+    Trilight = 1,
+    Flat = 3,
+    Custom = 4,
+}
+
+/** @internal */
+export enum DefaultReflectionMode {
+    Skybox = 0,
+    Custom = 1,
+}
+
+/**
+ * The RendererData class is used to manage the lighting settings of a scene.  
+ * It is created and used within the Needle Engine Context.
+ */
+export class RendererData {
+
+    private context: Context;
+
+    constructor(context: Context) {
+        this.context = context;
+        this.context.pre_update_callbacks.push(this.preUpdate.bind(this))
+    }
+
+    /**
+     * The id of the currently active scene light settings (source identifier).
+     */
+    private _currentLightSettingsId?: SourceIdentifier;
+    private _sceneLightSettings?: Map<SourceIdentifier, SceneLightSettings>;
+
+    get currentLightSettingsId(): SourceIdentifier | undefined {
+        return this._currentLightSettingsId;
+    }
+
+    private preUpdate() {
+        const time = this.context.time;
+        this._timevec4.x = time.time;
+        this._timevec4.y = Math.sin(time.time);
+        this._timevec4.z = Math.cos(time.time);
+        this._timevec4.w = time.deltaTime;
+    }
+
+    private _timevec4: Vector4 = new Vector4();
+
+    /** Time data used for custom shaders
+     * x: time
+     * y: sin(time)
+     * z: cos(time)
+     * w: deltaTime
+     */
+    get timeVec4(): Vector4 {
+        return this._timevec4;
+    }
+
+    /** the current environment intensity */
+    get environmentIntensity(): number {
+        if (!this._sceneLightSettings) return 1;
+        if (!this._currentLightSettingsId) return 1;
+        const settings = this._sceneLightSettings.get(this._currentLightSettingsId);
+        if (settings)
+            return settings.ambientIntensity;// * Math.PI * .5;
+        return 1;
+    }
+
+    /** Get all currently registered scene light settings */
+    get sceneLightSettings() { return this._sceneLightSettings?.values() }
+
+    /** set the scene lighting from a specific scene. Will disable any previously enabled lighting settings */
+    enable(sourceId: SourceIdentifier | AssetReference) {
+        if (sourceId instanceof AssetReference)
+            sourceId = sourceId.url;
+        const settings = this._sceneLightSettings?.get(sourceId);
+        if (!settings) {
+            if (debug) console.warn("No light settings found for", sourceId);
+            return false;
+        }
+        if (debug) console.log("Enable scene light settings", sourceId, settings);
+        if (sourceId !== this._currentLightSettingsId && this._currentLightSettingsId) {
+            this.disable(this._currentLightSettingsId);
+        }
+        this._currentLightSettingsId = sourceId;
+        settings.enabled = true;
+        return true;
+    }
+
+    /** disable the lighting of a specific scene, will only have any effect if it is currently active */
+    disable(sourceId: SourceIdentifier | AssetReference) {
+        if (sourceId instanceof AssetReference)
+            sourceId = sourceId.url;
+        if (sourceId === null || sourceId === undefined) return false;
+        const settings = this._sceneLightSettings?.get(sourceId);
+        if (!settings) {
+            return false;
+        }
+        if (debug) console.log("Disable scene light settings", sourceId, settings);
+        settings.enabled = false;
+        return true;
+    }
+
+    /**
+     * Enables the currently active scene lighting (if any), returns the id of the enabled lighting.
+     * @returns The id of the enabled lighting, or null if no lighting is currently active.
+     */
+    enableCurrent(): SourceIdentifier | null {
+        if (this._currentLightSettingsId) {
+            this.enable(this._currentLightSettingsId);
+            return this._currentLightSettingsId ?? null;
+        }
+        return null;
+    }
+
+    /** Disables the currently active scene lighting (if any), returns the id of the previously active lighting
+     * @returns The id of the previously active lighting, or null if no lighting was active.
+     */
+    disableCurrent(): SourceIdentifier | null {
+        if (this._currentLightSettingsId) {
+            const prev = this._currentLightSettingsId;
+            this.disable(this._currentLightSettingsId);
+            return prev
+        }
+        return null;
+    }
+
+
+    /** @internal */
+    internalRegisterSceneLightSettings(sceneLightSettings: SceneLightSettings) {
+        const sourceId = sceneLightSettings.sourceId;
+        if (!sourceId) {
+            console.error("Missing source id for scene light settings, can not register:", sceneLightSettings);
+            return;
+        }
+        if (debug) console.log("Register " + sceneLightSettings?.sourceId + " lighting", sceneLightSettings);
+        if (!this._sceneLightSettings) this._sceneLightSettings = new Map();
+        this._sceneLightSettings.set(sourceId, sceneLightSettings);
+    }
+
+    /** @internal */
+    internalUnregisterSceneLightSettings(sceneLightSettings: SceneLightSettings) {
+        const sourceId = sceneLightSettings.sourceId;
+        if (!sourceId) {
+            console.error("Missing source id for scene light settings, can not unregister:", sceneLightSettings);
+            return;
+        }
+        if (debug) console.log("Unregister " + sceneLightSettings?.sourceId + " lighting", sceneLightSettings);
+        if (!this._sceneLightSettings) return;
+        this._sceneLightSettings.delete(sourceId);
+    }
+
+    /** @internal */
+    internalRegisterReflection(sourceId: SourceIdentifier, reflectionTexture: Texture) {
+        if (debug) console.log("Register reflection", sourceId, reflectionTexture);
+        const h = new LightData(this.context, reflectionTexture, 1);
+        this._lighting[sourceId] = h;
+    }
+
+    /** @internal */
+    internalGetReflection(sourceId: SourceIdentifier): LightData | null | undefined {
+        return this._lighting[sourceId];
+    }
+
+    private __currentReflectionId: SourceIdentifier | null = null;
+
+    /** @internal */
+    internalEnableReflection(sourceId: SourceIdentifier): Texture | null {
+        this.__currentReflectionId = sourceId;
+        const settings = this._sceneLightSettings?.get(sourceId);
+
+        if (debug) {
+            console.log("Enable reflection", sourceId, settings ? AmbientMode[settings.ambientMode] : "Unknown ambient mode", settings);
+        }
+
+        switch (settings?.ambientMode) {
+            case AmbientMode.Skybox:
+            case AmbientMode.Custom:
+                // only set environment reflection when ambient mode is skybox or custom
+                const existing = this.internalGetReflection(sourceId);
+                if (existing && existing.Source) {
+                    if (debug) console.log("Setting environment reflection", existing);
+                    const scene = this.context.scene;
+                    const tex = existing.Source;
+                    tex.mapping = EquirectangularReflectionMapping;
+                    scene.environment = tex;
+                    scene.environmentIntensity = this.environmentIntensity || 1;
+                    return tex;
+                }
+                else if (debug) console.warn("Could not find reflection for source", sourceId);
+                break;
+        }
+
+        if (settings?.environmentReflectionSource === DefaultReflectionMode.Custom) {
+            switch (settings?.ambientMode) {
+                case AmbientMode.Trilight:
+                    if (settings.ambientTrilight) {
+                        const colors = settings.ambientTrilight;
+                        const tex = createTrilightTexture(colors[0], colors[1], colors[2], 64, 64);
+                        tex.colorSpace = SRGBColorSpace;
+                        tex.mapping = EquirectangularReflectionMapping;
+                        this.context.scene.environment = tex;
+                        return tex;
+                    }
+                    else console.error("Missing ambient trilight", settings.sourceId);
+                case AmbientMode.Flat:
+                    if (settings.ambientLight) {
+                        const tex = createFlatTexture(settings.ambientLight, 64);
+                        tex.colorSpace = SRGBColorSpace;
+                        tex.mapping = EquirectangularReflectionMapping;
+                        this.context.scene.environment = tex;
+                        return tex;
+                    }
+                    else console.error("Missing ambientlight", settings.sourceId);
+            }
+        }
+        return null;
+    }
+
+    /** @internal */
+    internalDisableReflection(sourceId?: SourceIdentifier) {
+        if (sourceId && sourceId !== this.__currentReflectionId) {
+            if (debug) console.log("Not disabling reflection for", sourceId, "because it is not the current light settings id", this.__currentReflectionId)
+            return;
+        }
+        if (debug) console.log("Disable reflection", sourceId)
+        const scene = this.context.scene;
+        scene.environment = null;
+    }
+
+    private _lighting: { [sourceId: SourceIdentifier]: LightData } = {};
+
+}
+
+export class LightData {
+
+    get Source(): Texture { return this._source; }
+    // get Array(): number[] | undefined { return this._sphericalHarmonicsArray; }
+
+    private _source: Texture;
+    // private _sphericalHarmonicsArray?: number[];
+    // private _context: Context;
+    // private _sphericalHarmonics: SphericalHarmonics3 | null = null;
+    // private _ambientScale: number = 1;
+    // private _lightProbe?: LightProbe;
+
+    constructor(_context: Context, tex: Texture, _ambientScale: number = 1) {
+        // this._context = context;
+        this._source = tex;
+        // this._ambientScale = ambientScale;
+        tex.mapping = EquirectangularReflectionMapping;
+    }
+
+    /* REMOVED, no LightProbe / custom shader lighting support for now
+    getSphericalHarmonicsArray(intensityFactor: number = 1): SphericalHarmonicsData | null {
+        if (this._sphericalHarmonicsArray?.length && this._source) {
+            return { array: this._sphericalHarmonicsArray, texture: this._source, lightProbe: this._lightProbe };
+        }
+
+        try {
+            const reflection = this._source;
+            let rt: WebGLCubeRenderTarget | null = null;
+            if (reflection) {
+                if (debug) console.log("GENERATING LIGHT PROBE", reflection, this.Source);
+                const size = Math.min(reflection.image.width, 512);
+                const target = new WebGLCubeRenderTarget(size);
+                rt = target.fromEquirectangularTexture(this._context.renderer, reflection);
+                // Not sure why we did assign the resulting texture here again but this causes rendering to break when toggling env lighting (e.g. on website) because this texture will then be set as the scene.environment
+                // this._source = rt.texture;
+            }
+
+            this._sphericalHarmonicsArray = [];
+            if (rt) {
+                const sampledProbe = LightProbeGenerator.fromCubeRenderTarget(this._context.renderer, rt);
+                this._lightProbe = sampledProbe;
+                const lightFactor = (this._ambientScale * (intensityFactor * intensityFactor * Math.PI * .5)) - 1;
+                // console.log(intensityFactor, lightFactor);
+                this._sphericalHarmonics = sampledProbe.sh;
+                this._sphericalHarmonicsArray = this._sphericalHarmonics.toArray();
+                if (this._sphericalHarmonicsArray) {
+                    const factor = ((intensityFactor) / (Math.PI * .5));
+                    for (let i = 0; i < this._sphericalHarmonicsArray.length; i++) {
+                        this._sphericalHarmonicsArray[i] *= factor;
+                    }
+                    sampledProbe.sh.scale(lightFactor);
+                    if (this._source)
+                        return { array: this._sphericalHarmonicsArray, texture: this._source, lightProbe: sampledProbe };
+                }
+            }
+        }
+        catch (err) {
+            console.error(err);
+        }
+
+        return null;
+    }
+    */
+}
