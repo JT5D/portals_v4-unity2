@@ -20,24 +20,26 @@ We are transitioning from ViroReact to Unity, while adding Needle Engine for web
     *   Viro screens must be unmounted (`navigation.replace`) before navigating to a Unity route.
     *   Do not nest Viro components inside Unity views or vice versa.
 
-### 🟢 Unity AR Foundation (Future AR)
+### 🟢 Unity AR Foundation (Future AR & XR)
 *   **Role**: The primary engine for "Figment" (Creation Suite), Geospatial Maps, and High-Fidelity AR.
-*   **Library**: `@azesmway/react-native-unity`.
+*   **Library**: `@azesmway/react-native-unity` (Mobile only).
+*   **XR Strategy (VisionOS/Quest)**:
+    *   **Mobile**: React Native wraps Unity.
+    *   **VisionOS/Quest**: We deploy a **Pure Unity Build** logic for immersive features. React Native UI is not easily compatible with immersive Unity Spaces on VisionOS today.
+    *   **Shared Code**: Logic lives in C# scripts (`/unity` folder), shared between Mobile (Library) and XR (Standalone) targets.
 *   **Integration**:
-    *   Runs as a Full-Screen Native Component.
+    *   Runs as a Full-Screen Native Component on Mobile.
     *   Owns the Camera and Sensors when active.
-*   **Data Flow**:
-    *   **In**: `App -> postMessage -> UnityMessageManager` (JSON Actions).
-    *   **Out**: `Unity -> onMessage -> App` (Events like "Object Placed").
 
 ### 🟣 Needle Engine (Web Integration)
 *   **Role**: "Portal Meetings" (Screensharing) and Web-based viewing of Portals.
 *   **Technology**: Three.js wrapped in Needle's optimize runtime (WebXR).
 *   **Host**: `react-native-webview` (Mobile) or Browser (Desktop).
+*   **Licensing**: **Non-Commercial Free Tier** is fine for MVP. Commercial requires **Pro License** (€49/mo/user).
+    *   *Decision*: Use Free Tier with watermark for MVP. Upgrade when revenue > $0.
 *   **Why not React Three Fiber (R3F)?**
     *   Needle provides a **Unity-to-Web** workflow. We can design a room in Unity and export it to the Web. R3F requires rebuilding the scene in JSX.
     *   Needle handles efficient glTF loading (Draco/KTX2) and Networking (WebRTC) out of the box.
-*   **Conflict Risk**: Low (Sandboxed in WebView).
 
 ---
 
@@ -66,3 +68,4 @@ We are transitioning from ViroReact to Unity, while adding Needle Engine for web
 ### `glTF-Transform` vs. `gltf-pipeline`
 *   **Standard**: We strictly use `glTF-Transform` for our Cloud Asset Pipeline because it works in **Serverless/Edge** environments (Cloudflare Workers) where Node.js `fs` is unavailable.
 
+Needle License Update
