@@ -23,3 +23,6 @@ jobs:
 
       - name: Run tests
         run: npm test -- --runInBand
+
+      - name: Unity batchmode validation (if available)
+        run: npm run unity:validate

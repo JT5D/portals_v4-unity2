@@ -48,14 +48,17 @@ TypeError: Cannot read property 'getAssetByID' of undefined
 ---
 
 ### 3. Metro Connection Issues on Physical Device
+**Status**: ✅ Active (2026-01-06)
 
 **Problem**: Physical iOS devices show "No development servers found" when using local network.
 
 **Fix**: Use tunnel mode for reliable connectivity:
 
 ```bash
-npx expo start --dev-client --tunnel
+npm run tunnel
 ```
+
+Or run `npm run ios` to start the tunnel and install/launch on the device.
 
 The tunnel URL will be displayed (e.g., `portals://expo-development-client/?url=https://xxxxx-8081.exp.direct`). Scan the QR code or enter the URL manually on device.
 
@@ -98,12 +101,14 @@ This command performs:
 - `pod install` (with custom automation for New Arch, Maps, and Teams)
 
 ### 2. Native Automation (Podfile)
+**Status**: ✅ Active (2026-01-06)
 The generated `ios/Podfile` (via Expo prebuild) now automatically:
 - Sets the **Development Team** from `EXPO_PUBLIC_DEVELOPMENT_TEAM` or auto-detected during prebuild.
 - Corrects **Swift Explicit Modules** (prevents "no such module Expo").
 - Fixes **react-native-maps** and **RNSVG** "Undefined symbols" at runtime.
 
 ### 3. Critical Patches
+**Status**: ✅ Active (2026-01-06)
 The `patches/` directory now includes a comprehensive fix for `@reactvision/react-viro@2.43.6`:
 - **PromisesObjC**: Adds the missing dependency to `ViroKit.podspec`.
 - **AssetRegistry**: Fixes the `getAssetByID` crash in React Native 0.81.
@@ -112,6 +117,7 @@ The `patches/` directory now includes a comprehensive fix for `@reactvision/reac
 `@azesmway/react-native-unity` is pinned to `1.0.11` because we patch its podspec to only compile the RN shims. Do not bump without updating the patch.
 
 ### 4. Unity Scene & Build Workflow (NEW)
+**Status**: ✅ Active (2026-01-06)
 - **Scene location**: Keep Unity scenes under `unity/Assets/Scenes/`. The primary test scene is `UnityTestScene.unity`.
 - **Build Settings**: Open `File > Build Settings` and ensure `UnityTestScene` (and any active scenes) are added. This keeps `unity/ProjectSettings/EditorBuildSettings.asset` in sync.
 - **Re-export builds after scene changes**: Follow `unity/UNITY_BUILD_EXPORT_GUIDE.md` to regenerate:
@@ -119,16 +125,17 @@ The `patches/` directory now includes a comprehensive fix for `@reactvision/reac
   - Android: `unityLibrary` export to `unity/builds/android` (with `Export Project` checked)
 - **iOS Data + NativeCallProxy automation**: `unity/Assets/Editor/IOSBuildPostProcessor.cs` adds `Data` to the UnityFramework target and marks `NativeCallProxy.h` as Public during Unity export. Rebuild the framework and run `pod install` (or `npm run setup`) after new Unity exports.
 - **Unity MCP verify**: After opening Unity, run `MCP/Verify Tools` (Unity menu) to confirm the custom MCP tooling is active before running automated scripts.
-- **Bridge validation**: After a fresh export, run `npm run tunnel` then `npx expo run:ios --device` and open the Unity test route (`UnityTestScene`). Expect Unity to send `The button has been tapped!` (logged in JS) when the test button is pressed in the Unity view.
-- **One-command automation**: `./scripts/build_and_run_ios.sh` kills stale Metro, runs Unity export + UnityFramework build, copies the framework, runs pods, starts Metro on 8081, and installs to the device (`IMClab 15` by default).
+- **Bridge validation**: After a fresh export, run `npm run ios` (auto tunnel + device launch) and open `UnityTestScene`. Expect Unity to send `The button has been tapped!` (logged in JS) when the test button is pressed in the Unity view.
+- **One-command automation**: `./scripts/build_and_run_ios.sh` kills stale Metro, runs Unity export + UnityFramework build, copies the framework, runs pods, starts Metro on 8081, installs to the device (`IMClab 15` by default), and attempts to open the dev client tunnel.
 - **Unity ready ping**: On scene load, Unity sends `{"type":"unity_ready","scene":"<name>"}` to React Native (see `unity/Assets/Scripts/UnityReadyNotifier.cs`). Look for this in JS logs to confirm the scene is alive before testing messaging.
 - **Xcode version (Sequoia)**: Use Xcode 16.4 on macOS 15; set `DEVELOPER_DIR=/Applications/Xcode-164.app/Contents/Developer`. Our build script forces the classic linker (`LD_CLASSIC/LD_USE_CLASSIC_LINKER` + `-Wl,-ld_classic`) to avoid the ld64 assertion seen on Xcode 16+. If Xcode 16.4 is not installed, download from Apple: https://developer.apple.com/download/all/?q=Xcode%2016.4
 
 ### 5. Testing & CI (NEW)
 - **Local gate**: Run `npm test` (Jest) before any native build or export. See `BUILD_CHECKLIST.md` for the pre-build gate steps.
+- **Unity batchmode**: Run `npm run unity:validate` to catch script/compile errors before device builds.
 - **CI**: `.github/workflows/ci.yml` runs `npm ci` + `npm test -- --runInBand` on PRs and on pushes to `dev`/`main`.
 - **Expo tunnel for validation**: Always validate Unity ↔ RN after exports using `npm run tunnel` + `npx expo run:ios --device` to catch bridge regressions early.
-- **E2E**: Plan to evaluate Detox or Expo EAS E2E for smoke flows (auth + UnityTestScene launch) to raise pre-TestFlight confidence.
+- **E2E**: Detox scaffolding is in `e2e/` (manual run on physical device; Unity doesn't run on simulator).
 - **Manual QA**: See `QA_PROCESS.md` for device matrix and acceptance criteria after Unity exports.
 
 ---
@@ -165,6 +172,9 @@ No manual intervention needed for CI/CD builds.
 | `plugins/withPodfileFixes.js` | Podfile automation |
 | `plugins/withUnity.js` | Unity Android integration + iOS framework checks |
 | `unity/Assets/Editor/IOSBuildPostProcessor.cs` | Unity iOS export fixups (Data + NativeCallProxy) |
+| `scripts/run_ios_device.sh` | Auto tunnel + device launch |
+| `scripts/check_unity_exports.sh` | Fail-fast Unity export guard |
+| `scripts/unity_validate.sh` | Unity batchmode validation |
 
 ---
 

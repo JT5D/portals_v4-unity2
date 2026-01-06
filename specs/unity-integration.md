@@ -25,6 +25,7 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 ## 4. Implementation Steps
 - [x] **Infrastructure**: Install `@azesmway/react-native-unity` (pinned for patch compatibility).
 - [x] **Expo Plugin**: Create `plugins/withUnity.js` to automate Android gradle modifications + iOS UnityFramework sanity checks.
+- [x] **Android Resources**: Plugin configures `unityStreamingAssets` and UnityView accessibility string.
 - [x] **iOS Export Fixups**: `unity/Assets/Editor/IOSBuildPostProcessor.cs` adds Unity Data to UnityFramework resources and marks `NativeCallProxy.h` as Public.
 - [x] **Unity Project**: Set up Unity 6 (6000.2.14f1) project in `unity/` folder.
 - [x] **Unity Scenes**: Create UnityTestScene.unity and configure build settings.
@@ -33,6 +34,7 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 - [x] **Bridge**: Implement `UnityArView.tsx` component wrapper.
 - [x] **View**: Create `src/components/UnityArView.tsx` and `src/screens/UnityTestScene.tsx`.
 - [x] **Unity Builds**: Re-export iOS builds with UnityTestScene included (UnityFramework copied to `unity/builds/ios`).
+- [x] **Export Guard**: `scripts/check_unity_exports.sh` fails fast when iOS/Android exports are missing.
 - [ ] **Android Export**: Export unityLibrary with UnityTestScene.
 - [ ] **Build & Test**: Test on physical iOS and Android devices.
 
@@ -54,7 +56,7 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 - `@azesmway/react-native-unity` v1.0.11 installed (pinned)
 - `UnityArView` component wraps UnityView with type safety
 - `UnityTestScene` ready for testing; Unity sends a ready ping via `UnityReadyNotifier` on scene load
-- Expo plugin configured for Android gradle setup + iOS UnityFramework checks
+- Expo plugin configured for Android gradle setup + iOS UnityFramework checks (fails fast if exports are stale)
 
 ## 6. Next Steps
 1. **Export Fresh Unity Builds** (see unity/UNITY_BUILD_EXPORT_GUIDE.md)
@@ -71,3 +73,22 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 5. **Implement Bidirectional Messaging**
    - Unity → RN: AR event notifications (ready ping already implemented)
    - RN → Unity: Portal placement commands
+
+## 7. Patch Expectations & Upgrade Checklist
+- **Pinned patch**: `patches/@azesmway+react-native-unity+1.0.11.patch` restricts podspec to RN shims only.
+- **Assumptions**:
+  - `UnityFramework.framework/Data` exists after iOS export.
+  - `NativeCallProxy.h` is Public in UnityFramework headers (auto-applied by `IOSBuildPostProcessor`).
+- **Upgrade checklist**:
+  1. Bump `@azesmway/react-native-unity` version in `package.json`.
+  2. Recreate/update the patch in `patches/` and verify podspec still compiles only the RN shims.
+  3. Re-export Unity iOS + Android builds.
+  4. Run `npm run ios` and confirm Unity ↔ RN messaging in `UnityTestScene`.
+
+## 8. Performance & Assets
+- **URP stripping**: Shader stripping enabled in `unity/Assets/UniversalRenderPipelineGlobalSettings.asset` to reduce variants.
+- **GPU budget targets (mobile)**:
+  - Triangle budget: 100k–200k per frame
+  - Draw calls: under 150 per frame
+  - Texture memory: under 256–384 MB per scene
+- **Large textures**: Evaluate Addressables for streaming high-res textures; prioritize ASTC/ETC2 and mipmapped assets.
