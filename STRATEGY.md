@@ -75,7 +75,7 @@ A unified, automated, and powerful AR platform where users can **upload any asse
 ---
 
 ## 6. Implementation Plan (Specs)
-*   [ ] **Spec 0**: [Tech Stack Integration Matrix (The Constitution)](./specs/tech-stack-integration.md)
-*   [ ] **Spec 1**: [Setup Unity Integration & Bridge](./specs/unity-integration.md)
-*   [ ] **Spec 2**: [Needle Engine Screensharing](./specs/needle-integration.md)
-*   [ ] **Spec 3**: [Cloud Asset Pipeline (Worker)](./specs/asset-pipeline.md)
+*   [ ] **Spec 0**: [Tech Stack Integration Matrix (The Constitution)](specs/tech-stack-integration.md)
+*   [ ] **Spec 1**: [Setup Unity Integration & Bridge](specs/unity-integration.md)
+*   [ ] **Spec 2**: [Needle Engine Screensharing](specs/needle-integration.md)
+*   [ ] **Spec 3**: [Cloud Asset Pipeline (Worker)](specs/asset-pipeline.md)
