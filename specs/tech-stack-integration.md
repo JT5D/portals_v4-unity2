@@ -67,5 +67,3 @@ We are transitioning from ViroReact to Unity, while adding Needle Engine for web
 
 ### `glTF-Transform` vs. `gltf-pipeline`
 *   **Standard**: We strictly use `glTF-Transform` for our Cloud Asset Pipeline because it works in **Serverless/Edge** environments (Cloudflare Workers) where Node.js `fs` is unavailable.
-
-Needle License Update

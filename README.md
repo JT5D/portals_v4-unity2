@@ -5,7 +5,7 @@
 ![React Native](https://img.shields.io/badge/React%20Native-0.81-blue?logo=react)
 ![Expo](https://img.shields.io/badge/Expo-54-black?logo=expo)
 ![Firebase](https://img.shields.io/badge/Firebase-12-orange?logo=firebase)
-![ViroReact](https://img.shields.io/badge/ViroReact-2.50-purple)
+![ViroReact](https://img.shields.io/badge/ViroReact-2.43.6-purple)
 
 ---
 
@@ -49,7 +49,7 @@ Portals merges AI tools, social media & augmented reality, allowing users to:
 | Layer               | Technology                       |
 | ------------------- | -------------------------------- |
 | **Framework** | React Native 0.81 + Expo 54      |
-| **AR Engine** | ViroReact 2.50                   |
+| **AR Engine** | ViroReact 2.43.6 (legacy) + Unity (UaaL) |
 | **State**     | Zustand                          |
 | **Auth**      | Firebase Authentication          |
 | **Database**  | Firebase Firestore               |
@@ -167,7 +167,7 @@ Gamified engagement through:
 ### Prerequisites
 
 - Node.js 18+
-- Xcode 15+ (iOS)
+- Xcode 16.1+ (iOS, macOS 15)
 - Android Studio (Android)
 - Expo CLI
 

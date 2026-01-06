@@ -17,7 +17,7 @@ This document outlines critical issues with the iOS build and how they are manag
 
 ### 1. ViroReact Version (CRITICAL)
 
-**Problem**: ViroReact 2.50.0 causes native crashes on iOS due to missing dynamic framework dependencies (`GTMSessionFetcher`, `GoogleToolboxForMac`).
+**Problem**: ViroReact 2.50+ causes native crashes on iOS due to missing dynamic framework dependencies (`GTMSessionFetcher`, `GoogleToolboxForMac`).
 
 **Fix**: `@reactvision/react-viro` is pinned to version `2.43.6` exactly.
 
@@ -98,8 +98,8 @@ This command performs:
 - `pod install` (with custom automation for New Arch, Maps, and Teams)
 
 ### 2. Native Automation (Podfile)
-The `ios/Podfile` now automatically:
-- Sets the **Development Team** to `Z8622973EB`.
+The generated `ios/Podfile` (via Expo prebuild) now automatically:
+- Sets the **Development Team** from `EXPO_PUBLIC_DEVELOPMENT_TEAM` or auto-detected during prebuild.
 - Corrects **Swift Explicit Modules** (prevents "no such module Expo").
 - Fixes **react-native-maps** and **RNSVG** "Undefined symbols" at runtime.
 
@@ -109,12 +109,15 @@ The `patches/` directory now includes a comprehensive fix for `@reactvision/reac
 - **AssetRegistry**: Fixes the `getAssetByID` crash in React Native 0.81.
 - **GoogleKitHUD**: `scripts/patch-virokit.sh` automatically creates missing localization files.
 
+`@azesmway/react-native-unity` is pinned to `1.0.11` because we patch its podspec to only compile the RN shims. Do not bump without updating the patch.
+
 ### 4. Unity Scene & Build Workflow (NEW)
 - **Scene location**: Keep Unity scenes under `unity/Assets/Scenes/`. The primary test scene is `UnityTestScene.unity`.
 - **Build Settings**: Open `File > Build Settings` and ensure `UnityTestScene` (and any active scenes) are added. This keeps `unity/ProjectSettings/EditorBuildSettings.asset` in sync.
 - **Re-export builds after scene changes**: Follow `unity/UNITY_BUILD_EXPORT_GUIDE.md` to regenerate:
   - iOS: `UnityFramework.framework` to `unity/builds/ios`
   - Android: `unityLibrary` export to `unity/builds/android` (with `Export Project` checked)
+- **iOS Data bundling**: `plugins/withUnity.js` adds `unity/builds/ios/Data` into the iOS app resources. Re-run `npx expo prebuild --platform ios --clean` (or `npm run setup`) after new Unity exports to refresh Xcode references.
 - **Unity MCP verify**: After opening Unity, run `MCP/Verify Tools` (Unity menu) to confirm the custom MCP tooling is active before running automated scripts.
 - **Bridge validation**: After a fresh export, run `npm run tunnel` then `npx expo run:ios --device` and open the Unity test route (`UnityTestScene`). Expect Unity to send `The button has been tapped!` (logged in JS) when the test button is pressed in the Unity view.
 - **One-command automation**: `./scripts/build_and_run_ios.sh` kills stale Metro, runs Unity export + UnityFramework build, copies the framework, runs pods, starts Metro on 8081, and installs to the device (`IMClab 15` by default).
@@ -159,19 +162,19 @@ No manual intervention needed for CI/CD builds.
 |------|---------|
 | `package.json` | ViroReact version + postinstall script |
 | `patches/@reactvision+react-viro+2.43.6.patch` | AssetRegistry fix |
-| `ios/Podfile` | CocoaPods configuration |
-| `ios/Podfile.lock` | Locked pod versions |
+| `plugins/withPodfileFixes.js` | Podfile automation |
+| `plugins/withUnity.js` | Unity iOS/Android integration |
 
 ---
 
-*Last updated: January 5, 2026*
+*Last updated: January 6, 2026*
 
 ---
 
 ## 🌍 Cross-Platform & Geospatial Configuration
 
 ### Expo Plugin
-ViroReact's Expo plugin is configured in `app.json`:
+ViroReact's Expo plugin is configured in `app.config.js`:
 ```json
 ["@reactvision/react-viro", {
   "android": { "xRMode": ["AR"] }
@@ -198,5 +201,5 @@ npx expo run:android --device
 ```
 
 ### iOS Bundle Identifier
-Set in `app.json`: `com.portals.app`
+Set in `app.config.js`: `com.h3mai.portals`
 Update this if deploying to App Store.

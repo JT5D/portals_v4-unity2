@@ -10,6 +10,7 @@ Use this checklist before exporting Unity or running native builds.
 
 ## Unity exports
 - [ ] Re-export iOS `UnityFramework.framework` to `unity/builds/ios` (see unity/UNITY_BUILD_EXPORT_GUIDE.md)
+- [ ] Re-run `npx expo prebuild --platform ios --clean` after iOS export to refresh Unity Data resources in Xcode
 - [ ] Re-export Android with `Export Project` checked to `unity/builds/android`; strip launcher intent from `unityLibrary` manifest if present
 
 ## Bridge validation (post-export)

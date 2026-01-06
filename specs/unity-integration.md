@@ -23,8 +23,8 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 - **Export Config**: iOS (`UnityFramework`), Android (`Export Project`)
 
 ## 4. Implementation Steps
-- [x] **Infrastructure**: Install `@azesmway/react-native-unity` and configure `react-native.config.js`.
-- [x] **Expo Plugin**: Create `plugins/withUnity.js` to automate `Podfile` and `build.gradle` modifications.
+- [x] **Infrastructure**: Install `@azesmway/react-native-unity` (pinned for patch compatibility).
+- [x] **Expo Plugin**: Create `plugins/withUnity.js` to automate iOS Data resources + Android gradle modifications.
 - [x] **Unity Project**: Set up Unity 6 (6000.2.14f1) project in `unity/` folder.
 - [x] **Unity Scenes**: Create UnityTestScene.unity and configure build settings.
 - [x] **Native Bridge**: Copy Plugins/iOS from @azesmway package for RN communication.
@@ -50,22 +50,23 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 - Android unityLibrary export still needed with UnityTestScene.
 
 ### ✅ React Native Integration
-- `@azesmway/react-native-unity` v1.0.11 installed
+- `@azesmway/react-native-unity` v1.0.11 installed (pinned)
 - `UnityArView` component wraps UnityView with type safety
 - `UnityTestScene` ready for testing; Unity sends a ready ping via `UnityReadyNotifier` on scene load
-- Expo plugin configured for Android gradle setup
+- Expo plugin configured for Android gradle setup + iOS Data resources
 
 ## 6. Next Steps
 1. **Export Fresh Unity Builds** (see unity/UNITY_BUILD_EXPORT_GUIDE.md)
    - iOS: Build UnityFramework.framework with new scenes
    - Android: Export unityLibrary with new scenes
-2. **Test on Physical Devices**
+2. **Rebuild iOS project** after Unity export (`npm run setup` or `npx expo prebuild --platform ios --clean`)
+3. **Test on Physical Devices**
    - iOS: `npx expo run:ios --device`
    - Android: `npx expo run:android --device`
-3. **Add Unity AR Foundation Features**
+4. **Add Unity AR Foundation Features**
    - Plane detection
    - Image tracking
    - AR session management
-4. **Implement Bidirectional Messaging**
+5. **Implement Bidirectional Messaging**
    - Unity → RN: AR event notifications (ready ping already implemented)
    - RN → Unity: Portal placement commands
