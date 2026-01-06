@@ -6,8 +6,8 @@ type LogEntry = { level: 'log' | 'warn' | 'error'; message: string; ts: number }
 
 const MAX_LOGS = 200;
 
-export const DebugOverlay: React.FC = () => {
-    const [visible, setVisible] = useState(false);
+export const DebugOverlay: React.FC<{ startVisible?: boolean }> = ({ startVisible }) => {
+    const [visible, setVisible] = useState(startVisible ?? __DEV__);
     const [fps, setFps] = useState(0);
     const [, forceRender] = useState(0);
     const logsRef = useRef<LogEntry[]>([]);

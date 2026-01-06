@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef } from 'react';
 import UnityView from '@azesmway/react-native-unity';
+import { DebugOverlay } from '../components/DebugOverlay';
 
 export const UnityTestScene: React.FC = () => {
     const navigation = useNavigation();
@@ -43,6 +44,7 @@ export const UnityTestScene: React.FC = () => {
                 style={styles.unityView}
                 onUnityMessage={handleUnityMessage}
             />
+            <DebugOverlay startVisible />
         </SafeAreaView>
     );
 };

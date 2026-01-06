@@ -78,24 +78,27 @@ public class BuildScript
             catch (Exception e) { Debug.LogWarning($"Could not clean XR temp path: {xrTempPath}. {e.Message}"); }
         }
 
-        // Remove XR Simulation assets from the build to prevent move/lock issues.
-        var simAssets = new[]
+        // XR Simulation cleanup is optional; deleting assets can break ARFoundation's build processor.
+        if (Environment.GetEnvironmentVariable("UNITY_CLEAN_XR_SIM") == "1")
         {
-            "Assets/XR/UserSimulationSettings",
-            "Assets/XR/Resources/XRSimulationRuntimeSettings.asset",
-            "Assets/XR/Settings/XR Simulation Settings.asset",
-            "Assets/XR/Settings/XRSimulationSettings.asset",
-            "Assets/XR/Temp"
-        };
-        foreach (var asset in simAssets)
-        {
-            if (System.IO.Directory.Exists(asset))
+            var simAssets = new[]
             {
-                try { UnityEditor.AssetDatabase.DeleteAsset(asset); } catch { }
-            }
-            else if (System.IO.File.Exists(asset))
+                "Assets/XR/UserSimulationSettings",
+                "Assets/XR/Resources/XRSimulationRuntimeSettings.asset",
+                "Assets/XR/Settings/XR Simulation Settings.asset",
+                "Assets/XR/Settings/XRSimulationSettings.asset",
+                "Assets/XR/Temp"
+            };
+            foreach (var asset in simAssets)
             {
-                try { UnityEditor.AssetDatabase.DeleteAsset(asset); } catch { }
+                if (System.IO.Directory.Exists(asset))
+                {
+                    try { UnityEditor.AssetDatabase.DeleteAsset(asset); } catch { }
+                }
+                else if (System.IO.File.Exists(asset))
+                {
+                    try { UnityEditor.AssetDatabase.DeleteAsset(asset); } catch { }
+                }
             }
         }
 

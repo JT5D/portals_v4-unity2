@@ -35,8 +35,12 @@ DEVICE_NAME="${DEVICE_NAME:-IMClab 15}"
 if [ -n "${IOS_DEVICE_NAME:-}" ]; then
     DEVICE_NAME="$IOS_DEVICE_NAME"
 fi
-SCHEME="${SCHEME:-Portals}"
+XCODE_SCHEME="${IOS_SCHEME:-Portals}"
 PORT="${PORT:-8081}"
+URL_SCHEME="${EXPO_URL_SCHEME:-portals}"
+IOS_BUNDLE_ID="${IOS_BUNDLE_ID:-com.h3mai.portals}"
+EXPO_TUNNEL_URL="${EXPO_TUNNEL_URL:-}"
+PREFERRED_XCODE_VERSION="${PREFERRED_XCODE_VERSION:-16.4}"
 
 BUILD_ONLY=false
 SKIP_PREFLIGHT=false
@@ -120,7 +124,7 @@ log "Using Unity: $UNITY_BIN"
 
 # 1b. Find Xcode
 if [ -z "${DEVELOPER_DIR:-}" ]; then
-    warn "Looking for preferred Xcode version (${PREFERRED_XCODE_VERSION:-16.4})..."
+    warn "Looking for preferred Xcode version (${PREFERRED_XCODE_VERSION})..."
     if [ -f "$PROJECT_ROOT/scripts/find_xcode.py" ]; then
         DEVELOPER_DIR=$(python3 "$PROJECT_ROOT/scripts/find_xcode.py")
         export DEVELOPER_DIR
@@ -333,13 +337,102 @@ log "Running Pod Install..."
     LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install > "$LOG_DIR/pod_install.log" 2>&1
 )
 
+if [ ! -d "$PROJECT_ROOT/node_modules/@expo/ngrok" ]; then
+    GLOBAL_NGROK="$(npm root -g 2>/dev/null)/@expo/ngrok"
+    if [ -d "$GLOBAL_NGROK" ]; then
+        mkdir -p "$PROJECT_ROOT/node_modules/@expo"
+        cp -R "$GLOBAL_NGROK" "$PROJECT_ROOT/node_modules/@expo/" || true
+        log "Copied global @expo/ngrok into local node_modules."
+    else
+        warn "@expo/ngrok not found locally or globally; tunnel URL detection may fail."
+    fi
+fi
+
 log "Starting Metro Bundler..."
 METRO_ENV="EXPO_DEV_SERVER_PORT=$PORT EXPO_METRO_PORT=$PORT EXPO_PACKAGER_PORT=$PORT LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8"
-nohup bash -c "${METRO_ENV} npx expo start --dev-client --tunnel --scheme portals" > "$LOG_DIR/metro.log" 2>&1 &
+nohup bash -c "${METRO_ENV} npx expo start --dev-client --tunnel --scheme \"$URL_SCHEME\" --port \"$PORT\"" > "$LOG_DIR/metro.log" 2>&1 &
 echo $! > "$LOG_DIR/metro.pid"
+
+log "Waiting for Metro to listen on :$PORT..."
+METRO_READY=false
+for i in {1..30}; do
+    if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+        METRO_READY=true
+        break
+    fi
+    sleep 1
+done
+if [ "$METRO_READY" = false ]; then
+    warn "Metro did not start on :$PORT (check $LOG_DIR/metro.log)."
+fi
 
 log "Installing and Running on Device: $DEVICE_NAME..."
 # We use a subshell to capture exit code properly if needed
-bash -c "${METRO_ENV} npx expo run:ios --device \"$DEVICE_NAME\" --scheme \"$SCHEME\" --configuration Release"
+bash -c "${METRO_ENV} npx expo run:ios --device \"$DEVICE_NAME\" --scheme \"$XCODE_SCHEME\" --configuration Release"
+
+log "Launching dev client with tunnel URL..."
+TUNNEL_URL=""
+if [ -n "$EXPO_TUNNEL_URL" ]; then
+    TUNNEL_URL="$EXPO_TUNNEL_URL"
+else
+    for i in {1..20}; do
+        TUNNEL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null | python3 - <<'PY'
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    tunnels = data.get("tunnels", [])
+    for t in tunnels:
+        url = t.get("public_url", "")
+        if url.startswith("https://"):
+            print(url)
+            break
+except Exception:
+    pass
+PY
+)
+        if [ -n "$TUNNEL_URL" ]; then
+            break
+        fi
+        sleep 1
+    done
+fi
+
+if [ -z "$TUNNEL_URL" ] && [ -f "$PROJECT_ROOT/.expo/settings.json" ]; then
+    TUNNEL_URL=$(python3 - <<'PY'
+import json
+import pathlib
+
+settings = pathlib.Path(".expo/settings.json")
+data = json.loads(settings.read_text())
+randomness = data.get("urlRandomness", "")
+if randomness:
+    print(f"https://{randomness}-8081.exp.direct")
+PY
+)
+    if [ -n "$TUNNEL_URL" ]; then
+        warn "Using exp.direct fallback from .expo/settings.json"
+    fi
+fi
+
+if [ -n "$TUNNEL_URL" ]; then
+    EXPO_URL="$TUNNEL_URL"
+    echo "$EXPO_URL" > "$LOG_DIR/metro_url.txt"
+    log "Tunnel URL: $EXPO_URL"
+    PAYLOAD_URL=$(python3 - <<PY
+import urllib.parse
+print(f"{\"$URL_SCHEME\"}://expo-development-client/?url=" + urllib.parse.quote(\"$EXPO_URL\", safe=\"\"))
+PY
+)
+    xcrun devicectl device process launch \
+        --device "$DEVICE_NAME" \
+        --terminate-existing \
+        --payload-url "$PAYLOAD_URL" \
+        --json-output "$LOG_DIR/devicectl_launch.json" \
+        --log-output "$LOG_DIR/devicectl_launch.log" \
+        "$IOS_BUNDLE_ID" \
+        >/dev/null 2>&1 || warn "devicectl launch failed; open $EXPO_URL in the dev client manually (bundle id: $IOS_BUNDLE_ID)."
+else
+    warn "Could not determine tunnel URL. Set EXPO_TUNNEL_URL or open the dev client manually."
+fi
 
 log "Done!"

@@ -167,7 +167,7 @@ Gamified engagement through:
 ### Prerequisites
 
 - Node.js 18+
-- Xcode 16.4+ (iOS, macOS 15)
+- Xcode 16.4 (macOS 15). Download: https://developer.apple.com/download/all/?q=Xcode%2016.4
 - Android Studio (Android)
 - Expo CLI
 
