@@ -188,7 +188,7 @@ npm install
 cd ios && pod install && cd ..
 
 # Start development server
-npx expo start --dev-client
+npx expo start --dev-client --tunnel
 ```
 
 ### Running on Device
