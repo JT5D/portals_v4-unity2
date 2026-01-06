@@ -15,9 +15,10 @@ Portals merges social media with augmented reality, allowing users to:
 
 - **Explore** AR experiences pinned to real-world locations
 - **Create** immersive 3D scenes with an intuitive editor
-- **Share** video recordings of AR experiences
+- **Share** video recordings &  explorable AI + AR experiences
 - **Collect** rare "Artifacts" by physically visiting locations
 - **Earn** FUEL tokens through movement and engagement
+- **Monetize** AI + AR creations by minting & dropping content
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
