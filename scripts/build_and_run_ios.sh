@@ -44,6 +44,8 @@ PREFERRED_XCODE_VERSION="${PREFERRED_XCODE_VERSION:-16.4}"
 
 BUILD_ONLY=false
 SKIP_PREFLIGHT=false
+SKIP_UNITY_EXPORT=false
+KEEP_UNITY_OPEN=false
 FORCE_CLOSE_UNITY=false
 
 mkdir -p "$LOG_DIR"
@@ -80,6 +82,8 @@ usage() {
     echo "Options:"
     echo "  --build-only      Only build the UnityFramework, do not run pod install or launch app"
     echo "  --skip-preflight  Skip MCP checks and missing script validation"
+    echo "  --skip-unity-export  Skip headless Unity export (use existing unity/builds/ios)"
+    echo "  --keep-unity-open  Do not close Unity Editor (implies --skip-preflight)"
     echo "  --help            Show this help"
     exit 0
 }
@@ -98,6 +102,15 @@ while [[ $# -gt 0 ]]; do
             SKIP_PREFLIGHT=true
             shift
             ;;
+        --skip-unity-export)
+            SKIP_UNITY_EXPORT=true
+            shift
+            ;;
+        --keep-unity-open)
+            KEEP_UNITY_OPEN=true
+            SKIP_PREFLIGHT=true
+            shift
+            ;;
         --force-close-unity)
             FORCE_CLOSE_UNITY=true
             shift
@@ -111,12 +124,18 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [ "$SKIP_UNITY_EXPORT" = true ]; then
+    KEEP_UNITY_OPEN=true
+    SKIP_PREFLIGHT=true
+fi
+
 # =============================================================================
 # 1. Environment Check & Setup
 # =============================================================================
 
 log "Starting consolidated iOS build process..."
 if [ "$BUILD_ONLY" = true ]; then log "Mode: Build Only"; fi
+if [ "$SKIP_UNITY_EXPORT" = true ]; then log "Mode: Skip Unity export (Unity Editor friendly)"; fi
 
 # 1a. Find Unity
 UNITY_BIN=$(find_unity)
@@ -200,16 +219,20 @@ for port in 8080 8081; do
     lsof -ti tcp:$port | xargs -r kill || true
 done
 
-# Kill Unity if running
-if pgrep -f "Unity.app/Contents/MacOS/Unity" > /dev/null; then
-    warn "Unity is running. Attempting to close it gracefully..."
-    osascript -e 'tell application "Unity" to quit' || true
-    # Wait loop
-    for i in {1..5}; do
-        pgrep -f "Unity.app/Contents/MacOS/Unity" > /dev/null || break
-        sleep 1
-    done
-    pgrep -f "Unity.app/Contents/MacOS/Unity" > /dev/null && pkill -f "Unity.app/Contents/MacOS/Unity" || true
+# Kill Unity if running (unless we want to keep the editor open).
+if [ "$KEEP_UNITY_OPEN" = false ]; then
+    if pgrep -f "Unity.app/Contents/MacOS/Unity" > /dev/null; then
+        warn "Unity is running. Attempting to close it gracefully..."
+        osascript -e 'tell application \"Unity\" to quit' || true
+        # Wait loop
+        for i in {1..5}; do
+            pgrep -f "Unity.app/Contents/MacOS/Unity" > /dev/null || break
+            sleep 1
+        done
+        pgrep -f "Unity.app/Contents/MacOS/Unity" > /dev/null && pkill -f "Unity.app/Contents/MacOS/Unity" || true
+    fi
+else
+    warn "KEEP_UNITY_OPEN enabled; Unity Editor will not be closed."
 fi
 
 # Optional clean: remove DerivedData if FORCE_CLEAN=1 is set to recover from corrupted caches.
@@ -222,30 +245,38 @@ fi
 # 4. Unity Export (Headless)
 # =============================================================================
 
-log "running Unity export..."
-# Stop MCP server just for the build to free ports and stdout hooks.
-if mcp_running; then
-    warn "Stopping Unity MCP server for headless build..."
-    pkill -f "/Users/jamestunick/Applications/UnityMCP/UnityMcpServer/src server.py" >/dev/null 2>&1 || true
-fi
-
-"$UNITY_BIN" -quit -batchmode \
-    -projectPath "$UNITY_PROJECT" \
-    -executeMethod BuildScript.PerformIOSBuild \
-    -logFile "$LOG_DIR/unity_ios_build.log"
-
-# Note: Unity logs to file. We check log content for success message.
-if grep -q "iOS Build Succeeded" "$LOG_DIR/unity_ios_build.log"; then
-    log "Unity export successful."
-else
-    error "Unity export failed. Check $LOG_DIR/unity_ios_build.log"
-    tail -n 20 "$LOG_DIR/unity_ios_build.log"
-    # Restart MCP server if we stopped it
-    if [ -n "${RESTART_MCP:-}" ] && [ "$RESTART_MCP" = "1" ]; then
-        warn "Restarting Unity MCP server after failed build..."
-        # Optional: add your launcher here if desired
+if [ "$SKIP_UNITY_EXPORT" = true ]; then
+    log "Skipping Unity export (using existing Unity-iPhone.xcodeproj)."
+    if [ ! -d "$XCODE_PROJECT" ]; then
+        error "Missing Unity export at $XCODE_PROJECT. Export iOS from Unity Editor first."
+        exit 1
     fi
-    exit 1
+else
+    log "running Unity export..."
+    # Stop MCP server just for the build to free ports and stdout hooks.
+    if mcp_running; then
+        warn "Stopping Unity MCP server for headless build..."
+        pkill -f "/Users/jamestunick/Applications/UnityMCP/UnityMcpServer/src server.py" >/dev/null 2>&1 || true
+    fi
+
+    "$UNITY_BIN" -quit -batchmode \
+        -projectPath "$UNITY_PROJECT" \
+        -executeMethod BuildScript.PerformIOSBuild \
+        -logFile "$LOG_DIR/unity_ios_build.log"
+
+    # Note: Unity logs to file. We check log content for success message.
+    if grep -q "iOS Build Succeeded" "$LOG_DIR/unity_ios_build.log"; then
+        log "Unity export successful."
+    else
+        error "Unity export failed. Check $LOG_DIR/unity_ios_build.log"
+        tail -n 20 "$LOG_DIR/unity_ios_build.log"
+        # Restart MCP server if we stopped it
+        if [ -n "${RESTART_MCP:-}" ] && [ "$RESTART_MCP" = "1" ]; then
+            warn "Restarting Unity MCP server after failed build..."
+            # Optional: add your launcher here if desired
+        fi
+        exit 1
+    fi
 fi
 
 # =============================================================================

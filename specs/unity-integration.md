@@ -71,3 +71,8 @@ Integrate **Unity as a Library (UaaL)** using the `@azesmway/react-native-unity`
 5. **Implement Bidirectional Messaging**
    - Unity → RN: AR event notifications (ready ping already implemented)
    - RN → Unity: Portal placement commands
+
+## 7. Unity Editor Fast Loop
+When iterating on scenes in the Unity Editor:
+1. Export iOS from Unity (`Tools/Build iOS`) to `unity/builds/ios`.
+2. Run `npm run ios:editor` to build the UnityFramework and launch the device via tunnel.

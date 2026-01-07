@@ -83,6 +83,14 @@ The tunnel URL will be displayed (e.g., `portals://expo-development-client/?url=
 
 ---
 
+### Unity Editor Fast Loop (Troubleshooting)
+Use this when iterating on Unity scenes and you want to keep the Unity Editor open:
+
+1. In Unity: run `MCP/Verify Tools` (or `Tools/Build iOS`) to export iOS into `unity/builds/ios`.
+2. On the CLI: run `npm run ios:editor` to build the UnityFramework, install on device, and open the tunnel.
+
+This skips headless Unity export and avoids closing the editor.
+
 ## 📋 Automation & Setup (NEW)
 
 We have automated the most common fixes to ensure a "one-click" build experience for team members.

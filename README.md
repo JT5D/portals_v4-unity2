@@ -198,6 +198,9 @@ npx expo start --dev-client --tunnel
 # iOS
 npx expo run:ios --device
 
+# iOS (Unity Editor fast loop: keep Unity open)
+npm run ios:editor
+
 # Android
 npx expo run:android --device
 ```
