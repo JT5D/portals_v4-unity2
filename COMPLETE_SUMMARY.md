@@ -273,10 +273,11 @@ ios-full  # If scenes/assets changed
    - If issues: Check troubleshooting section in TEST_UNITY_INTEGRATION.md
 
 ### This Week (Recommended Optimizations)
-1. **Streamline ~/CLAUDE.md** from 390 → 200 lines
-   - Save 5-7K tokens per session
-   - Effort: 30 minutes
-   - ROI: Every session
+1. ✅ **Streamlined ~/CLAUDE.md** from 414 → 236 lines (43% reduction) - **COMPLETED**
+   - Saves 5-7K tokens per session
+   - Completed: 2026-01-08 (20 minutes)
+   - ROI: Immediate (every future session)
+   - File: ~/CLAUDE.md (global rules, outside repo)
 
 2. **Create unity-performance-analyzer agent**
    - Automate Unity Profiler analysis
