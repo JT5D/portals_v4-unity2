@@ -1741,7 +1741,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-unity (1.0.11):
+  - react-native-unity (0.0.6):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2451,7 +2451,7 @@ DEPENDENCIES:
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-maps (from `../node_modules/react-native-maps`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
-  - "react-native-unity (from `../node_modules/@azesmway/react-native-unity`)"
+  - "react-native-unity (from `../node_modules/@artmajeur/react-native-unity`)"
   - react-native-video (from `../node_modules/react-native-video`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -2649,7 +2649,7 @@ EXTERNAL SOURCES:
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-unity:
-    :path: "../node_modules/@azesmway/react-native-unity"
+    :path: "../node_modules/@artmajeur/react-native-unity"
   react-native-video:
     :path: "../node_modules/react-native-video"
   react-native-webview:
@@ -2809,7 +2809,7 @@ SPEC CHECKSUMS:
   react-native-get-random-values: f807b3ccb892fe265aeba89ef37f96dfdfc587eb
   react-native-maps: ee1e65647460c3d41e778071be5eda10e3da6225
   react-native-safe-area-context: 53f796cb6c814661bbe99fbdfd0585d07b996cdd
-  react-native-unity: fdffefe66fbe652acae984e399325f210dc6db52
+  react-native-unity: 0b59996723fbd5deadeddf1ec15a88bb284de04e
   react-native-video: 2fcbb36d6490d98a83e906bc29f913b6e7894140
   react-native-webview: a4f0775a31b73cf13cfc3d2d2b119aa94ec76e49
   React-NativeModulesApple: 1664340b8750d64e0ef3907c5e53d9481f74bcbd
@@ -2853,6 +2853,6 @@ SPEC CHECKSUMS:
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: bafabec74e772a38fedd971bbaf907e98babba4e
+PODFILE CHECKSUM: 3f557d1c001a2c969736478fdc582844fd962d25
 
 COCOAPODS: 1.16.2

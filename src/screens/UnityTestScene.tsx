@@ -1,23 +1,21 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { UnityArView } from '../components/UnityArView';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRef } from 'react';
-import UnityView from '@azesmway/react-native-unity';
+import { useNavigation } from '@react-navigation/native';
+import React, { useRef, useState } from 'react';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { DebugOverlay } from '../components/DebugOverlay';
+import { UnityArView, UnityArViewRef } from '../components/UnityArView';
 
 export const UnityTestScene: React.FC = () => {
     const navigation = useNavigation();
-    const unityRef = useRef<UnityView>(null);
+    const unityRef = useRef<UnityArViewRef>(null);
     const [unityReady, setUnityReady] = useState(false);
 
     const handleUnityMessage = (message: any) => {
-        console.log('[Unity Message]:', message);
+        console.log('[UnityTestScene] Message from Unity:', message);
     };
 
     const handleUnityReady = () => {
-        console.log('[UnityTestScene] Unity is ready and can receive messages');
+        console.log('[UnityTestScene] Unity ready - bridge established');
         setUnityReady(true);
     };
 
@@ -27,8 +25,8 @@ export const UnityTestScene: React.FC = () => {
             return;
         }
         const payload = JSON.stringify({ type: 'ping', source: 'rn', ts: Date.now() });
-        console.log('The button has been tapped!');
-        unityRef.current?.postMessage('BridgeTarget', 'OnMessage', payload);
+        // Use the logging-enabled sendMessage from UnityArViewRef
+        unityRef.current?.sendMessage('BridgeTarget', 'OnMessage', payload);
     };
 
     return (
@@ -59,6 +57,20 @@ export const UnityTestScene: React.FC = () => {
                         ? 'Unity will log {type:"pong"} if handler is wired.'
                         : 'Waiting for Unity to initialize...'}
                 </Text>
+            </View>
+            <View style={styles.actionRow}>
+                <TouchableOpacity
+                    style={[styles.pingButton, !unityReady && styles.pingButtonDisabled, { backgroundColor: '#FFD700' }]}
+                    onPress={() => {
+                        if (!unityReady) return;
+                        const payload = JSON.stringify({ action: 'spawnBrush', x: 0, y: 0, z: 0 });
+                        unityRef.current?.sendMessage('BridgeTarget', 'OnMessage', payload);
+                    }}
+                    disabled={!unityReady}
+                >
+                    <Ionicons name="brush-outline" size={18} color="#000" />
+                    <Text style={styles.pingText}>Spawn VFX</Text>
+                </TouchableOpacity>
             </View>
             <UnityArView
                 ref={unityRef}
