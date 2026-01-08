@@ -45,10 +45,13 @@ manage_gameobject(action="find", search_term="Player", search_method="by_name")
 | Flag | Why Needed |
 |------|------------|
 | `-Wl,-ld_classic` | Xcode 15+ new linker has issues with Unity IL2CPP duplicate symbols |
-| `-force_load il2cpp.a` | Ensures all IL2CPP runtime symbols included (even unreferenced) |
 | `-configuration Release` | react-native-unity bug: DEBUG references `_mh_dylib_header` (only in dylibs) |
 
-**Sources**: [Apple Dev Forums](https://developer.apple.com/forums/thread/749458), [Unity Issue Tracker](https://issuetracker.unity3d.com/issues/building-projects-with-il2cpp-scripting-backend-for-apple-platforms-fails-with-xcode-15-dot-0b6-or-newer)
+**NOT needed** (Unity handles automatically):
+- `force_load il2cpp.a` - Already in Unity's OTHER_LDFLAGS
+- Separate GameAssembly build - Built via Xcode target dependency
+
+**Sources**: [Unity Xcode Structure](https://docs.unity3d.com/Manual/StructureOfXcodeProject.html), [Apple Dev Forums](https://developer.apple.com/forums/thread/749458)
 
 <!-- DISABLED: Fast Iteration (needs debugging)
 ### Fast Iteration (use these!)
