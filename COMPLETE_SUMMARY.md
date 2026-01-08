@@ -53,6 +53,24 @@ All requested tasks completed:
 **Solution**: Created `.claudeignore` excluding Unity Library/, node_modules/, etc.
 - **Impact**: 180K tokens saved per session (90% reduction)
 
+### 5. Discord Commit Webhook Formatting
+**Problem**: Git post-push hook Discord notifications showing escaped `\n` instead of line breaks, missing field labels
+
+**Solution**: Restored original format with proper field labels and actual newlines:
+- `post_commit_to_discord.sh` now formats as:
+  ```
+  New Checkin: {author_name}
+  Repo: {repo}
+  Branch: {branch}
+  Commit: {commit_subject}
+  {commit_url}
+  ```
+- Uses author name instead of email for better readability
+- Python script properly encodes JSON payload with real newlines
+- **Impact**: Discord notifications now readable and properly formatted, matching H3M Github APP style
+
+**File**: `/Users/jamestunick/.local/bin/post_commit_to_discord.sh`
+
 ---
 
 ## 🚀 Automation Created
@@ -119,9 +137,18 @@ portals-cd  # Quick navigate to project directory
 - `scripts/run_all_tests.sh` - NEW master test runner
 - `TEST_UNITY_INTEGRATION.md` - NEW testing guide
 
+### Git Automation
+- `/Users/jamestunick/.local/bin/post_commit_to_discord.sh` - Discord webhook formatting restored
+  - Proper field labels (New Checkin, Repo, Branch, Commit)
+  - Real newlines instead of escaped `\n`
+  - Author name instead of email for readability
+
 ### Documentation
-- `COMPLETE_SUMMARY.md` - This file
+- `COMPLETE_SUMMARY.md` - This file (updated with Discord fix)
+- `UNITY_SCENE_ANALYSIS.md` - NEW comprehensive scene architecture deep dive
+- `DEVICE_TESTING_CHECKLIST.md` - NEW step-by-step device testing guide
 - `~/.claude/docs/UNITY_RN_INTEGRATION_WORKFLOW.md` - Updated workflow guide
+- `~/.claude/knowledgebase/LEARNING_LOG.md` - Updated with Discord webhook learnings
 
 ---
 
@@ -331,6 +358,42 @@ Research Report:   (See Claude Code session output above)
 - **Immediate**: 180K tokens/session saved, Unity integration working
 - **Short-term**: Automated testing saves 10-30 min per iteration
 - **Long-term**: 40-60% faster development cycles with full optimizations
+
+---
+
+## 📝 Git Commit History (This Session)
+
+**Branch**: `react-unity`
+
+### Recent Commits
+
+**2026-01-08 00:15** - `b18f36bb7`
+```
+Restore original Discord commit log formatting
+```
+- Reverted to original format with proper field labels
+- Now shows: New Checkin, Repo, Branch, Commit, URL
+- Uses author name instead of email for readability
+- File: `/Users/jamestunick/.local/bin/post_commit_to_discord.sh`
+
+**2026-01-08 00:10** - `19731b18d`
+```
+Add comprehensive Unity scene analysis and device testing documentation
+```
+- Created UNITY_SCENE_ANALYSIS.md (18KB comprehensive guide)
+- Created DEVICE_TESTING_CHECKLIST.md (8KB step-by-step guide)
+- Documents scene architecture, bridge communication, debugging workflow
+
+**2026-01-08 00:05** - `ca5d5491a`
+```
+Fix Discord webhook compact formatting
+```
+- Initial attempt to fix Discord formatting (later revised)
+- Removed double newlines for compact display
+
+### Verification
+
+All commits pushed to `react-unity` branch and visible in Discord with proper formatting.
 
 ---
 
