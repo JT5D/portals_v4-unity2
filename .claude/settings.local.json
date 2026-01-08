@@ -67,7 +67,10 @@
       "Bash(~/Documents/GitHub/Unity-XR-AI/KnowledgeBase/scripts/generate-kb-index.sh)",
       "Bash(./scripts/verify_device_unity.sh:*)",
       "Bash(ideviceinstaller -l:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash([ -n \"$DISCORD_COMMITS_WEBHOOK\" ])",
+      "Bash(timeout 5 idevicesyslog:*)",
+      "Bash(./scripts/monitor_unity_live.sh:*)"
     ]
   }
 }

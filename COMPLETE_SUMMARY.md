@@ -246,6 +246,15 @@ ios-full  # If scenes/assets changed
 
 3. **Unity MCP First**: When available, Unity MCP saves 10× time (30 seconds vs. 10 minutes manual). Always try MCP first, fall back to manual only when necessary.
 
+### Operational Rules (Agreed)
+1. **Preflight Process Hygiene**: Before any automated test/build/monitoring script, always check for existing running processes (Unity, Metro, idevicesyslog, build/test scripts) and clean up conflicts to avoid lockups or port contention.
+
+2. **System + Toolchain Awareness**: When debugging persistent or hard-to-reproduce issues, explicitly validate the state of Unity, Xcode, Pods, Expo/Metro, device trust, and MCP server to rule out environmental causes early.
+
+3. **Deep Review for Complexity Risk**: During debugging or refactors, call out over-complication or future-risk patterns early (integration drift, duplicated pipelines, fragile sequencing).
+
+4. **Unity Editor + MCP as First-Class Option**: Use Unity Editor and MCP tooling whenever it speeds inspection, testing, or scene changes; fall back to manual steps only when MCP is unavailable.
+
 ### Testing Strategy
 1. **Phase-Gate Testing**: Unity Editor → iOS Simulator → iOS Device. Each phase catches issues before expensive next phase. Editor tests take 30 seconds, device tests take 10+ minutes.
 
@@ -334,8 +343,17 @@ Test Scripts:      scripts/test_*.sh
 This Summary:      COMPLETE_SUMMARY.md
 Testing Guide:     TEST_UNITY_INTEGRATION.md
 Integration Flow:  ~/.claude/docs/UNITY_RN_INTEGRATION_WORKFLOW.md
+Global Rules:      /Users/jamestunick/GLOBAL_RULES.md
+Knowledgebase:     /Users/jamestunick/.claude/knowledgebase/_MASTER_KNOWLEDGEBASE_INDEX.md
 Research Report:   (See Claude Code session output above)
 ```
+
+### Global Rules & Knowledge Base
+- **Windsurf Global Rules**: [`~/CLAUDE.md`](file:///Users/jamestunick/CLAUDE.md)
+- **Claude Code Global Rules**: [`~/CLAUDE.md`](file:///Users/jamestunick/CLAUDE.md)
+- **Knowledge Base Index**: [`~/.claude/knowledgebase/_MASTER_KNOWLEDGEBASE_INDEX.md`](file:///Users/jamestunick/.claude/knowledgebase/_MASTER_KNOWLEDGEBASE_INDEX.md)
+- **Unity-XR-AI Knowledge Base Overview**: [`~/Documents/GitHub/Unity-XR-AI/CLAUDE.md`](file:///Users/jamestunick/Documents/GitHub/Unity-XR-AI/CLAUDE.md)
+- **AntiGravity Setup & Rules**: [`~/Documents/GitHub/Unity-XR-AI/KnowledgeBase/.claude/ANTIGRAVITY_SETUP_COMPLETE.md`](file:///Users/jamestunick/Documents/GitHub/Unity-XR-AI/KnowledgeBase/.claude/ANTIGRAVITY_SETUP_COMPLETE.md)
 
 ---
 
