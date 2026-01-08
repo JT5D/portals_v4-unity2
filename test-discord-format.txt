@@ -1,0 +1,10 @@
+Testing Discord commit format restoration
+
+Format should match original:
+- New Checkin: {author_name}
+- Repo: {repo}
+- Branch: {branch}
+- Commit: {commit_subject}
+- {commit_url}
+
+All on separate lines with no blank lines between fields.
