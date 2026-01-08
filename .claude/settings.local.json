@@ -63,7 +63,8 @@
       "Bash(git rm:*)",
       "Bash(tail:*)",
       "Bash(claude mcp restart:*)",
-      "Bash(echo \"To monitor Unity console in real-time during Play mode testing, run this command in a separate terminal:\n\ntail -f ~/Library/Logs/Unity/Editor.log | grep --line-buffered -E ''\\(BridgeTarget|unity_ready|Error|Exception\\)''\")"
+      "Bash(echo \"To monitor Unity console in real-time during Play mode testing, run this command in a separate terminal:\n\ntail -f ~/Library/Logs/Unity/Editor.log | grep --line-buffered -E ''\\(BridgeTarget|unity_ready|Error|Exception\\)''\")",
+      "Bash(~/Documents/GitHub/Unity-XR-AI/KnowledgeBase/scripts/generate-kb-index.sh)"
     ]
   }
 }
