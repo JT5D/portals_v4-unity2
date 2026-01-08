@@ -25,20 +25,30 @@ manage_gameobject(action="find", search_term="Player", search_method="by_name")
 
 ### Build & Deploy
 ```bash
-./scripts/build_and_run_ios.sh                      # Full build (asks before closing Unity)
-./scripts/build_and_run_ios.sh --force-close-unity  # Full build (auto-closes Unity)
+./scripts/build_minimal.sh                          # Minimal build (fail-fast, ~15 min)
+./scripts/build_and_run_ios.sh                      # Full build with all checks (~20 min)
 ./scripts/build_and_run_ios.sh --skip-unity-export  # Skip Unity export (use existing)
-./scripts/build_and_run_ios.sh --build-only         # Build framework only (no deploy)
 ```
 
 ### Build Troubleshooting
 
 | Error | Fix |
 |-------|-----|
+| `_mh_dylib_header undefined` | **Must use Release config** - RN Unity bug with Debug builds |
 | `scripts are compiling` | Wait for Unity compilation to finish, retry |
 | `URP GlobalSettings not at last version` | Delete `Assets/UniversalRenderPipelineGlobalSettings.asset`, reopen Unity |
 | `XR Simulation asset move failed` | Delete `Assets/XR/Temp/` folder and `.meta` |
-| `NiceIO could not load` | Visual Scripting warning, non-blocking |
+| `duplicate symbols` (Xcode 15+) | Uses `-Wl,-ld_classic` flag (handled by scripts) |
+
+### Build Internals (Why These Flags?)
+
+| Flag | Why Needed |
+|------|------------|
+| `-Wl,-ld_classic` | Xcode 15+ new linker has issues with Unity IL2CPP duplicate symbols |
+| `-force_load il2cpp.a` | Ensures all IL2CPP runtime symbols included (even unreferenced) |
+| `-configuration Release` | react-native-unity bug: DEBUG references `_mh_dylib_header` (only in dylibs) |
+
+**Sources**: [Apple Dev Forums](https://developer.apple.com/forums/thread/749458), [Unity Issue Tracker](https://issuetracker.unity3d.com/issues/building-projects-with-il2cpp-scripting-backend-for-apple-platforms-fails-with-xcode-15-dot-0b6-or-newer)
 
 <!-- DISABLED: Fast Iteration (needs debugging)
 ### Fast Iteration (use these!)
@@ -92,6 +102,7 @@ scripts/
 **Official Docs**: [Unity 6000.2 UAAL](https://docs.unity3d.com/6000.2/Documentation/Manual/UnityasaLibrary-iOS.html)
 **UAAL Example**: [Unity-Technologies/uaal-example](https://github.com/Unity-Technologies/uaal-example/blob/master/docs/ios.md)
 **Package**: `@artmajeur/react-native-unity@0.0.6` (fork of @azesmway with New Arch optimizations)
+**Reference**: [YourArtOfficial/react-native-unity](https://github.com/YourArtOfficial/react-native-unity) - Canonical implementation reference
 
 > **Package Comparison**: See `~/.claude/knowledgebase/_REACT_NATIVE_UNITY_PACKAGES.md`
 > Includes 3-way comparison with alternative `react-native-unity2` (fusetools)
