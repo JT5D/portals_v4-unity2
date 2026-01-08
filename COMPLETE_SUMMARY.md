@@ -54,20 +54,21 @@ All requested tasks completed:
 - **Impact**: 180K tokens saved per session (90% reduction)
 
 ### 5. Discord Commit Webhook Formatting
-**Problem**: Git post-push hook Discord notifications showing escaped `\n` instead of line breaks, missing field labels
+**Problem**: Git post-push hook Discord notifications showing escaped `\n` instead of line breaks, missing field labels, unclear author identity
 
 **Solution**: Restored original format with proper field labels and actual newlines:
 - `post_commit_to_discord.sh` now formats as:
   ```
-  New Checkin: {author_name}
+  New Checkin: Full Name (@github-handle)
   Repo: {repo}
   Branch: {branch}
   Commit: {commit_subject}
   {commit_url}
   ```
-- Uses author name instead of email for better readability
+- Maps GitHub handles to full names (imclab → James Tunick)
+- Case-insensitive author name lookup
 - Python script properly encodes JSON payload with real newlines
-- **Impact**: Discord notifications now readable and properly formatted, matching H3M Github APP style
+- **Impact**: Discord notifications now show clear author identity with both full name and handle, matching H3M Github APP style
 
 **File**: `/Users/jamestunick/.local/bin/post_commit_to_discord.sh`
 
@@ -138,10 +139,12 @@ portals-cd  # Quick navigate to project directory
 - `TEST_UNITY_INTEGRATION.md` - NEW testing guide
 
 ### Git Automation
-- `/Users/jamestunick/.local/bin/post_commit_to_discord.sh` - Discord webhook formatting restored
+- `/Users/jamestunick/.local/bin/post_commit_to_discord.sh` - Discord webhook formatting enhanced
   - Proper field labels (New Checkin, Repo, Branch, Commit)
   - Real newlines instead of escaped `\n`
-  - Author name instead of email for readability
+  - Maps GitHub handles to full names: "Full Name (@handle)"
+  - Case-insensitive author lookup (imclab → James Tunick)
+  - Easily extensible author_map dictionary for team members
 
 ### Documentation
 - `COMPLETE_SUMMARY.md` - This file (updated with Discord fix)
