@@ -490,6 +490,8 @@ xcodebuild -workspace Portals.xcworkspace \
     -configuration Release \
     -destination "id=$DEVICE_UDID" \
     -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM=Z8622973EB \
+    CODE_SIGN_STYLE=Automatic \
     build install
 cd ..
 
@@ -511,14 +513,29 @@ url = os.environ["EXPO_URL"]
 print(f"{scheme}://expo-development-client/?url=" + urllib.parse.quote(url, safe=""))
 PY
     )
-    xcrun devicectl device process launch \
+    LAUNCH_OUTPUT=$(xcrun devicectl device process launch \
         --device "$DEVICE_NAME" \
         --terminate-existing \
         --payload-url "$PAYLOAD_URL" \
-        --json-output "$LOG_DIR/devicectl_launch.json" \
-        --log-output "$LOG_DIR/devicectl_launch.log" \
-        "$IOS_BUNDLE_ID" \
-        >/dev/null 2>&1 || warn "devicectl launch failed; open $EXPO_URL in the dev client manually (bundle id: $IOS_BUNDLE_ID)."
+        "$IOS_BUNDLE_ID" 2>&1)
+    LAUNCH_EXIT_CODE=$?
+
+    if [ $LAUNCH_EXIT_CODE -ne 0 ]; then
+        if echo "$LAUNCH_OUTPUT" | grep -q "device was not.*unlocked"; then
+            error "❌ Device is LOCKED. Please unlock your device and run:"
+            echo ""
+            echo "  xcrun devicectl device process launch --device \"$DEVICE_NAME\" --payload-url \"$PAYLOAD_URL\" $IOS_BUNDLE_ID"
+            echo ""
+            warn "Or manually open the Portals app on your device."
+        else
+            warn "devicectl launch failed. Open $EXPO_URL in the dev client manually (bundle id: $IOS_BUNDLE_ID)."
+            if [ -n "$LAUNCH_OUTPUT" ]; then
+                echo "$LAUNCH_OUTPUT" | head -10
+            fi
+        fi
+    else
+        build_log "✅ App launched successfully"
+    fi
 else
     warn "Could not determine tunnel URL. Set EXPO_TUNNEL_URL or open the dev client manually."
 fi

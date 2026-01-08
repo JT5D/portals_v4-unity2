@@ -6,11 +6,8 @@ using UnityEngine.SceneManagement;
 
 public class BridgeTarget : MonoBehaviour
 {
-    private const int MaxLogs = 12;
+    private const int MaxLogs = 15;
     private static readonly Queue<string> LogBuffer = new();
-    private bool m_ShowOverlay = true;
-    private GameObject m_DebugCube;
-    private float m_LastCameraCheck;
 
     private static class NativeAPI
     {
@@ -23,56 +20,64 @@ public class BridgeTarget : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void EnsureBridgeTarget()
     {
-        if (FindObjectOfType<BridgeTarget>() != null)
-        {
-            return;
-        }
-
+        if (FindObjectOfType<BridgeTarget>() != null) return;
         var go = new GameObject("BridgeTarget");
         go.AddComponent<BridgeTarget>();
-    }
-
-    private void Awake()
-    {
-        DontDestroyOnLoad(gameObject);
-        Application.logMessageReceived += HandleLog;
-    }
-
-    private void OnDestroy()
-    {
-        Application.logMessageReceived -= HandleLog;
+        DontDestroyOnLoad(go);
     }
 
     private void Start()
     {
-        Debug.Log("BridgeTarget ready");
-        SendToMobileApp(BuildPayload("unity_ready", "Unity booted"));
-        TryCreateDebugCube();
+        Debug.Log("[Bridge] Ready and listening.");
+        SendToMobileApp(BuildJSON("unity_ready", "Portals v4 Reality Engine Loaded"));
     }
 
-    private void Update()
+    // --- The Core Router ---
+    public void OnMessage(string json)
     {
-        if (m_DebugCube == null && Time.unscaledTime - m_LastCameraCheck > 1f)
+        Debug.Log($"[Bridge] Received: {json}");
+
+        // Simple manual JSON parsing (Fast, no allocs)
+        if (json.Contains("\"action\":\"spawnBrush\""))
         {
-            m_LastCameraCheck = Time.unscaledTime;
-            TryCreateDebugCube();
+            HandleSpawnBrush(json);
+        }
+        else if (json.Contains("\"action\":\"ping\""))
+        {
+            SendToMobileApp(BuildJSON("pong", "Unity Alive"));
         }
     }
 
-    public void OnMessage(string json)
+    private void HandleSpawnBrush(string json)
     {
-        Debug.Log($"[BridgeTarget] Received: {json}");
+        Debug.Log("[Bridge] Spawn Brush Request Received");
 
-        var payload = BuildPayload("pong", "Unity received ping");
-        SendToMobileApp(payload);
-        Debug.Log($"[BridgeTarget] Sending: {payload}");
+        // 1. Load the Asset (No "Resources" prefix needed in path)
+        var vfxAsset = Resources.Load<UnityEngine.VFX.VisualEffectAsset>("VFX/SimpleBrush");
+        if (vfxAsset == null)
+        {
+            Debug.LogError("[Bridge] Failed to load VFX/SimpleBrush from Resources");
+            SendToMobileApp(BuildJSON("error", "Asset not found"));
+            return;
+        }
+
+        // 2. Spawn the Container
+        var brushGO = new GameObject($"Brush_{Time.frameCount}");
+        brushGO.transform.position = Camera.main ? Camera.main.transform.position + (Camera.main.transform.forward * 0.5f) : Vector3.zero;
+
+        // 3. Add VFX Component
+        var vfx = brushGO.AddComponent<UnityEngine.VFX.VisualEffect>();
+        vfx.visualEffectAsset = vfxAsset;
+        vfx.Play();
+
+        SendToMobileApp(BuildJSON("ack", $"Spawned {brushGO.name}"));
     }
 
-    private static string BuildPayload(string type, string note)
+    // --- Helpers ---
+    private string BuildJSON(string type, string note)
     {
-        var sceneName = SceneManager.GetActiveScene().name;
-        var timestamp = Time.realtimeSinceStartup.ToString("0.000", CultureInfo.InvariantCulture);
-        return $"{{\\\"type\\\":\\\"{type}\\\",\\\"source\\\":\\\"unity\\\",\\\"scene\\\":\\\"{sceneName}\\\",\\\"note\\\":\\\"{note}\\\",\\\"ts\\\":{timestamp}}}";
+        // Manual string concat allows us to avoid internal JSON serializers for speed
+        return $"{{\"type\":\"{type}\",\"source\":\"unity\",\"note\":\"{note}\"}}";
     }
 
     private void SendToMobileApp(string payload)
@@ -85,62 +90,7 @@ public class BridgeTarget : MonoBehaviour
 #elif UNITY_IOS && !UNITY_EDITOR
         NativeAPI.sendMessageToMobileApp(payload);
 #else
-        Debug.Log($"[BridgeTarget] Would send: {payload}");
+        Debug.Log($"[Bridge-Mock] Sending: {payload}");
 #endif
-    }
-
-    private void TryCreateDebugCube()
-    {
-        if (m_DebugCube != null)
-        {
-            return;
-        }
-
-        var cam = Camera.main;
-        if (cam == null)
-        {
-            return;
-        }
-
-        m_DebugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        m_DebugCube.name = "UnityBridgeDebugCube";
-        m_DebugCube.transform.SetParent(cam.transform, false);
-        m_DebugCube.transform.localPosition = new Vector3(0f, 0f, 0.4f);
-        m_DebugCube.transform.localScale = Vector3.one * 0.08f;
-    }
-
-    private static void HandleLog(string logString, string stackTrace, LogType type)
-    {
-        if (LogBuffer.Count >= MaxLogs)
-        {
-            LogBuffer.Dequeue();
-        }
-
-        LogBuffer.Enqueue($"[{type}] {logString}");
-    }
-
-    private void OnGUI()
-    {
-        if (!m_ShowOverlay)
-        {
-            return;
-        }
-
-        GUI.color = new Color(0f, 0f, 0f, 0.6f);
-        GUI.Box(new Rect(10, 10, Screen.width - 20, 200), GUIContent.none);
-        GUI.color = Color.white;
-
-        GUILayout.BeginArea(new Rect(20, 20, Screen.width - 40, 180));
-        GUILayout.Label("Unity Bridge Debug", GUI.skin.label);
-        foreach (var line in LogBuffer)
-        {
-            GUILayout.Label(line, GUI.skin.label);
-        }
-
-        if (GUILayout.Button("Hide Debug"))
-        {
-            m_ShowOverlay = false;
-        }
-        GUILayout.EndArea();
     }
 }
