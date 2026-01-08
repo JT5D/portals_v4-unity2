@@ -14,8 +14,11 @@ NC='\033[0m'
 # Paths
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UNITY_PROJECT="$PROJECT_ROOT/unity"
-IOS_BUILD_PATH="$UNITY_PROJECT/builds/ios"
-XCODE_PROJECT="$IOS_BUILD_PATH/Unity-iPhone.xcodeproj"
+# Per @azesmway/react-native-unity docs: Unity exports to temp location OUTSIDE RN project
+# Only the built UnityFramework.framework is copied to unity/builds/ios/
+UNITY_EXPORT_PATH="/tmp/unity-ios-export"
+FRAMEWORK_DEST="$UNITY_PROJECT/builds/ios"
+XCODE_PROJECT="$UNITY_EXPORT_PATH/Unity-iPhone.xcodeproj"
 DERIVED_DATA_ROOT="$HOME/Library/Developer/Xcode/DerivedData"
 LOG_DIR="$PROJECT_ROOT/logs"
 DERIVED_DATA_APP_PATTERN="$DERIVED_DATA_ROOT/Unity-iPhone-*"
@@ -62,6 +65,7 @@ SKIP_PREFLIGHT=false
 SKIP_UNITY_EXPORT=false
 KEEP_UNITY_OPEN=false
 FORCE_CLOSE_UNITY=false
+SKIP_POD_INSTALL=false
 
 mkdir -p "$LOG_DIR"
 
@@ -192,6 +196,10 @@ while [[ $# -gt 0 ]]; do
         --help)
             usage
             ;;
+        --skip-pod-install)
+            SKIP_POD_INSTALL=true
+            shift
+            ;;
         *)
             shift
             ;;
@@ -313,7 +321,7 @@ fi
 # Optional clean: remove DerivedData if FORCE_CLEAN=1 is set to recover from corrupted caches.
 if [ "${FORCE_CLEAN:-0}" = "1" ]; then
     warn "FORCE_CLEAN=1: removing Xcode DerivedData for Unity-iPhone..."
-    rm -rf $DERIVED_DATA_APP_PATTERN "$IOS_BUILD_PATH/DerivedData" || true
+    rm -rf $DERIVED_DATA_APP_PATTERN "$UNITY_EXPORT_PATH/DerivedData" || true
 fi
 
 # =============================================================================
@@ -360,14 +368,14 @@ fi
 
 build_log "Building GameAssembly first (contains il2cpp.a)..."
 (
-    cd "$IOS_BUILD_PATH"
+    cd "$UNITY_EXPORT_PATH"
     # Use -sdk instead of -destination, and SYMROOT instead of -derivedDataPath for -target builds
     xcodebuild -project Unity-iPhone.xcodeproj \
         -target GameAssembly \
         -configuration Release \
         -sdk iphoneos \
-        SYMROOT="$IOS_BUILD_PATH/DerivedData/Build" \
-        CONFIGURATION_BUILD_DIR="$IOS_BUILD_PATH/DerivedData/Build/Products/Release-iphoneos" \
+        SYMROOT="$UNITY_EXPORT_PATH/DerivedData/Build" \
+        CONFIGURATION_BUILD_DIR="$UNITY_EXPORT_PATH/DerivedData/Build/Products/Release-iphoneos" \
         build \
         > "$LOG_DIR/xcodebuild_gameassembly.log" 2>&1
 ) || {
@@ -378,12 +386,12 @@ build_log "Building GameAssembly first (contains il2cpp.a)..."
 
 build_log "Building UnityFramework (Release)..."
 (
-    cd "$IOS_BUILD_PATH"
+    cd "$UNITY_EXPORT_PATH"
 
     # Strategy: Force Classic Linker (ld-classic) via LDFLAGS
     # CRITICAL: Force-load il2cpp.a which contains the IL2CPP runtime symbols
     LD_CLASSIC_PATH=$(xcrun -f ld-classic 2>/dev/null || echo "")
-    IL2CPP_LIB="$IOS_BUILD_PATH/DerivedData/Build/Products/Release-iphoneos/il2cpp.a"
+    IL2CPP_LIB="$UNITY_EXPORT_PATH/DerivedData/Build/Products/Release-iphoneos/il2cpp.a"
 
     if [ -n "$LD_CLASSIC_PATH" ]; then
         build_log "Found Classic Linker at: $LD_CLASSIC_PATH"
@@ -402,7 +410,7 @@ build_log "Building UnityFramework (Release)..."
         -scheme UnityFramework \
         -configuration Release \
         -destination "generic/platform=iOS" \
-        -derivedDataPath "$IOS_BUILD_PATH/DerivedData" \
+        -derivedDataPath "$UNITY_EXPORT_PATH/DerivedData" \
         "${EXTRA_BUILD_ARGS[@]}" \
         build \
         > "$LOG_DIR/xcodebuild_framework.log" 2>&1
@@ -412,26 +420,24 @@ build_log "Building UnityFramework (Release)..."
     exit 1
 }
 
-# Copy framework to expected location
-LATEST_FRAMEWORK="$IOS_BUILD_PATH/DerivedData/Build/Products/Release-iphoneos/UnityFramework.framework"
+# Copy ONLY the framework to the plugin's expected location
+# Per @azesmway/react-native-unity docs: unity/builds/ios should contain ONLY UnityFramework.framework
+LATEST_FRAMEWORK="$UNITY_EXPORT_PATH/DerivedData/Build/Products/Release-iphoneos/UnityFramework.framework"
 if [ ! -d "$LATEST_FRAMEWORK" ]; then
     error "Framework artifact not found at $LATEST_FRAMEWORK"
     exit 1
 fi
-rm -rf "$IOS_BUILD_PATH/UnityFramework.framework"
-cp -R "$LATEST_FRAMEWORK" "$IOS_BUILD_PATH/"
-build_log "Framework built and copied to ios/UnityFramework/"
 
-# CRITICAL: Also copy to node_modules so React Native Unity package uses custom framework
-NODE_MODULES_UNITY_PATH="$PROJECT_ROOT/node_modules/@azesmway/react-native-unity/ios"
-if [ -d "$NODE_MODULES_UNITY_PATH" ]; then
-    build_log "Copying custom UnityFramework to node_modules..."
-    rm -rf "$NODE_MODULES_UNITY_PATH/UnityFramework.framework"
-    cp -R "$LATEST_FRAMEWORK" "$NODE_MODULES_UNITY_PATH/"
-    build_log "✅ Custom UnityFramework installed in node_modules"
-else
-    warn "⚠️  node_modules Unity package not found at: $NODE_MODULES_UNITY_PATH"
-fi
+# Ensure destination exists and contains ONLY the framework (not full Unity export)
+mkdir -p "$FRAMEWORK_DEST"
+rm -rf "$FRAMEWORK_DEST/UnityFramework.framework"
+cp -R "$LATEST_FRAMEWORK" "$FRAMEWORK_DEST/"
+build_log "✅ Framework copied to unity/builds/ios/UnityFramework.framework"
+
+# Note: The podspec's prepare_command will copy from unity/builds/ios/ to node_modules during pod install
+# No need to manually copy to node_modules here - pod install handles it via:
+#   cp -R ../../../unity/builds/ios/ ios/
+build_log "Framework will be installed to node_modules via pod install"
 
 # Restart MCP server if it was running before build and user opted-in.
 if mcp_running && [ "${RESTART_MCP:-0}" = "1" ]; then
@@ -448,11 +454,25 @@ fi
 # 6. Pod Install & Install to Device
 # =============================================================================
 
-build_log "Running Pod Install..."
-(
-    cd "$PROJECT_ROOT/ios"
-    LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install > "$LOG_DIR/pod_install.log" 2>&1
-)
+if [ "$SKIP_POD_INSTALL" = false ]; then
+    # Per @azesmway/react-native-unity docs: Clear Pods cache before install
+    # This ensures the podspec's prepare_command runs fresh and copies the new framework
+    build_log "Clearing Pods cache to ensure fresh framework install..."
+    rm -rf "$PROJECT_ROOT/ios/Pods"
+    rm -f "$PROJECT_ROOT/ios/Podfile.lock"
+
+    build_log "Running Pod Install..."
+    (
+        cd "$PROJECT_ROOT/ios"
+        LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install > "$LOG_DIR/pod_install.log" 2>&1
+    ) || {
+        error "Pod install failed. Check $LOG_DIR/pod_install.log"
+        tail -n 20 "$LOG_DIR/pod_install.log"
+        exit 1
+    }
+else
+    build_log "Skipping Pod Install (requested via --skip-pod-install)"
+fi
 
 ensure_ngrok
 

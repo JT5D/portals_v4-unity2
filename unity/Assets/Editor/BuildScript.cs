@@ -15,7 +15,9 @@ public class BuildScript
 
     private static string GetBuildPathIOS()
     {
-        return Path.Combine(Application.dataPath, "../builds/ios");
+        // Per @azesmway/react-native-unity docs: Export to ANY folder OUTSIDE the RN project.
+        // The framework will be copied to unity/builds/ios/ after building.
+        return "/tmp/unity-ios-export";
     }
 
     private static string[] GetScenePaths()
