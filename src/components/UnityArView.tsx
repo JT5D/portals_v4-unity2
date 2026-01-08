@@ -1,24 +1,34 @@
 import UnityView, { UnityViewMessage } from '@azesmway/react-native-unity';
-import React, { forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
 
 export interface UnityArViewProps extends ViewProps {
     onUnityMessage?: (message: any) => void;
+    onUnityReady?: () => void;
 }
 
-export const UnityArView = forwardRef<UnityView, UnityArViewProps>(({ onUnityMessage, style, ...props }, ref) => {
+export const UnityArView = forwardRef<UnityView, UnityArViewProps>(({ onUnityMessage, onUnityReady, style, ...props }, ref) => {
     const unityRef = useRef<UnityView>(null);
+    const [unityReady, setUnityReady] = useState(false);
     useImperativeHandle(ref, () => unityRef.current as UnityView);
 
     const handleMessage = (message: UnityViewMessage) => {
-        if (onUnityMessage && message.message) {
+        if (message.message) {
             try {
                 // Attempt to parse JSON message from Unity
                 const data = JSON.parse(message.message);
-                onUnityMessage(data);
+
+                // Check for unity_ready message
+                if (data.type === 'unity_ready' && !unityReady) {
+                    console.log('[UnityArView] Unity is ready!');
+                    setUnityReady(true);
+                    onUnityReady?.();
+                }
+
+                onUnityMessage?.(data);
             } catch (e) {
                 // Fallback to raw string
-                onUnityMessage(message.message);
+                onUnityMessage?.(message.message);
             }
         }
     };

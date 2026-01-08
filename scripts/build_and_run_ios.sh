@@ -30,11 +30,26 @@ fi
 # Settings with defaults
 [ -z "${UNITY_VERSION:-}" ] && UNITY_VERSION="6000.2.14f1"
 UNITY_HUB_PATH="/Applications/Unity/Hub/Editor/${UNITY_VERSION}/Unity.app/Contents/MacOS/Unity"
-DEVICE_NAME="${DEVICE_NAME:-IMClab 15}"
+DEVICE_NAME_PATTERN="${DEVICE_NAME:-IMClab 15}"
 # Overwrite with env var if present
 if [ -n "${IOS_DEVICE_NAME:-}" ]; then
-    DEVICE_NAME="$IOS_DEVICE_NAME"
+    DEVICE_NAME_PATTERN="$IOS_DEVICE_NAME"
 fi
+
+# Resolve exact device name or UDID from xctrace (case-sensitive)
+DEVICE_NAME=$(xcrun xctrace list devices 2>&1 | grep -i "$DEVICE_NAME_PATTERN" | grep -v "Simulator" | head -1 | sed -E 's/^([^(]+).*/\1/' | xargs)
+DEVICE_UDID=$(xcrun xctrace list devices 2>&1 | grep -i "$DEVICE_NAME_PATTERN" | grep -v "Simulator" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+
+if [ -z "$DEVICE_NAME" ]; then
+    echo "❌ Device not found matching pattern: $DEVICE_NAME_PATTERN" >&2
+    echo "Available devices:" >&2
+    xcrun xctrace list devices 2>&1 | grep -v "Simulator" | head -10 >&2
+    exit 1
+fi
+
+# Note: build_log function defined later in script
+# Will be shown again after functions are loaded
+DEVICE_RESOLVED=1
 XCODE_SCHEME="${IOS_SCHEME:-Portals}"
 PORT="${PORT:-8081}"
 URL_SCHEME="${EXPO_URL_SCHEME:-portals}"
@@ -54,12 +69,71 @@ mkdir -p "$LOG_DIR"
 # Helper Functions
 # =============================================================================
 
-log() { echo -e "${GREEN}[BuildScript] $1${NC}"; }
-warn() { echo -e "${YELLOW}[BuildScript] $1${NC}"; }
+build_log() { echo -e "${GREEN}[BuildScript] $1${NC}"; }
+warn() { echo -e "${YELLOW}[BuildScript] $1${NC}" >&2; }
 error() { echo -e "${RED}[BuildScript] $1${NC}"; }
 unity_running() { pgrep -f "Unity.app/Contents/MacOS/Unity.*${UNITY_PROJECT}" >/dev/null 2>&1; }
 xcode_running() { pgrep -f "xcodebuild" >/dev/null 2>&1; }
 mcp_running() { pgrep -f "/Users/jamestunick/Applications/UnityMCP/UnityMcpServer/src server.py" >/dev/null 2>&1; }
+
+ensure_ngrok() {
+    if node -e "require('@expo/ngrok')" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    error "@expo/ngrok is required for tunnel mode. Install with: npm install -D @expo/ngrok@^4.1.0"
+    exit 1
+}
+
+resolve_tunnel_url() {
+    if [ -n "$EXPO_TUNNEL_URL" ]; then
+        echo "$EXPO_TUNNEL_URL"
+        return
+    fi
+
+    local url=""
+    for i in {1..20}; do
+        url=$(curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null | python3 - <<'PY'
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    for t in data.get("tunnels", []):
+        url = t.get("public_url", "")
+        if url.startswith("https://"):
+            print(url)
+            break
+except Exception:
+    pass
+PY
+)
+        if [ -n "$url" ]; then
+            echo "$url"
+            return
+        fi
+        sleep 1
+    done
+
+    if [ -f "$PROJECT_ROOT/.expo/settings.json" ]; then
+        url=$(python3 - <<PY
+import json
+import pathlib
+
+settings = pathlib.Path(".expo/settings.json")
+data = json.loads(settings.read_text())
+randomness = data.get("urlRandomness", "")
+if randomness:
+    print(f"https://{randomness}-${PORT}.exp.direct")
+PY
+)
+        if [ -n "$url" ]; then
+            warn "Using exp.direct fallback from .expo/settings.json"
+            echo "$url"
+            return
+        fi
+    fi
+
+    echo ""
+}
 
 find_unity() {
     if [ -f "$UNITY_HUB_PATH" ]; then
@@ -133,13 +207,14 @@ fi
 # 1. Environment Check & Setup
 # =============================================================================
 
-log "Starting consolidated iOS build process..."
-if [ "$BUILD_ONLY" = true ]; then log "Mode: Build Only"; fi
-if [ "$SKIP_UNITY_EXPORT" = true ]; then log "Mode: Skip Unity export (Unity Editor friendly)"; fi
+build_log "Starting consolidated iOS build process..."
+build_log "Resolved device: $DEVICE_NAME (UDID: $DEVICE_UDID)"
+if [ "$BUILD_ONLY" = true ]; then build_log "Mode: Build Only"; fi
+if [ "$SKIP_UNITY_EXPORT" = true ]; then build_log "Mode: Skip Unity export (Unity Editor friendly)"; fi
 
 # 1a. Find Unity
 UNITY_BIN=$(find_unity)
-log "Using Unity: $UNITY_BIN"
+build_log "Using Unity: $UNITY_BIN"
 
 # 1b. Find Xcode
 if [ -z "${DEVELOPER_DIR:-}" ]; then
@@ -147,7 +222,7 @@ if [ -z "${DEVELOPER_DIR:-}" ]; then
     if [ -f "$PROJECT_ROOT/scripts/find_xcode.py" ]; then
         DEVELOPER_DIR=$(python3 "$PROJECT_ROOT/scripts/find_xcode.py")
         export DEVELOPER_DIR
-        log "Selected Xcode: $DEVELOPER_DIR"
+        build_log "Selected Xcode: $DEVELOPER_DIR"
     else
         warn "scripts/find_xcode.py not found, relying on system default Xcode."
     fi
@@ -158,7 +233,7 @@ fi
 # =============================================================================
 
 if [ "$SKIP_PREFLIGHT" = false ]; then
-    log "Running Preflight Checks..."
+    build_log "Running Preflight Checks..."
 
     # Detect running editor/builds and bail to avoid DB locks and batchmode failures.
     if unity_running; then
@@ -180,12 +255,12 @@ if [ "$SKIP_PREFLIGHT" = false ]; then
     fi
 
     # Kill stuck processes
-    log "Cleaning stuck processes..."
+    build_log "Cleaning stuck processes..."
     pkill -f "Unity-iPhone.xcodeproj" >/dev/null 2>&1 || true
     pkill -f "il2cpp" >/dev/null 2>&1 || true
 
     # MCP Verify
-    log "Running Unity MCPTools.VerifyAndAutoFix..."
+    build_log "Running Unity MCPTools.VerifyAndAutoFix..."
     mkdir -p "$LOG_DIR/headless"
     "$UNITY_BIN" -batchmode -nographics -quit \
         -projectPath "$UNITY_PROJECT" \
@@ -195,7 +270,7 @@ if [ "$SKIP_PREFLIGHT" = false ]; then
     }
 
     # Missing Scripts Check
-    log "Checking for missing scripts..."
+    build_log "Checking for missing scripts..."
     if [ -f "$PROJECT_ROOT/scripts/check_missing_scripts.py" ]; then
         python3 "$PROJECT_ROOT/scripts/check_missing_scripts.py" \
           --project "$UNITY_PROJECT" \
@@ -213,7 +288,7 @@ fi
 # 3. Clean & Prepare
 # =============================================================================
 
-log "Cleaning up previous processes..."
+build_log "Cleaning up previous processes..."
 # Kill stale Metro
 for port in 8080 8081; do
     lsof -ti tcp:$port | xargs -r kill || true
@@ -246,13 +321,13 @@ fi
 # =============================================================================
 
 if [ "$SKIP_UNITY_EXPORT" = true ]; then
-    log "Skipping Unity export (using existing Unity-iPhone.xcodeproj)."
+    build_log "Skipping Unity export (using existing Unity-iPhone.xcodeproj)."
     if [ ! -d "$XCODE_PROJECT" ]; then
         error "Missing Unity export at $XCODE_PROJECT. Export iOS from Unity Editor first."
         exit 1
     fi
 else
-    log "running Unity export..."
+    build_log "running Unity export..."
     # Stop MCP server just for the build to free ports and stdout hooks.
     if mcp_running; then
         warn "Stopping Unity MCP server for headless build..."
@@ -266,7 +341,7 @@ else
 
     # Note: Unity logs to file. We check log content for success message.
     if grep -q "iOS Build Succeeded" "$LOG_DIR/unity_ios_build.log"; then
-        log "Unity export successful."
+        build_log "Unity export successful."
     else
         error "Unity export failed. Check $LOG_DIR/unity_ios_build.log"
         tail -n 20 "$LOG_DIR/unity_ios_build.log"
@@ -283,7 +358,7 @@ fi
 # 5. Build UnityFramework (xcodebuild)
 # =============================================================================
 
-log "Building GameAssembly first (contains il2cpp.a)..."
+build_log "Building GameAssembly first (contains il2cpp.a)..."
 (
     cd "$IOS_BUILD_PATH"
     # Use -sdk instead of -destination, and SYMROOT instead of -derivedDataPath for -target builds
@@ -301,7 +376,7 @@ log "Building GameAssembly first (contains il2cpp.a)..."
     exit 1
 }
 
-log "Building UnityFramework (Release)..."
+build_log "Building UnityFramework (Release)..."
 (
     cd "$IOS_BUILD_PATH"
 
@@ -311,8 +386,8 @@ log "Building UnityFramework (Release)..."
     IL2CPP_LIB="$IOS_BUILD_PATH/DerivedData/Build/Products/Release-iphoneos/il2cpp.a"
 
     if [ -n "$LD_CLASSIC_PATH" ]; then
-        log "Found Classic Linker at: $LD_CLASSIC_PATH"
-        log "Force-loading il2cpp.a: $IL2CPP_LIB"
+        build_log "Found Classic Linker at: $LD_CLASSIC_PATH"
+        build_log "Force-loading il2cpp.a: $IL2CPP_LIB"
         EXTRA_BUILD_ARGS=(
            "OTHER_LDFLAGS=-Wl,-ld_classic -force_load $IL2CPP_LIB"
         )
@@ -345,7 +420,18 @@ if [ ! -d "$LATEST_FRAMEWORK" ]; then
 fi
 rm -rf "$IOS_BUILD_PATH/UnityFramework.framework"
 cp -R "$LATEST_FRAMEWORK" "$IOS_BUILD_PATH/"
-log "Framework built and copied."
+build_log "Framework built and copied to ios/UnityFramework/"
+
+# CRITICAL: Also copy to node_modules so React Native Unity package uses custom framework
+NODE_MODULES_UNITY_PATH="$PROJECT_ROOT/node_modules/@azesmway/react-native-unity/ios"
+if [ -d "$NODE_MODULES_UNITY_PATH" ]; then
+    build_log "Copying custom UnityFramework to node_modules..."
+    rm -rf "$NODE_MODULES_UNITY_PATH/UnityFramework.framework"
+    cp -R "$LATEST_FRAMEWORK" "$NODE_MODULES_UNITY_PATH/"
+    build_log "✅ Custom UnityFramework installed in node_modules"
+else
+    warn "⚠️  node_modules Unity package not found at: $NODE_MODULES_UNITY_PATH"
+fi
 
 # Restart MCP server if it was running before build and user opted-in.
 if mcp_running && [ "${RESTART_MCP:-0}" = "1" ]; then
@@ -354,7 +440,7 @@ if mcp_running && [ "${RESTART_MCP:-0}" = "1" ]; then
 fi
 
 if [ "$BUILD_ONLY" = true ]; then
-    log "Build only mode complete. Exiting."
+    build_log "Build only mode complete. Exiting."
     exit 0
 fi
 
@@ -362,29 +448,20 @@ fi
 # 6. Pod Install & Install to Device
 # =============================================================================
 
-log "Running Pod Install..."
+build_log "Running Pod Install..."
 (
     cd "$PROJECT_ROOT/ios"
     LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install > "$LOG_DIR/pod_install.log" 2>&1
 )
 
-if [ ! -d "$PROJECT_ROOT/node_modules/@expo/ngrok" ]; then
-    GLOBAL_NGROK="$(npm root -g 2>/dev/null)/@expo/ngrok"
-    if [ -d "$GLOBAL_NGROK" ]; then
-        mkdir -p "$PROJECT_ROOT/node_modules/@expo"
-        cp -R "$GLOBAL_NGROK" "$PROJECT_ROOT/node_modules/@expo/" || true
-        log "Copied global @expo/ngrok into local node_modules."
-    else
-        warn "@expo/ngrok not found locally or globally; tunnel URL detection may fail."
-    fi
-fi
+ensure_ngrok
 
-log "Starting Metro Bundler..."
+build_log "Starting Metro Bundler..."
 METRO_ENV="EXPO_DEV_SERVER_PORT=$PORT EXPO_METRO_PORT=$PORT EXPO_PACKAGER_PORT=$PORT LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8"
 nohup bash -c "${METRO_ENV} npx expo start --dev-client --tunnel --scheme \"$URL_SCHEME\" --port \"$PORT\"" > "$LOG_DIR/metro.log" 2>&1 &
 echo $! > "$LOG_DIR/metro.pid"
 
-log "Waiting for Metro to listen on :$PORT..."
+build_log "Waiting for Metro to listen on :$PORT..."
 METRO_READY=false
 for i in {1..30}; do
     if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
@@ -397,63 +474,43 @@ if [ "$METRO_READY" = false ]; then
     warn "Metro did not start on :$PORT (check $LOG_DIR/metro.log)."
 fi
 
-log "Installing and Running on Device: $DEVICE_NAME..."
-# We use a subshell to capture exit code properly if needed
-bash -c "${METRO_ENV} npx expo run:ios --device \"$DEVICE_NAME\" --scheme \"$XCODE_SCHEME\" --configuration Release"
-
-log "Launching dev client with tunnel URL..."
-TUNNEL_URL=""
-if [ -n "$EXPO_TUNNEL_URL" ]; then
-    TUNNEL_URL="$EXPO_TUNNEL_URL"
+TUNNEL_URL="$(resolve_tunnel_url)"
+if [ -n "$TUNNEL_URL" ]; then
+    echo "$TUNNEL_URL" > "$LOG_DIR/metro_url.txt"
+    build_log "Tunnel URL: $TUNNEL_URL"
 else
-    for i in {1..20}; do
-        TUNNEL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null | python3 - <<'PY'
-import json, sys
-try:
-    data = json.load(sys.stdin)
-    tunnels = data.get("tunnels", [])
-    for t in tunnels:
-        url = t.get("public_url", "")
-        if url.startswith("https://"):
-            print(url)
-            break
-except Exception:
-    pass
-PY
-)
-        if [ -n "$TUNNEL_URL" ]; then
-            break
-        fi
-        sleep 1
-    done
+    warn "Could not determine tunnel URL. Set EXPO_TUNNEL_URL to override."
 fi
 
-if [ -z "$TUNNEL_URL" ] && [ -f "$PROJECT_ROOT/.expo/settings.json" ]; then
-    TUNNEL_URL=$(python3 - <<'PY'
-import json
-import pathlib
+build_log "Installing and Running on Device: $DEVICE_NAME (UDID: $DEVICE_UDID)..."
+# Bypass expo (it lowercases UDIDs), use xcodebuild directly
+cd ios
+xcodebuild -workspace Portals.xcworkspace \
+    -scheme "$XCODE_SCHEME" \
+    -configuration Release \
+    -destination "id=$DEVICE_UDID" \
+    -allowProvisioningUpdates \
+    build install
+cd ..
 
-settings = pathlib.Path(".expo/settings.json")
-data = json.loads(settings.read_text())
-randomness = data.get("urlRandomness", "")
-if randomness:
-    print(f"https://{randomness}-8081.exp.direct")
-PY
-)
-    if [ -n "$TUNNEL_URL" ]; then
-        warn "Using exp.direct fallback from .expo/settings.json"
-    fi
+build_log "Launching dev client with tunnel URL..."
+if [ -z "$TUNNEL_URL" ]; then
+    TUNNEL_URL="$(resolve_tunnel_url)"
 fi
 
 if [ -n "$TUNNEL_URL" ]; then
     EXPO_URL="$TUNNEL_URL"
-    echo "$EXPO_URL" > "$LOG_DIR/metro_url.txt"
-    log "Tunnel URL: $EXPO_URL"
-    PAYLOAD_URL=$(python3 - <<PY
+    build_log "Tunnel URL: $EXPO_URL"
+    PAYLOAD_URL=$(
+        EXPO_URL="$EXPO_URL" URL_SCHEME="$URL_SCHEME" python3 - <<'PY'
 import urllib.parse
-print(f"{\"$URL_SCHEME\"}://expo-development-client/?url=" + urllib.parse.quote(\"$EXPO_URL\", safe=\"\"))
+import os
+
+scheme = os.environ["URL_SCHEME"]
+url = os.environ["EXPO_URL"]
+print(f"{scheme}://expo-development-client/?url=" + urllib.parse.quote(url, safe=""))
 PY
-)
+    )
     xcrun devicectl device process launch \
         --device "$DEVICE_NAME" \
         --terminate-existing \
@@ -466,4 +523,4 @@ else
     warn "Could not determine tunnel URL. Set EXPO_TUNNEL_URL or open the dev client manually."
 fi
 
-log "Done!"
+build_log "Done!"

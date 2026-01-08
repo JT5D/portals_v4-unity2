@@ -1,0 +1,38 @@
+# Unity artifacts (largest token consumers)
+unity/Library/
+unity/Temp/
+unity/Logs/
+unity/builds/
+unity/UserSettings/
+unity/obj/
+
+# React Native build artifacts
+node_modules/
+ios/Pods/
+ios/build/
+ios/DerivedData/
+android/build/
+android/app/build/
+
+# Logs and caches
+logs/
+*.log
+*.cache
+*.pdb
+
+# Reference projects (should be separate sessions)
+_ref/
+
+# Documentation backups
+.claude/backups/
+
+# Temporary build files
+*.bak
+*.bak2
+scripts/*.bak*
+
+# Research/planning docs (load manually when needed)
+CLAUDE_CODE_*.md
+QUICK_WINS_*.md
+RESEARCH_*.md
+START_HERE.md

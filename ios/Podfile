@@ -86,5 +86,23 @@ target 'Portals' do
       end
     end
     # --- END AUTO-INJECTION ---
+
+    # Copy custom UnityFramework from Unity build to node_modules
+    # This ensures the React Native Unity package uses our custom-built framework
+    # instead of the package's default framework
+    custom_framework_path = File.join(Pod::Config.instance.installation_root, '..', 'unity', 'builds', 'ios', 'UnityFramework.framework')
+    target_framework_path = File.join(Pod::Config.instance.installation_root, '..', 'node_modules', '@azesmway', 'react-native-unity', 'ios', 'UnityFramework.framework')
+
+    if File.exist?(custom_framework_path)
+      puts "🔧 Copying custom UnityFramework from Unity build..."
+      FileUtils.rm_rf(target_framework_path) if File.exist?(target_framework_path)
+      FileUtils.cp_r(custom_framework_path, target_framework_path)
+      puts "✅ Custom UnityFramework copied successfully"
+      puts "   Source: #{custom_framework_path}"
+      puts "   Target: #{target_framework_path}"
+    else
+      puts "⚠️  Custom UnityFramework not found at: #{custom_framework_path}"
+      puts "   Run Unity build first: npm run unity:build:ios"
+    end
   end
 end

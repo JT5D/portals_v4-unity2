@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { UnityArView } from '../components/UnityArView';
 import { useNavigation } from '@react-navigation/native';
@@ -10,13 +10,24 @@ import { DebugOverlay } from '../components/DebugOverlay';
 export const UnityTestScene: React.FC = () => {
     const navigation = useNavigation();
     const unityRef = useRef<UnityView>(null);
+    const [unityReady, setUnityReady] = useState(false);
 
     const handleUnityMessage = (message: any) => {
         console.log('[Unity Message]:', message);
     };
 
+    const handleUnityReady = () => {
+        console.log('[UnityTestScene] Unity is ready and can receive messages');
+        setUnityReady(true);
+    };
+
     const handlePingUnity = () => {
+        if (!unityReady) {
+            console.warn('[UnityTestScene] Unity not ready yet, please wait...');
+            return;
+        }
         const payload = JSON.stringify({ type: 'ping', source: 'rn', ts: Date.now() });
+        console.log('The button has been tapped!');
         unityRef.current?.postMessage('BridgeTarget', 'OnMessage', payload);
     };
 
@@ -30,19 +41,30 @@ export const UnityTestScene: React.FC = () => {
             </View>
             <View style={styles.header}>
                 <Text style={styles.title}>Unity AR Test</Text>
-                <Text style={styles.subtitle}>Unity is rendering below</Text>
+                <Text style={styles.subtitle}>
+                    Unity Status: {unityReady ? '✅ Ready' : '⏳ Initializing...'}
+                </Text>
             </View>
             <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.pingButton} onPress={handlePingUnity}>
-                    <Ionicons name="radio-outline" size={18} color="#000" />
-                    <Text style={styles.pingText}>Ping Unity</Text>
+                <TouchableOpacity
+                    style={[styles.pingButton, !unityReady && styles.pingButtonDisabled]}
+                    onPress={handlePingUnity}
+                    disabled={!unityReady}
+                >
+                    <Ionicons name="radio-outline" size={18} color={unityReady ? "#000" : "#666"} />
+                    <Text style={[styles.pingText, !unityReady && styles.pingTextDisabled]}>Ping Unity</Text>
                 </TouchableOpacity>
-                <Text style={styles.hint}>Unity will log {"{type:\"pong\"}"} if handler is wired.</Text>
+                <Text style={styles.hint}>
+                    {unityReady
+                        ? 'Unity will log {type:"pong"} if handler is wired.'
+                        : 'Waiting for Unity to initialize...'}
+                </Text>
             </View>
             <UnityArView
                 ref={unityRef}
                 style={styles.unityView}
                 onUnityMessage={handleUnityMessage}
+                onUnityReady={handleUnityReady}
             />
             <DebugOverlay startVisible />
         </SafeAreaView>
@@ -106,10 +128,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8,
     },
+    pingButtonDisabled: {
+        backgroundColor: '#333',
+        opacity: 0.5,
+    },
     pingText: {
         color: '#000',
         fontWeight: '700',
         fontSize: 14,
+    },
+    pingTextDisabled: {
+        color: '#666',
     },
     hint: {
         color: '#bbb',
