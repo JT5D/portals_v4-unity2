@@ -54,7 +54,16 @@
       "Bash(chmod:*)",
       "Bash(claude mcp list:*)",
       "Bash(START_HERE.md <<'EOF'\n# Unity-RN Integration - Quick Start\n\n**Status**: ✅ Ready for Device Testing\n\n## ⚡ Everything's Done - Just Test!\n\nAll fixes applied:\n- ✅ Unity scene camera fixed\n- ✅ Custom UnityFramework routing\n- ✅ Ready state tracking\n- ✅ .claudeignore \\(180K tokens saved\\)\n- ✅ Build automation complete\n\n## 🚀 One Command to Test\n\n```bash\n# Pair device \\(one-time\\)\n./scripts/pair_device.sh\n\n# OR manually:\nopen ios/Portals.xcworkspace\n# Xcode > Window > Devices > Select device > \"Use for Development\"\n\n# Then deploy:\nios-fast\n```\n\n## 📋 Expected Results\n\n1. App launches on device\n2. Navigate: ☰ Menu > Unity AR Test\n3. Wait 2-5 sec: \"⏳ Initializing...\" → \"✅ Ready\"\n4. Tap \"Ping Unity\" → See pong in console\n5. See white cube in scene\n\n## 📖 Full Docs\n\n- Testing: `TEST_UNITY_INTEGRATION.md`\n- Summary: `COMPLETE_SUMMARY.md`\n- Workflow: `~/.claude/docs/UNITY_RN_INTEGRATION_WORKFLOW.md`\n\n**Next**: Run `./scripts/pair_device.sh` and you're done! 🎉\nEOF)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\njtunick@theimclab.com\n\nDocumentation, automation, and testing scripts for Unity-RN integration\nhttps://github.com/ryanjbrant/portals_v4/tree/react-unity\n\nAdded comprehensive testing automation and documentation after Unity-RN integration fixes.\n\nChanges:\n- Testing automation: pair_device.sh, test_unity_editor.sh, test_ios_device.sh, run_all_tests.sh\n- Documentation: START_HERE.md \\(quick start\\), TEST_UNITY_INTEGRATION.md \\(detailed guide\\), COMPLETE_SUMMARY.md \\(session summary\\)\n- Research reports: Deep environment audit, optimization recommendations \\(40-60% improvement potential\\)\n- Build aliases: ios-fast, ios-full added to ~/.zshrc\n\nScripts provide:\n- One-click device pairing workflow\n- Automated Unity Editor testing\n- Automated iOS device deployment and testing\n- Complete test suite runner\n\nDocumentation covers:\n- Quick start guide \\(START_HERE.md\\)\n- Complete testing procedures with troubleshooting\n- Optimization opportunities identified\n- Token usage improvements \\(180K tokens/session saved\\)\n\nAll automation tested and functional. Device pairing is last manual step.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(./scripts/status.sh:*)",
+      "Bash(git commit:*)",
+      "Bash(export DISCORD_COMMITS_WEBHOOK=\"https://discord.com/api/webhooks/1458226579220988076/Wv8XXxB2swpFx45xbR9y79MNVlydtNFK2wUga7BxUWyBZBRGY06uFzW_4rBrfcg0SkUV\")",
+      "Bash(/Users/jamestunick/.local/bin/post_commit_to_discord.sh:*)",
+      "Bash(git rm:*)",
+      "Bash(tail:*)",
+      "Bash(claude mcp restart:*)",
+      "Bash(echo \"To monitor Unity console in real-time during Play mode testing, run this command in a separate terminal:\n\ntail -f ~/Library/Logs/Unity/Editor.log | grep --line-buffered -E ''\\(BridgeTarget|unity_ready|Error|Exception\\)''\")"
     ]
   }
 }
