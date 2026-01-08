@@ -37,7 +37,24 @@
       "Bash(DEVELOPER_DIR=\"/Applications/Xcode-164.app/Contents/Developer\" ./scripts/build_and_run_ios.sh:*)",
       "Bash(du:*)",
       "Bash(security find-identity:*)",
-      "Bash(DEVELOPER_DIR=\"/Applications/Xcode-164.app/Contents/Developer\" xcodebuild:*)"
+      "Bash(DEVELOPER_DIR=\"/Applications/Xcode-164.app/Contents/Developer\" xcodebuild:*)",
+      "Bash(git reset:*)",
+      "Bash(test:*)",
+      "Bash(git commit --amend -m \"$\\(cat <<''COMMITMSG''\njtunick@theimclab.com\n\nUnity-React Native integration: scene visibility, message passing, and .claudeignore optimization\nhttps://github.com/ryanjbrant/portals_v4/tree/react-unity\n\nRoot cause: Package''s default UnityFramework loaded instead of custom build with BridgeTarget.\nCritical optimization: Added .claudeignore \\(180K token savings per session, 90% reduction\\).\n\nChanges:\n- Unity scene: Camera clear flags Depth Only → Solid Color \\(fixes rendering\\)\n- Build system: Auto-copy custom UnityFramework to node_modules/@azesmway/react-native-unity/ios/\n- Podfile: post_install hook ensures custom framework used\n- React Native: Ready state tracking, UI shows \"⏳ Initializing...\" → \"✅ Ready\"\n- Unity Editor: SetupUnityTestScene.cs automation script \\(Tools > Setup Unity Test Scene\\)\n- Token optimization: .claudeignore excludes Library/, Temp/, node_modules/, Pods/\n\nFiles modified:\nunity/Assets/Scenes/UnityTestScene.unity, unity/Assets/Scripts/Editor/SetupUnityTestScene.cs, src/components/UnityArView.tsx, src/screens/UnityTestScene.tsx, ios/Podfile, scripts/build_and_run_ios.sh, .claudeignore\n\nTesting: Unity scene visible with white cube, ping button functional after initialization\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nCOMMITMSG\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(/tmp/verify_mcp_optimization.sh)",
+      "Bash(if pgrep -x \"Windsurf\")",
+      "Bash(then echo \"Found Windsurf - restarting...\")",
+      "Bash(elif pgrep -x \"Cursor\")",
+      "Bash(then echo \"Found Cursor - restarting...\")",
+      "Bash(else echo \"No IDE running - please start Windsurf or Cursor manually\")",
+      "Bash(pgrep:*)",
+      "Bash(~/.zshrc <<'EOF'\n\n# ============================================================================\n# Portals Unity-RN Build Aliases \\(Added 2026-01-08\\)\n# ============================================================================\nalias ios-fast='cd ~/Documents/GitHub/portals_v4 && ./scripts/build_and_run_ios.sh --skip-unity-export --keep-unity-open'\nalias ios-full='cd ~/Documents/GitHub/portals_v4 && ./scripts/build_and_run_ios.sh'\nalias portals-cd='cd ~/Documents/GitHub/portals_v4'\n\n# Unity test automation\nalias unity-test='osascript ~/Documents/GitHub/portals_v4/scripts/test_unity_editor.scpt'\nEOF)",
+      "Bash(source ~/.zshrc)",
+      "Bash(chmod:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(START_HERE.md <<'EOF'\n# Unity-RN Integration - Quick Start\n\n**Status**: ✅ Ready for Device Testing\n\n## ⚡ Everything's Done - Just Test!\n\nAll fixes applied:\n- ✅ Unity scene camera fixed\n- ✅ Custom UnityFramework routing\n- ✅ Ready state tracking\n- ✅ .claudeignore \\(180K tokens saved\\)\n- ✅ Build automation complete\n\n## 🚀 One Command to Test\n\n```bash\n# Pair device \\(one-time\\)\n./scripts/pair_device.sh\n\n# OR manually:\nopen ios/Portals.xcworkspace\n# Xcode > Window > Devices > Select device > \"Use for Development\"\n\n# Then deploy:\nios-fast\n```\n\n## 📋 Expected Results\n\n1. App launches on device\n2. Navigate: ☰ Menu > Unity AR Test\n3. Wait 2-5 sec: \"⏳ Initializing...\" → \"✅ Ready\"\n4. Tap \"Ping Unity\" → See pong in console\n5. See white cube in scene\n\n## 📖 Full Docs\n\n- Testing: `TEST_UNITY_INTEGRATION.md`\n- Summary: `COMPLETE_SUMMARY.md`\n- Workflow: `~/.claude/docs/UNITY_RN_INTEGRATION_WORKFLOW.md`\n\n**Next**: Run `./scripts/pair_device.sh` and you're done! 🎉\nEOF)",
+      "Bash(git add:*)"
     ]
   }
 }
