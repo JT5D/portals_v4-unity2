@@ -423,16 +423,101 @@ We follow a **Spec-Driven Development** methodology. All major architectural dec
 
 > **Note**: These commands apply to the **react-only workflow** (`dev`/`main` branches without Unity integration). For the `react-unity` branch, use `./scripts/build_minimal.sh` instead.
 
-## Key Differences from react-unity Branch
+## Key Differences: react-unity vs Legacy (dev/main)
+
+### Build & Configuration
 
 | Setting | dev/main (Legacy) | react-unity |
 |---------|-------------------|-------------|
 | Config file | `app.json` | `app.config.js` |
 | Bundle ID | `com.portals.app` | `com.h3mai.portals` |
 | Build command | `npx expo run:ios --device` | `./scripts/build_minimal.sh` |
-| Unity integration | None | Unity 6000.2 UAAL |
 | Build configuration | Debug (hot reload) | Release (embedded bundle) |
-| AR Engine | ViroReact only | Unity + ViroReact |
+| AR Engine | ViroReact 2.43.6 | Unity 6000.2 UAAL + ViroReact |
+
+### Performance Metrics
+
+| Metric | ViroReact (Legacy) | Unity UAAL |
+|--------|-------------------|------------|
+| Target FPS (iPhone 12+) | 30-60 FPS | 60 FPS stable |
+| Target FPS (iPad Pro) | 60 FPS | 60-120 FPS (ProMotion) |
+| Target FPS (Quest 2/3) | N/A | 72-90 FPS |
+| iOS App Size | ~150 MB | ~450 MB (+UnityFramework) |
+| Build Time (clean) | ~5 min | ~15-20 min |
+| Build Time (incremental) | ~2 min | ~5-7 min |
+
+### Graphics & VFX Capabilities
+
+| Feature | ViroReact (Legacy) | Unity UAAL |
+|---------|-------------------|------------|
+| Hi-Fidelity Graphics | Basic PBR | URP/HDRP, Real-time GI |
+| VFX Graph (GPU Particles) | ❌ | ✅ Advanced particle systems |
+| Shader Graph | ❌ | ✅ Visual shader authoring |
+| Post-Processing | Limited | ✅ Full stack (Bloom, DoF, etc.) |
+| Real-time Shadows | Basic | ✅ Cascaded shadow maps |
+| Reflection Probes | ❌ | ✅ |
+| Occlusion Culling | ❌ | ✅ |
+
+### Physics & Simulation
+
+| Feature | ViroReact (Legacy) | Unity UAAL |
+|---------|-------------------|------------|
+| Physics Engine | Basic collision | ✅ PhysX / Unity Physics |
+| Rigidbody Dynamics | Limited | ✅ Full simulation |
+| Cloth Simulation | ❌ | ✅ |
+| Particle Collisions | ❌ | ✅ |
+| Joints & Constraints | ❌ | ✅ |
+| Ragdoll Physics | ❌ | ✅ |
+
+### Tracking & Computer Vision
+
+| Feature | ViroReact (Legacy) | Unity UAAL |
+|---------|-------------------|------------|
+| Plane Detection | ✅ ARKit/ARCore | ✅ AR Foundation 6.x |
+| Image Tracking | ✅ | ✅ |
+| Object Tracking | ❌ | ✅ |
+| Hand Tracking | ❌ | ✅ (Quest, Vision Pro) |
+| Hand Pose Recognition | ❌ | ✅ XR Hands |
+| Body Tracking | ❌ | ✅ ARKit Body Tracking |
+| Face Tracking | ❌ | ✅ ARKit Face |
+| Facial Expression | ❌ | ✅ 52 blend shapes |
+| Eye Tracking | ❌ | ✅ (Vision Pro, Quest Pro) |
+| Semantic Segmentation | ❌ | ✅ People occlusion |
+| Object Classification | ❌ | ✅ Barracuda/Sentis ML |
+| Mesh Classification | ❌ | ✅ AR Foundation |
+| LiDAR Meshing | Basic | ✅ Real-time mesh |
+
+### Generative AI Features
+
+| Feature | ViroReact (Legacy) | Unity UAAL |
+|---------|-------------------|------------|
+| Voice UX | ✅ Gemini | ✅ Gemini + Native |
+| Speech-to-Text | ✅ | ✅ |
+| Text-to-3D | ❌ | ✅ (via Meshy/Tripo API) |
+| Speech-to-3D | ❌ | ✅ Voice → 3D pipeline |
+| Speech-to-World | ❌ | ✅ Voice scene generation |
+| Speech-to-Avatar | ❌ | ✅ (Ready Player Me + LipSync) |
+| AI NPCs | ❌ | ✅ Behavior trees + LLM |
+
+### Platform Support
+
+| Platform | ViroReact (Legacy) | Unity UAAL |
+|----------|-------------------|------------|
+| iPhone/iPad | ✅ | ✅ |
+| Android | ✅ | ✅ |
+| Meta Quest 2/3 | ❌ | ✅ Native build |
+| Apple Vision Pro | ❌ | ✅ visionOS |
+| WebXR/WebGL | ❌ | 🔶 Planned (Needle Engine) |
+
+### Multiplayer & Networking
+
+| Feature | ViroReact (Legacy) | Unity UAAL |
+|---------|-------------------|------------|
+| Live Multiplayer | Firebase only | ✅ Netcode for GameObjects |
+| Real-time Sync | Firestore polling | ✅ State sync, RPCs |
+| Voice Chat | ❌ | ✅ (Photon Voice / Vivox) |
+| Shared AR Anchors | ❌ | ✅ Cloud Anchors |
+| Spectator Mode | ❌ | ✅ |
 
 ## Prerequisites
 

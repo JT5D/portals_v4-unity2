@@ -194,15 +194,80 @@ No manual intervention needed for CI/CD builds.
 
 > **Note**: These sections apply to the **react-only workflow** (dev/main branches without Unity integration). For the react-unity branch, use `./scripts/build_minimal.sh` instead.
 
-### Key Differences from react-unity Branch
+### Key Differences: react-unity vs Legacy (dev/main)
+
+#### Build & Configuration
 
 | Setting | dev/main (Legacy) | react-unity |
 |---------|-------------------|-------------|
 | Config file | `app.json` | `app.config.js` |
 | Bundle ID | `com.portals.app` | `com.h3mai.portals` |
 | Build command | `npx expo run:ios --device` | `./scripts/build_minimal.sh` |
-| Unity integration | None | Unity 6000.2 UAAL |
 | Build configuration | Debug (hot reload) | Release (embedded bundle) |
+| AR Engine | ViroReact 2.43.6 | Unity 6000.2 UAAL + ViroReact |
+
+#### Performance Metrics
+
+| Metric | ViroReact (Legacy) | Unity UAAL |
+|--------|-------------------|------------|
+| Target FPS (iPhone 12+) | 30-60 FPS | 60 FPS stable |
+| Target FPS (iPad Pro) | 60 FPS | 60-120 FPS (ProMotion) |
+| Target FPS (Quest 2/3) | N/A | 72-90 FPS |
+| iOS App Size | ~150 MB | ~450 MB (+UnityFramework) |
+| Build Time (clean) | ~5 min | ~15-20 min |
+| Build Time (incremental) | ~2 min | ~5-7 min |
+
+#### Graphics & VFX
+
+| Feature | ViroReact | Unity UAAL |
+|---------|-----------|------------|
+| Hi-Fidelity Graphics | Basic PBR | URP/HDRP, Real-time GI |
+| VFX Graph (GPU Particles) | ❌ | ✅ |
+| Shader Graph | ❌ | ✅ |
+| Post-Processing | Limited | ✅ Full stack |
+
+#### Physics & Tracking
+
+| Feature | ViroReact | Unity UAAL |
+|---------|-----------|------------|
+| Advanced Physics | Limited | ✅ PhysX |
+| Hand Tracking | ❌ | ✅ Quest/Vision Pro |
+| Hand Pose Recognition | ❌ | ✅ XR Hands |
+| Body Tracking | ❌ | ✅ ARKit |
+| Face Tracking | ❌ | ✅ 52 blend shapes |
+| Eye Tracking | ❌ | ✅ Vision Pro |
+| Semantic Segmentation | ❌ | ✅ |
+| Object Classification | ❌ | ✅ Sentis ML |
+
+#### Gen AI & Voice
+
+| Feature | ViroReact | Unity UAAL |
+|---------|-----------|------------|
+| Voice UX | ✅ Gemini | ✅ Gemini + Native |
+| Text-to-3D | ❌ | ✅ Meshy/Tripo |
+| Speech-to-3D | ❌ | ✅ |
+| Speech-to-World | ❌ | ✅ |
+| Speech-to-Avatar | ❌ | ✅ RPM + LipSync |
+
+#### Platform Support
+
+| Platform | ViroReact | Unity UAAL |
+|----------|-----------|------------|
+| iPhone/iPad | ✅ | ✅ |
+| Android | ✅ | ✅ |
+| Meta Quest 2/3 | ❌ | ✅ |
+| Apple Vision Pro | ❌ | ✅ |
+| WebXR/WebGL | ❌ | 🔶 Planned |
+
+#### Multiplayer
+
+| Feature | ViroReact | Unity UAAL |
+|---------|-----------|------------|
+| Live Multiplayer | Firebase | ✅ Netcode |
+| Voice Chat | ❌ | ✅ Photon/Vivox |
+| Shared AR Anchors | ❌ | ✅ Cloud Anchors |
+
+> See [README.md](README.md) for full detailed comparison tables.
 
 ## Metro Connection Issues on Physical Device
 

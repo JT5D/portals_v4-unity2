@@ -1,20 +1,21 @@
 # Automation Status - Unity-RN Integration
 
-**Last Updated**: 2026-01-08 02:45 AM
-**Status**: 90% Automated, 10% Manual
+**Last Updated**: 2026-01-09
+**Branch**: `react-unity`
+**Status**: 95% Automated, 5% Manual
 
 ---
 
 ## ✅ Fully Automated (No User Action Required)
 
 ### Build & Deployment
-- ✅ Unity scene export (with latest changes)
-- ✅ Custom UnityFramework build and installation
-- ✅ iOS app compilation
-- ✅ Device deployment
-- ✅ Metro bundler + Expo tunnel
-- **Command**: `ios-full` or `./scripts/build_and_run_ios.sh`
-- **Time**: 5-15 minutes (one command, fully hands-off)
+- ✅ Fail-fast device/Xcode checks
+- ✅ Unity scene export (headless)
+- ✅ UnityFramework build (includes GameAssembly via target dependency)
+- ✅ iOS app compilation (Release mode)
+- ✅ Device deployment + **auto-launch**
+- **Command**: `./scripts/build_minimal.sh`
+- **Time**: ~15-20 min clean, ~7 min incremental (one command, fully hands-off)
 
 ### Verification Checks
 - ✅ Metro bundler status (port 8081)
@@ -99,22 +100,22 @@
 
 ### Full Build + Test (First Time)
 ```bash
-# 1. Automated build (5-15 min, hands-off)
-ios-full
+# 1. Automated build + auto-launch (~15-20 min, hands-off)
+./scripts/build_minimal.sh
 
 # 2. Automated verification (30 sec)
 ./scripts/verify_device_unity.sh
 
 # 3. Manual testing (2 min) - See FINAL_VERIFICATION.md
-# - Open app on iPad
+# - App already open on device (auto-launched!)
 # - Tap through 4-step checklist
 # - Done!
 ```
 
-### Incremental Updates (Script Changes Only)
+### Incremental Updates (Skip Unity Export)
 ```bash
-# 1. Fast build (5-8 min, hands-off)
-ios-fast
+# 1. Fast build (~7 min, hands-off)
+./scripts/build_and_run_ios.sh --skip-unity-export
 
 # 2. Automated verification (30 sec)
 ./scripts/verify_device_unity.sh
@@ -177,9 +178,9 @@ ios-fast
 4. ✅ Comprehensive documentation at every step
 
 **What You Need to Do:**
-1. Run `ios-full` (one time, ~10-15 min)
+1. Run `./scripts/build_minimal.sh` (~15-20 min, app auto-launches!)
 2. Run `./scripts/verify_device_unity.sh` (30 sec)
-3. Open app, tap 4 buttons (2 min)
+3. Tap 4 buttons on device (2 min)
 4. Done - ready to build AR features!
 
 **Total Time: ~18 minutes first time, ~7 minutes incremental**
@@ -208,11 +209,13 @@ ios-fast
 
 ## 📚 Related Documentation
 
-- **Automated Build**: `scripts/build_and_run_ios.sh`
+- **Quick Build**: `scripts/build_minimal.sh` (recommended)
+- **Full Build**: `scripts/build_and_run_ios.sh`
 - **Automated Verification**: `scripts/verify_device_unity.sh`
 - **Manual Testing**: [FINAL_VERIFICATION.md](FINAL_VERIFICATION.md)
 - **Detailed Checklist**: [DEVICE_TESTING_CHECKLIST.md](DEVICE_TESTING_CHECKLIST.md)
 - **Architecture**: [UNITY_SCENE_ANALYSIS.md](UNITY_SCENE_ANALYSIS.md)
+- **Critical Issues**: [CRITICAL_README.md](CRITICAL_README.md)
 
 ---
 

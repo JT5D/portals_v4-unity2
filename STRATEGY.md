@@ -1,5 +1,6 @@
 # 🗺️ Strategic Implementation Spec
 > **Status:** Active Strategy
+> **Branch:** `react-unity` (Unity integration in progress)
 > **Driver:** @antigravity
 > **Approver:** @james
 > **Methodology:** [Spec-Driven Development (Spec Kit)](https://github.com/github/spec-kit)
@@ -30,12 +31,14 @@ A unified, automated, and powerful AR platform where users can **upload any asse
 
 ## 3. The Solution Strategy
 
-### 🟢 Initiative A: Unity Migration (The core engine)
+### 🟢 Initiative A: Unity Migration (The core engine) — **IN PROGRESS**
+*   **Status**: Active development on `react-unity` branch. iOS build working.
 *   **Strategy**: "Strangler Fig" pattern. We will keep ViroReact for existing simple screens but build ALL new complex AR features (Geospatial, complex VFX, Shared AR) in Unity.
 *   **Integration Architecture**:
-    *   **Embed**: Unity as a Full Screen library inside React Native.
-    *   **Bridge**: JSON-based message bus for bi-directional communication (RN UI <-> Unity Logic).
-    *   **State**: Global state (Redux/Zustand) lives in RN; Unity is a "renderer" of that state.
+    *   **Embed**: Unity as a Full Screen library inside React Native via `@artmajeur/react-native-unity`.
+    *   **Bridge**: JSON-based message bus for bi-directional communication (RN UI <-> Unity Logic via `BridgeTarget.cs`).
+    *   **State**: Global state (Zustand) lives in RN; Unity is a "renderer" of that state.
+*   **Build**: One-command build via `./scripts/build_minimal.sh` (~15-20 min clean, ~7 min incremental).
 
 ### 🟣 Initiative B: Needle Engine (Spatial Collaboration)
 *   **Strategy**: Hyrid WebView. Use Needle Engine (WebXR) for "lightweight" collaboration features like easy URL-based sharing and "Meeting Rooms."
