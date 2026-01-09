@@ -70,6 +70,8 @@ ccache --clear
 
 **Rule of thumb**: Keep ccache ON. Turn OFF if build output doesn't match code changes.
 
+**Note (RN 0.81+)**: ccache has limited benefit because React Native core is prebuilt (`React-Core-prebuilt`). Most speedup comes from Unity Append mode and Xcode DerivedData caching.
+
 ### Build Troubleshooting
 
 | Error | Fix |
@@ -161,6 +163,24 @@ private static void LogBeforeSplashScreen()
 - Separate GameAssembly build - Built via Xcode target dependency
 
 **Sources**: [Unity Xcode Structure](https://docs.unity3d.com/Manual/StructureOfXcodeProject.html), [Apple Dev Forums](https://developer.apple.com/forums/thread/749458)
+
+### Build Optimization Internals
+
+**Unity Append Mode** (`unity/Assets/Editor/BuildScript.cs`):
+- Uses `BuildOptions.AcceptExternalModificationsToPlayer` for incremental IL2CPP builds
+- Detects existing export via `/tmp/unity-ios-export/Unity-iPhone.xcodeproj/project.pbxproj`
+- Falls back to clean build if `UNITY_CLEAN_BUILD=1` or export doesn't exist
+- **Benefit**: Recompiles only changed C# scripts (~2-3 min vs 8-10 min)
+
+**Build Lock Mechanism** (`scripts/build_minimal.sh`):
+- Uses `/tmp/build_minimal.lock` to prevent concurrent builds
+- Checks PID validity before blocking (stale locks auto-clear)
+- Prevents wasted resources from parallel builds corrupting artifacts
+
+**ccache Configuration** (`ios/Podfile.properties.json`):
+- `apple.ccacheEnabled: "true"` enables during `pod install`
+- Configures `CC` to use `react-native/scripts/xcode/ccache-clang.sh`
+- **Limitation**: RN 0.81+ uses prebuilt core, so minimal C++ to cache
 
 ### Metro Configuration (Critical)
 
@@ -302,9 +322,15 @@ Both sides have structured logging with toggles:
 - RN: `__DEV__` in UnityArView.tsx, prefix `[UnityArView]`
 
 ```bash
-# Live device logs
-idevicesyslog | grep -E "Bridge|UnityArView"
+# ⚠️ NEVER use raw idevicesyslog - it hangs forever!
+# Always use the timeout-protected script:
+./scripts/capture_device_logs.sh 10 "Unity|Bridge|fps"
+
+# Alternative: Check app-generated log files
+# (Unity writes to Documents/bridge_early.log, ar_debug_log.txt)
 ```
+
+**⚠️ WARNING - idevicesyslog Hangs**: Raw `idevicesyslog` is a streaming tool that runs indefinitely. macOS has no native `timeout` command. Using it directly in scripts or background processes creates zombie processes. Always use `capture_device_logs.sh` which uses Perl for proper timeout handling.
 
 **Full Documentation**: See `~/.claude/knowledgebase/_UNITY_AS_A_LIBRARY_IOS.md`
 
