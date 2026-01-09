@@ -117,10 +117,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         overflow: 'hidden',
+        // DEBUG: Force minimum dimensions to prevent collapse
+        minHeight: 300,
+        minWidth: 300,
     },
     unity: {
         flex: 1,
         width: '100%',
-        height: '100%',  // CRITICAL: Per official docs, Unity needs parent with dimensions > 0
+        height: '100%',
+        // DEBUG: Force minimum dimensions
+        minHeight: 300,
+        minWidth: 300,
     },
 });
