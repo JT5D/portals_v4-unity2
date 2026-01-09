@@ -4,18 +4,60 @@
 
 ![React Native](https://img.shields.io/badge/React%20Native-0.81-blue?logo=react)
 ![Expo](https://img.shields.io/badge/Expo-54-black?logo=expo)
+![Unity](https://img.shields.io/badge/Unity-6000.2-white?logo=unity)
 ![Firebase](https://img.shields.io/badge/Firebase-12-orange?logo=firebase)
 ![ViroReact](https://img.shields.io/badge/ViroReact-2.43.6-purple)
 
 ---
 
-## 📱 Overview
+## Quick Start - Build & Run on iPhone (React-Unity Branch)
+
+```bash
+# One command to build and launch on connected iPhone/iPad
+./scripts/build_minimal.sh
+```
+
+This script performs: fail-fast checks → Unity export → UnityFramework build → pod install → app build/install → **auto-launch on device**
+
+**Requirements**: iPhone/iPad connected via USB, device unlocked, Xcode 16.4 installed
+
+> For detailed build troubleshooting and known issues, see [CRITICAL_README.md](CRITICAL_README.md)
+
+---
+
+## Branching Strategy
+
+| Branch | Purpose | Build Command |
+|--------|---------|---------------|
+| **`react-unity`** | Active development with Unity integration | `./scripts/build_minimal.sh` |
+| **`dev`** | Primary development for React-only features | `npx expo run:ios --device` |
+| **`main`** | Stable, tested releases only | - |
+
+### Workflow for Contributors:
+
+1. Fork the repository
+2. Create your feature branch from the appropriate base:
+   ```bash
+   # For Unity integration work:
+   git checkout react-unity
+   git checkout -b feature/unity-feature
+
+   # For React-only work:
+   git checkout dev
+   git checkout -b feature/react-feature
+   ```
+3. Commit and push to your fork
+4. Open a Pull Request targeting the appropriate branch
+
+---
+
+## Overview
 
 Portals merges AI tools, social media & augmented reality, allowing users to:
 
 - **Explore** AI+AR experiences pinned to real-world locations
 - **Create** immersive 3D scenes with an intuitive editor
-- **Share** video recordings &  explorable AI + AR experiences
+- **Share** video recordings & explorable AI + AR experiences
 - **Collect** rare "Artifacts" by physically visiting locations
 - **Earn** FUEL tokens through movement and engagement
 - **Monetize** AI + AR creations by minting & dropping content
@@ -40,24 +82,72 @@ Portals merges AI tools, social media & augmented reality, allowing users to:
 
 ---
 
+# React-Unity Integration
+
+The `react-unity` branch integrates Unity as a Library (UAAL) for advanced AR/XR experiences.
+
+## Unity Architecture
+
+| Component | Description |
+|-----------|-------------|
+| **UnityFramework** | iOS framework (~308MB) built from Unity project |
+| **BridgeTarget** | C# script handling RN ↔ Unity messaging |
+| **NativeCallProxy** | Native iOS bridge for Unity → RN communication |
+
+### Unity Build Flow
+
+```bash
+# Automated (recommended)
+./scripts/build_minimal.sh
+
+# Manual steps:
+# 1. Unity exports to /tmp/unity-ios-export/
+# 2. xcodebuild creates UnityFramework.framework
+# 3. Framework copied to unity/builds/ios/
+# 4. pod install links framework to RN app
+# 5. App built and installed on device
+```
+
+### Unity-React Native Messaging
+
+**RN → Unity:**
+```typescript
+unityRef.current?.sendMessage('BridgeTarget', 'OnMessage', jsonPayload);
+```
+
+**Unity → RN:**
+```csharp
+[DllImport("__Internal")]
+public static extern void sendMessageToMobileApp(string message);
+```
+
+### Key Unity Files
+
+| File | Purpose |
+|------|---------|
+| `unity/Assets/Scripts/BridgeTarget.cs` | Message handler + ready ping |
+| `unity/Assets/Plugins/iOS/NativeCallProxy.h/mm` | Native bridge |
+| `unity/Assets/Editor/BuildScript.cs` | Headless build methods |
+| `unity/Assets/Editor/IOSBuildPostProcessor.cs` | Post-export fixups |
+
 ---
 
-## 🏗️ Architecture
+# Architecture
 
-### Tech Stack
+## Tech Stack
 
-| Layer               | Technology                       |
-| ------------------- | -------------------------------- |
-| **Framework** | React Native 0.81 + Expo 54      |
-| **AR Engine** | ViroReact 2.43.6 (legacy) + Unity (UaaL) |
-| **State**     | Zustand                          |
-| **Auth**      | Firebase Authentication          |
-| **Database**  | Firebase Firestore               |
-| **Storage**   | Cloudflare R2 (S3-compatible)    |
-| **Maps**      | react-native-maps (Google/Apple) |
-| **Video**     | expo-video                       |
+| Layer | Technology |
+|-------|------------|
+| **Framework** | React Native 0.81 + Expo 54 |
+| **AR Engine** | Unity 6000.2 (UAAL) + ViroReact 2.43.6 (legacy) |
+| **State** | Zustand |
+| **Auth** | Firebase Authentication |
+| **Database** | Firebase Firestore |
+| **Storage** | Cloudflare R2 (S3-compatible) |
+| **Maps** | react-native-maps (Google/Apple) |
+| **Video** | expo-video |
 
-### Directory Structure
+## Directory Structure
 
 ```
 src/
@@ -96,11 +186,20 @@ src/
 │
 └── theme/             # Design system
     └── theme.ts                 # Colors, typography
+
+unity/                 # Unity project (react-unity branch)
+├── Assets/
+│   ├── Scenes/UnityTestScene.unity  # Main test scene
+│   ├── Scripts/BridgeTarget.cs      # RN messaging bridge
+│   ├── Plugins/iOS/                 # Native iOS bridge
+│   └── Editor/                      # Build automation
+└── builds/ios/
+    └── UnityFramework.framework     # Built framework (~308MB)
 ```
 
 ---
 
-## 🎯 Core Features
+## Core Features
 
 ### 1. Video Feed
 
@@ -162,52 +261,7 @@ Gamified engagement through:
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- Xcode 16.4 (macOS 15). Download: https://developer.apple.com/download/all/?q=Xcode%2016.4
-- Android Studio (Android)
-- Expo CLI
-
-### Installation
-
-```bash
-# Clone repository
-git clone https://github.com/ryanjbrant/portals_v4.git
-cd portals_v4
-
-# Switch to dev branch (CRITICAL)
-git checkout dev
-
-# Automated Setup (Recommended)
-npm run setup
-
-# Alternative: Manual Installation
-npm install
-cd ios && pod install && cd ..
-
-# Start development server
-npx expo start --dev-client --tunnel
-```
-
-### Running on Device
-
-```bash
-# iOS
-npx expo run:ios --device
-
-# iOS (Unity Editor fast loop: keep Unity open)
-npm run ios:editor
-
-# Android
-npx expo run:android --device
-```
-
----
-
-## 🔐 Environment Configuration
+## Environment Configuration
 
 ### Firebase Setup
 
@@ -226,7 +280,7 @@ npx expo run:android --device
 
 ---
 
-## 📊 Database Schema
+## Database Schema
 
 ### Firestore Collections
 
@@ -256,7 +310,7 @@ scenes/{sceneId}
 
 ---
 
-## 🎨 Design System
+## Design System
 
 ### Colors
 
@@ -282,7 +336,7 @@ colors: {
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run all tests
@@ -297,13 +351,19 @@ npm run test:coverage
 
 ---
 
-## 📦 Build & Deployment
+## Build & Deployment
 
-### Development Build
+### React-Unity Branch (iOS)
 
 ```bash
-# Create dev client
-npx expo run:ios --device
+# Full build with Unity export + device launch
+./scripts/build_minimal.sh
+
+# Skip Unity export (use existing framework)
+./scripts/build_and_run_ios.sh --skip-unity-export
+
+# Unity Editor fast loop (keep editor open)
+npm run ios:editor
 ```
 
 ### Production Build
@@ -318,7 +378,7 @@ eas build --platform android --profile production
 
 ---
 
-## 🔧 Key Services
+## Key Services
 
 ### LocationService
 
@@ -347,44 +407,11 @@ AI voice commands via Gemini:
 
 ---
 
-## 📄 License
-
-Copyright © 2024 Portals. All rights reserved.
-
----
-
-## 🌳 Branching Strategy
-
-To maintain stability, we use a simple branching model:
-
-1. **`main`**: Production-ready code. Only merged from `dev` after testing.
-2. **`dev`**: The primary integration branch. **All developers should push their code here.**
-3. **Feature branches**: Created from `dev` for individual tasks (e.g., `feature/amazing-ar`).
-
-### Workflow for Contributors:
-
-1. Fork the repository.
-2. Create your feature branch from the **`dev`** branch:
-   ```bash
-   git checkout dev
-   git checkout -b feature/amazing-feature
-   ```
-3. Commit and push to your fork.
-4. Open a Pull Request targeting the **`dev`** branch of the main repository.
-
----
-
----
-
----
-
-## Next Steps
-
-### Documentation & Strategy
+## Documentation & Strategy
 
 We follow a **Spec-Driven Development** methodology. All major architectural decisions and feature plans are documented here:
 
-* **[🎯 Strategy &amp; Roadmap](STRATEGY.md)** (Start Here)
+* **[Strategy & Roadmap](STRATEGY.md)** (Start Here)
   * [Tech Stack Integration Matrix](specs/tech-stack-integration.md)
   * [Unity Integration Spec](specs/unity-integration.md)
   * [Needle Engine Spec](specs/needle-integration.md)
@@ -392,7 +419,64 @@ We follow a **Spec-Driven Development** methodology. All major architectural dec
 
 ---
 
-## 📞 Support
+# Legacy: React-Only Development
+
+> **Note**: These commands apply to the **react-only workflow** (`dev`/`main` branches without Unity integration). For the `react-unity` branch, use `./scripts/build_minimal.sh` instead.
+
+## Prerequisites
+
+- Node.js 18+
+- Xcode 16.4 (macOS 15). Download: https://developer.apple.com/download/all/?q=Xcode%2016.4
+- Android Studio (Android)
+- Expo CLI
+
+## Installation (React-Only)
+
+```bash
+# Clone repository
+git clone https://github.com/ryanjbrant/portals_v4.git
+cd portals_v4
+
+# Switch to dev branch
+git checkout dev
+
+# Automated Setup (Recommended)
+npm run setup
+
+# Alternative: Manual Installation
+npm install
+cd ios && pod install && cd ..
+
+# Start development server
+npx expo start --dev-client --tunnel
+```
+
+## Running on Device (React-Only)
+
+```bash
+# iOS
+npx expo run:ios --device
+
+# Android
+npx expo run:android --device
+```
+
+## Development Build (React-Only)
+
+```bash
+# Create dev client
+npx expo run:ios --device
+```
+
+---
+
+## License
+
+Copyright © 2024 Portals. All rights reserved.
+
+---
+
+## Support
 
 - **Documentation:** [docs.portals.app](https://docs.portals.app)
 - **Discord:** [discord.gg/portals](https://discord.gg/portals)
