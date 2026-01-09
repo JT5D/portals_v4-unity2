@@ -17,7 +17,7 @@
     "setup": "export LANG=en_US.UTF-8 && export LC_ALL=en_US.UTF-8 && (command -v git-lfs >/dev/null 2>&1 || { echo >&2 'git-lfs is required. Install with brew install git-lfs'; exit 1; }) && git lfs install && git lfs pull && (command -v pod >/dev/null 2>&1 || { echo >&2 'CocoaPods is required but not installed. Install with brew install cocoapods'; exit 1; }) && ( [ -f .env ] || cp .env.example .env ) && npm install && npx expo prebuild --platform ios --clean && cd ios && pod install && cd .. && ./scripts/patch-fabric-registry.sh",
     "build:unity:ios": "bash scripts/build_and_run_ios.sh --build-only",
     "build:unity:android": "bash scripts/build_and_run_android.sh --build-only",
-    "postinstall": "patch-package && ./scripts/patch-virokit.sh",
+    "postinstall": "patch-package && ./scripts/patch-virokit.sh && node scripts/patch-react-native-unity.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

@@ -25,10 +25,50 @@ manage_gameobject(action="find", search_term="Player", search_method="by_name")
 
 ### Build & Deploy
 ```bash
-./scripts/build_minimal.sh                          # Minimal build (fail-fast, ~15 min)
-./scripts/build_and_run_ios.sh                      # Full build with all checks (~20 min)
+./scripts/build_minimal.sh                          # Incremental build (~3-5 min)
+UNITY_CLEAN_BUILD=1 ./scripts/build_minimal.sh      # Force clean Unity export
 ./scripts/build_and_run_ios.sh --skip-unity-export  # Skip Unity export (use existing)
+
+# JS-only changes (no Unity rebuild needed) - ~30 sec:
+cd ios && xcodebuild -workspace Portals.xcworkspace -scheme Portals \
+    -configuration Release -destination "id=$(xcrun xctrace list devices 2>&1 | grep -oE '[0-9A-F]{8}-[0-9A-F]{16}' | head -1)" \
+    -allowProvisioningUpdates DEVELOPMENT_TEAM=Z8622973EB build install
 ```
+
+### When to Use Clean vs Incremental Build
+
+| Use Incremental (default) | Use Clean (`UNITY_CLEAN_BUILD=1`) |
+|---------------------------|-----------------------------------|
+| C# script changes | Unity version upgrade |
+| Scene modifications | Added/removed native plugins |
+| Asset tweaks | Changed Player Settings (bundle ID, icons) |
+| Prefab updates | IL2CPP or linker errors |
+| Material/shader changes | Xcode project corruption |
+| Day-to-day development | After `git pull` with major changes |
+
+**Rule of thumb**: Use incremental unless something breaks, then try clean.
+
+### When to Use ccache On vs Off
+
+| ccache ON (default) | ccache OFF |
+|---------------------|------------|
+| Day-to-day development | Release/production builds |
+| Iterative debugging | After Xcode/compiler upgrade |
+| Frequent small changes | Build behaves unexpectedly |
+| CI/CD builds | Debugging compiler issues |
+
+```bash
+# ccache ON (default - set in Podfile.properties.json)
+./scripts/build_minimal.sh
+
+# ccache OFF (bypass for this build)
+USE_CCACHE=0 ./scripts/build_minimal.sh
+
+# Clear ccache entirely (nuclear option)
+ccache --clear
+```
+
+**Rule of thumb**: Keep ccache ON. Turn OFF if build output doesn't match code changes.
 
 ### Build Troubleshooting
 
@@ -39,6 +79,35 @@ manage_gameobject(action="find", search_term="Player", search_method="by_name")
 | `URP GlobalSettings not at last version` | Delete `Assets/UniversalRenderPipelineGlobalSettings.asset`, reopen Unity |
 | `XR Simulation asset move failed` | Delete `Assets/XR/Temp/` folder and `.meta` |
 | `duplicate symbols` (Xcode 15+) | Uses `-Wl,-ld_classic` flag (handled by scripts) |
+| Unity shows but never initializes | **Fabric registration issue** - see "Fabric Component Fix" below |
+
+### Fabric Component Fix (Critical for New Architecture)
+
+**Symptom**: Unity view appears but stays stuck on "Waiting for Unity to initialize"
+- Native logs show only `layoutSubviews` - no `updateProps`
+- bridge_log.txt is never created
+- No crash, no error - just silent failure
+
+**Root Cause**: `@artmajeur/react-native-unity` is NOT auto-registered with Fabric's component registry. The codegen doesn't discover `RNUnityView` because the package is missing `ios.componentProvider` in its codegenConfig.
+
+**Fix Applied** (automatic via hooks):
+1. `postinstall` script patches the package's codegenConfig
+2. Podfile `post_install` hook runs `patch-fabric-registry.sh` as backup
+3. The patch adds to `ios/build/generated/ios/RCTThirdPartyComponentsProvider.mm`:
+   ```objc
+   @"RNUnityView": NSClassFromString(@"RNUnityView"), // react-native-unity
+   ```
+
+**Manual Fix** (if hooks fail):
+```bash
+./scripts/patch-fabric-registry.sh
+# Then rebuild iOS
+```
+
+**Verification**: After navigating to Unity scene, check `Documents/unity_init.log` for:
+- ✅ `updateProps CALLED` (Fabric lifecycle working)
+- ✅ `initUnityModule` (Unity initialization started)
+- ✅ `initUnityModule COMPLETE` (Unity running)
 
 ### Build Internals (Why These Flags?)
 

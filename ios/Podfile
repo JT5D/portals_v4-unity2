@@ -67,6 +67,13 @@ target 'Portals' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
+    # Patch RNUnityView into Fabric component registry if codegen missed it
+    # (The @artmajeur/react-native-unity package needs manual registration)
+    patch_script = File.join(__dir__, '..', 'scripts', 'patch-fabric-registry.sh')
+    if File.exist?(patch_script)
+      system("bash #{patch_script}")
+    end
+
     # --- AUTO-INJECTED BY withPodfileFixes PLUGIN ---
     # Use environment variable if set, otherwise fallback to the ID detected during prebuild
     development_team = ENV['EXPO_PUBLIC_DEVELOPMENT_TEAM'] || 'MLQ2WENHNW'

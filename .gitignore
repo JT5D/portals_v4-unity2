@@ -41,6 +41,9 @@ yarn-error.*
 # generated native folders
 # /ios
 /android
+
+# iOS CocoaPods generated
+ios/*.xcworkspace/
 src/screens/FigmentAR/res/360/*.mp4
 
 # Unity Builds
