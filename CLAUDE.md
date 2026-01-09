@@ -109,6 +109,46 @@ ccache --clear
 - ✅ `initUnityModule` (Unity initialization started)
 - ✅ `initUnityModule COMPLETE` (Unity running)
 
+### Message Queue Fix (Unity-to-RN Messages)
+
+**Symptom**: Unity initializes successfully (logs show `initUnityModule COMPLETE`) but:
+- Buttons remain grayed out
+- Status shows "Waiting for Unity to initialize"
+- `bridge_log.txt` shows Unity sending `unity_ready` but RN never receives it
+
+**Root Cause**: Fabric's `_eventEmitter` is nil when Unity sends early messages. The `onUnityMessage` callback silently drops messages because it checks `if (_eventEmitter != nil)` before forwarding.
+
+**Fix Applied** (automatic via `postinstall`):
+- Script: `./scripts/patch-rn-unity-message-queue.sh`
+- Adds `_pendingMessages` queue to buffer messages before eventEmitter is ready
+- Modified `updateEventEmitter` flushes buffered messages when Fabric wires up
+
+**Verification**: Check `Documents/unity_init.log` for:
+- ✅ `updateEventEmitter CALLED, pending messages: N` (where N > 0)
+- ✅ `Flushing N pending messages`
+- ✅ `Pending messages flushed`
+
+### FPS Fix (Unity-RN VSync Conflict)
+
+**Symptom**: Unity shows 15 FPS while React Native shows 60 FPS (exactly 4:1 ratio)
+
+**Root Cause**: VSync synchronization mismatch between Unity and React Native render loops. Unity's default Medium quality has `vSyncCount: 1`, which conflicts with RN's render timing, causing 4:1 frame dropping.
+
+**Fix Applied** (in `BridgeTarget.cs`):
+```csharp
+[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
+private static void LogBeforeSplashScreen()
+{
+    QualitySettings.vSyncCount = 0;  // Disable VSync
+    Application.targetFrameRate = 60; // Match iOS refresh
+}
+```
+
+**Verification**: Check `Documents/bridge_early.log` for:
+- ✅ `Frame rate initialized: vSync=0, targetFPS=60 (was vSync=1)`
+
+**Note**: This fix runs at the earliest possible point (before splash screen) to ensure it applies before any frames are rendered.
+
 ### Build Internals (Why These Flags?)
 
 | Flag | Why Needed |
