@@ -2,6 +2,19 @@
 
 > ⚠️ **READ THIS BEFORE RUNNING THE APP** ⚠️
 
+## Quick Start - Build & Run on iPhone
+
+```bash
+# One command to build and launch on connected iPhone/iPad
+./scripts/build_minimal.sh
+```
+
+This script performs: fail-fast checks → Unity export → UnityFramework build → pod install → app build/install → **auto-launch on device**
+
+**Requirements**: iPhone/iPad connected via USB, device unlocked, Xcode 16.4 installed
+
+---
+
 This document outlines critical issues with the iOS build and how they are managed.
 
 ---

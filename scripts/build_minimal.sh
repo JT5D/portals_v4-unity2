@@ -126,4 +126,18 @@ xcodebuild -workspace Portals.xcworkspace \
         die "App build failed"
     }
 
-log "SUCCESS! App installed on device: $DEVICE_LINE"
+log "App installed on device: $DEVICE_LINE"
+
+# =============================================================================
+# 7. LAUNCH APP
+# =============================================================================
+log "Launching app..."
+DEVICE_NAME=$(echo "$DEVICE_LINE" | sed -E 's/ \([0-9.]+\) \([0-9A-F-]+\)$//')
+BUNDLE_ID="com.h3mai.portals"
+
+xcrun devicectl device process launch \
+    --device "$DEVICE_NAME" \
+    --terminate-existing \
+    "$BUNDLE_ID" 2>&1 && log "SUCCESS! App launched on $DEVICE_NAME" || {
+        log "Auto-launch failed (device may be locked). Open app manually."
+    }
