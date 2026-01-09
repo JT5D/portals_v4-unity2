@@ -1,7 +1,7 @@
 # portals_v4 - Unity XR Project Rules
 
 **Global Rules**: See `~/GLOBAL_RULES.md` (loaded first)
-**Project**: Unity 6000.2.14f1, AR Foundation 6.2.1, React Native 0.73.2
+**Project**: Unity 6000.2.14f1, AR Foundation 6.2.1, React Native 0.81.5, Expo SDK 54
 
 ---
 
@@ -53,6 +53,25 @@ manage_gameobject(action="find", search_term="Player", search_method="by_name")
 
 **Sources**: [Unity Xcode Structure](https://docs.unity3d.com/Manual/StructureOfXcodeProject.html), [Apple Dev Forums](https://developer.apple.com/forums/thread/749458)
 
+### Metro Configuration (Critical)
+
+**BlockList**: Must use **anchored regex** to avoid blocking react-native-unity package:
+```javascript
+// metro.config.js - CORRECT
+config.resolver.blockList = [
+    /^unity\/.*/,             // Anchored: only blocks ./unity/ at project root
+    /\/ios\/.*\.xcodeproj/,   // Blocks Xcode project files
+    /\/ios\/.*\.xcworkspace/, // Blocks Xcode workspace files
+];
+
+// WRONG - blocks node_modules/@artmajeur/react-native-unity too!
+// config.resolver.blockList = [/unity\/.*/];  // Matches "unity" anywhere
+```
+
+**App Config**: Team ID via env var (set `EXPO_PUBLIC_DEVELOPMENT_TEAM` in `.env`):
+- Build scripts pass `DEVELOPMENT_TEAM=Z8622973EB` directly to xcodebuild
+- Config loads in ~10ms (no shell commands at load time)
+
 <!-- DISABLED: Fast Iteration (needs debugging)
 ### Fast Iteration (use these!)
 ```bash
@@ -88,7 +107,9 @@ unity/
 ios/
   Portals.xcworkspace            # Main Xcode workspace
 scripts/
-  build_and_run_ios.sh           # Automated iOS build pipeline
+  build_minimal.sh               # Fast fail-fast build (~15 min)
+  build_and_run_ios.sh           # Full build with all checks (~20 min)
+  debug_build_verbose.sh         # Verbose debug build with checkpoints
   common.sh                      # Shared utilities (process cleanup)
   find_xcode.py                  # Xcode version selector (prefers 16.4)
   check_missing_scripts.py       # Pre-build GUID validation

@@ -1,17 +1,8 @@
 import 'dotenv/config';
-import { execSync } from 'child_process';
 
-// Auto-detect Team ID if not provided in .env
-let detectedTeamId = process.env.EXPO_PUBLIC_DEVELOPMENT_TEAM;
-if (!detectedTeamId) {
-    try {
-        detectedTeamId = execSync('security find-identity -v -p codesigning | grep "Apple Development" | head -1 | grep -o "(.*)" | tr -d "()"')
-            .toString()
-            .trim();
-    } catch (e) {
-        // Fallback to empty if detection fails
-    }
-}
+// Team ID should be set via EXPO_PUBLIC_DEVELOPMENT_TEAM in .env
+// Or passed directly to xcodebuild via build scripts (DEVELOPMENT_TEAM=Z8622973EB)
+const developmentTeam = process.env.EXPO_PUBLIC_DEVELOPMENT_TEAM || undefined;
 
 export default {
     expo: {
@@ -32,7 +23,7 @@ export default {
             supportsTablet: true,
             bundleIdentifier: "com.h3mai.portals",
             deploymentTarget: "17.0",
-            developmentTeam: detectedTeamId,
+            developmentTeam: developmentTeam,
             infoPlist: {
                 NSPhotoLibraryUsageDescription: "The app accesses your photos to let you import media into the AR scene.",
                 NSCameraUsageDescription: "The app uses your camera for AR.",

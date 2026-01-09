@@ -8,6 +8,7 @@
     "unity",
     "ios",
     "android",
-    "dist"
+    "dist",
+    "_ref"
   ]
 }
