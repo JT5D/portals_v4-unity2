@@ -423,6 +423,17 @@ We follow a **Spec-Driven Development** methodology. All major architectural dec
 
 > **Note**: These commands apply to the **react-only workflow** (`dev`/`main` branches without Unity integration). For the `react-unity` branch, use `./scripts/build_minimal.sh` instead.
 
+## Key Differences from react-unity Branch
+
+| Setting | dev/main (Legacy) | react-unity |
+|---------|-------------------|-------------|
+| Config file | `app.json` | `app.config.js` |
+| Bundle ID | `com.portals.app` | `com.h3mai.portals` |
+| Build command | `npx expo run:ios --device` | `./scripts/build_minimal.sh` |
+| Unity integration | None | Unity 6000.2 UAAL |
+| Build configuration | Debug (hot reload) | Release (embedded bundle) |
+| AR Engine | ViroReact only | Unity + ViroReact |
+
 ## Prerequisites
 
 - Node.js 18+
