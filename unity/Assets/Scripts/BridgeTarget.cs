@@ -20,7 +20,9 @@ public class BridgeTarget : MonoBehaviour
     private static float _lastMessageTime = 0f;
 
     private const int MaxLogs = 15;
-    private static readonly Queue<string> LogBuffer = new();
+
+    // Cached VFX asset (loaded once, reused for all brush spawns)
+    private static UnityEngine.VFX.VisualEffectAsset _cachedBrushVFX;
 
     // File logging
     private static string _logFilePath;
@@ -261,14 +263,21 @@ public class BridgeTarget : MonoBehaviour
     {
         LogDebug("Processing spawnBrush action");
 
-        // 1. Load the Asset (No "Resources" prefix needed in path)
-        var vfxAsset = Resources.Load<UnityEngine.VFX.VisualEffectAsset>("VFX/SimpleBrush");
-        if (vfxAsset == null)
+        // 1. Get cached VFX asset (load once, reuse forever)
+        if (_cachedBrushVFX == null)
+        {
+            _cachedBrushVFX = Resources.Load<UnityEngine.VFX.VisualEffectAsset>("VFX/SimpleBrush");
+            if (_cachedBrushVFX != null)
+                LogDebug("VFX asset cached successfully");
+        }
+
+        if (_cachedBrushVFX == null)
         {
             LogError("Failed to load VFX/SimpleBrush from Resources");
             SendToMobileApp(BuildJSON("error", "Asset not found"));
             return;
         }
+        var vfxAsset = _cachedBrushVFX;
 
         // 2. Spawn the Container
         var brushGO = new GameObject($"Brush_{Time.frameCount}");

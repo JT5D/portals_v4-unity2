@@ -149,7 +149,18 @@ public class BuildScript
         buildOptions.scenes = GetScenePaths();
         buildOptions.locationPathName = buildPath;
         buildOptions.target = BuildTarget.iOS;
-        buildOptions.options = BuildOptions.None; // Pure Release - no Development symbols
+
+        // Use Append mode for incremental builds if export already exists
+        // Falls back to Replace (None) for first build or if UNITY_CLEAN_BUILD=1
+        bool useAppend = System.IO.Directory.Exists(buildPath)
+            && System.IO.File.Exists(System.IO.Path.Combine(buildPath, "Unity-iPhone.xcodeproj/project.pbxproj"))
+            && Environment.GetEnvironmentVariable("UNITY_CLEAN_BUILD") != "1";
+
+        buildOptions.options = useAppend
+            ? BuildOptions.AcceptExternalModificationsToPlayer  // Append - incremental
+            : BuildOptions.None;                                 // Replace - clean build
+
+        Debug.Log($"iOS Build Mode: {(useAppend ? "Append (incremental)" : "Replace (clean)")}");
 
         var report = BuildPipeline.BuildPlayer(buildOptions);
 

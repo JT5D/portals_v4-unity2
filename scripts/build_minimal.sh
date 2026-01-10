@@ -28,12 +28,26 @@ die() { echo "[ERROR] $1"; exit 1; }
 # =============================================================================
 log "Running fail-fast checks..."
 
+# Check if another build is already running
+LOCK_FILE="/tmp/build_minimal.lock"
+if [ -f "$LOCK_FILE" ]; then
+    OTHER_PID=$(cat "$LOCK_FILE" 2>/dev/null)
+    if kill -0 "$OTHER_PID" 2>/dev/null; then
+        die "Another build is running (PID $OTHER_PID). Wait or kill it: kill $OTHER_PID"
+    fi
+fi
+echo $$ > "$LOCK_FILE"
+trap "rm -f '$LOCK_FILE'" EXIT
+
 [ -f "$UNITY_BIN" ] || die "Unity not found at $UNITY_BIN"
 
 DEVICE_LINE=$(xcrun xctrace list devices 2>&1 | sed -n '/^== Devices ==$/,/^==/p' | grep -v "MacBook\|^==" | head -1)
 DEVICE_UDID=$(echo "$DEVICE_LINE" | sed -E 's/.*\(([0-9A-F]{8}-[0-9A-F]{16})\).*/\1/')
 [ -z "$DEVICE_UDID" ] && die "No iOS device connected."
 log "Device: $DEVICE_LINE"
+DEVICE_NAME=$(echo "$DEVICE_LINE" | sed -E 's/ \([0-9.]+\) \([0-9A-F-]+\)$//')
+
+BUNDLE_ID="com.h3mai.portals"
 
 XCODE_PATH="/Applications/Xcode-164.app/Contents/Developer"
 [ -d "$XCODE_PATH" ] || XCODE_PATH=$(xcode-select -p)
@@ -132,9 +146,6 @@ log "App installed on device: $DEVICE_LINE"
 # 7. LAUNCH APP
 # =============================================================================
 log "Launching app..."
-DEVICE_NAME=$(echo "$DEVICE_LINE" | sed -E 's/ \([0-9.]+\) \([0-9A-F-]+\)$//')
-BUNDLE_ID="com.h3mai.portals"
-
 xcrun devicectl device process launch \
     --device "$DEVICE_NAME" \
     --terminate-existing \

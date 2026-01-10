@@ -1,0 +1,13 @@
+<linker>
+    <!-- Preserve BridgeTarget to prevent IL2CPP stripping -->
+    <assembly fullname="Assembly-CSharp">
+        <type fullname="BridgeTarget" preserve="all"/>
+        <type fullname="ARDebugOverlay" preserve="all"/>
+        <type fullname="ARSessionLogger" preserve="all"/>
+    </assembly>
+
+    <!-- Preserve System.IO for file operations -->
+    <assembly fullname="mscorlib">
+        <namespace fullname="System.IO" preserve="all"/>
+    </assembly>
+</linker>

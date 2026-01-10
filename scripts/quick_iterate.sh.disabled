@@ -1,0 +1,36 @@
+#!/bin/bash
+# scripts/quick_iterate.sh
+# Faster iteration wrapper for basic tasks
+
+set -euo pipefail
+
+MODE="${1:-help}"
+
+case "$MODE" in
+    rn)
+        echo "🔥 Quick Iteration: React Native Hot Reload"
+        echo "Use 'r' in the terminal to reload, or 'd' for developer menu."
+        npx expo start --dev-client
+        ;;
+    unity)
+        echo "🎮 Quick Iteration: Unity Editor"
+        echo "Opening Unity Project..."
+        "/Applications/Unity/Hub/Editor/6000.2.14f1/Unity.app/Contents/MacOS/Unity" -projectPath "$(pwd)/unity" &
+        ;;
+    fast)
+        echo "🚀 Quick Iteration: Fast Build (Skip Export & Pods)"
+        # Skips 1. Unity Export (3-5 min) AND 2. Pod Install (2-5 min)
+        # ONLY use this if you modified native iOS code or need to re-sign.
+        # If you only changed JS, use 'rn' mode.
+        ./scripts/build_and_run_ios.sh --skip-unity-export --skip-pod-install
+        ;;
+    status)
+        echo "📊 System Status:"
+        echo "- Unity Editor: $(pgrep -f "Unity.app" >/dev/null && echo "Running" || echo "Stopped")"
+        echo "- Metro Bundler: $(lsof -ti:8081 >/dev/null && echo "Running" || echo "Stopped")"
+        ;;
+    *)
+        echo "Usage: ./scripts/quick_iterate.sh [rn|unity|fast|status]"
+        exit 1
+        ;;
+esac

@@ -1,0 +1,27 @@
+# Exclude heavy dependencies and build artifacts from AI indexing
+node_modules/
+unity/Library/
+unity/Temp/
+unity/Obj/
+unity/Build/
+unity/Logs/
+unity/MemoryCaptures/
+ios/
+android/
+dist/
+build/
+.expo/
+.next/
+.turbo/
+out/
+.logs/
+logs/
+*.mp4
+*.wav
+*.zip
+*.tar.gz
+*.unitypackage
+**/node_modules/**
+**/Library/**
+**/Temp/**
+**/Build/**
