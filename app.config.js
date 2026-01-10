@@ -5,7 +5,7 @@ export default {
         name: "Portals",
         slug: "Portals",
         scheme: "portals",
-        version: "1.0.0",
+        version: "4.0",
         orientation: "portrait",
         icon: "./assets/icon.png",
         userInterfaceStyle: "light",
@@ -17,16 +17,18 @@ export default {
         },
         ios: {
             supportsTablet: true,
-            bundleIdentifier: "com.h3mai.portals",
+            bundleIdentifier: "com.h3m.portals",
             deploymentTarget: "17.0",
+            appleTeamId: "4ACKE7A883",
             infoPlist: {
+                ITSAppUsesNonExemptEncryption: false,
                 NSPhotoLibraryUsageDescription: "The app accesses your photos to let you import media into the AR scene.",
                 NSCameraUsageDescription: "The app uses your camera for AR.",
                 NSMicrophoneUsageDescription: "The app uses your microphone for recording AR videos."
             }
         },
         android: {
-            package: "com.h3mai.portals",
+            package: "com.h3m.portals",
             adaptiveIcon: {
                 foregroundImage: "./assets/adaptive-icon.png",
                 backgroundColor: "#ffffff"
