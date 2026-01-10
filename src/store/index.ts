@@ -211,9 +211,27 @@ export const useAppStore = create<AppState>((set, get) => ({
                 );
             }
 
-            console.log(`[Store] Fetched ${posts.length} posts.`);
-            if (posts.length > 0) {
-                set({ feed: posts });
+            // Filter out mystery portals, posts with rarity tiers, and posts with signal modes
+            // These are map-only experiences and should not appear in the regular feed
+            const filteredPosts = posts.filter((post) => {
+                const settings = post.portalSettings;
+                if (!settings) return true; // No portal settings = regular post, show in feed
+
+                // Exclude mystery posts
+                if (settings.isMystery === true) return false;
+
+                // Exclude posts with rarity tiers (these are map portals)
+                if (settings.rarity) return false;
+
+                // Exclude posts with signal modes (these are map portals)
+                if (settings.signalMode) return false;
+
+                return true; // Show in feed
+            });
+
+            console.log(`[Store] Fetched ${filteredPosts.length} posts (${posts.length - filteredPosts.length} portal posts filtered out).`);
+            if (filteredPosts.length > 0) {
+                set({ feed: filteredPosts });
             } else {
                 console.log("[Store] No posts found.");
             }

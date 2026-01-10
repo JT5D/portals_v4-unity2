@@ -205,6 +205,7 @@ export class figment extends Component {
         {this._renderLightingSetup()}
 
         {/* Dedicated Shadow Light - Always present to ensure shadows work */}
+        {/* influenceBitMask=1 affects all objects with lightReceivingBitMask that includes bit 1 */}
         <ViroSpotLight
           innerAngle={15}
           outerAngle={60}
@@ -215,25 +216,37 @@ export class figment extends Component {
           attenuationStartDistance={5}
           attenuationEndDistance={20}
           castsShadow={true}
-          shadowMapSize={512}
+          influenceBitMask={1}
+          shadowMapSize={1024}
           shadowNearZ={2}
           shadowFarZ={20}
-          shadowOpacity={0.35}
+          shadowOpacity={0.5}
         />
 
         {/* Global Shadow Receiver Plane (Invisible, catches shadows AND physics collisions) */}
+        {/* lightReceivingBitMask=1 receives shadows from lights with influenceBitMask that includes bit 1 */}
+        {/* Physics shape must be explicitly defined for proper collision with dynamic objects */}
         <ViroQuad
-          position={[0, -0.01, 0]}
+          position={[0, 0, 0]}
           rotation={[-90, 0, 0]}
           width={100}
           height={100}
           arShadowReceiver={true}
+          lightReceivingBitMask={1}
           physicsBody={{
             type: 'Static',
+            mass: 0,
+            shape: {
+              type: 'Box',
+              params: [100, 100, 0.1], // width, height(depth after rotation), thickness
+            },
             friction: 0.8,
             restitution: 0.3,
           }}
           viroTag="floor"
+          onCollision={(collidedTag, collidedPoint, collidedNormal) => {
+            console.log('[Floor] Collision with:', collidedTag, 'at:', collidedPoint);
+          }}
         />
 
         {models}
@@ -388,11 +401,18 @@ export class figment extends Component {
   // effectItems - list of effects; from the data model, see js/model/EffectItems.js
   _renderEffects(effectItems) {
     if (effectItems) {
+      console.log('[Figment] _renderEffects: checking', effectItems.length, 'effects');
       for (var i = 0; i < effectItems.length; i++) {
         if (effectItems[i].selected) {
-          return (<EffectItemRender index={i} effectItem={effectItems[i]} />);
+          console.log('[Figment] _renderEffects: Found selected effect at index', i, 'name:', effectItems[i].name);
+          const rendered = (<EffectItemRender index={i} effectItem={effectItems[i]} />);
+          console.log('[Figment] _renderEffects: Rendering effect:', rendered ? 'success' : 'null');
+          return rendered;
         }
       }
+      console.log('[Figment] _renderEffects: No effect selected');
+    } else {
+      console.log('[Figment] _renderEffects: effectItems is null/undefined');
     }
   }
 
