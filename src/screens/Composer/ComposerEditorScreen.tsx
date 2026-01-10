@@ -81,7 +81,7 @@ export const ComposerEditorScreen = () => {
     }, [permission]);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
+        let interval: ReturnType<typeof setInterval>;
         if (isRecording) {
             recordingStartRef.current = Date.now();
 

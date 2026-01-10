@@ -3,7 +3,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
 // @ts-ignore
-import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import { getAuth, initializeAuth, getReactNativePersistence, Auth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -33,7 +33,7 @@ isSupported().then((supported) => {
 });
 
 // Initialize Auth with Persistence
-let auth;
+let auth: Auth;
 try {
     auth = initializeAuth(app, {
         // @ts-ignore

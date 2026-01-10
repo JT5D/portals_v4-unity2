@@ -43,6 +43,38 @@ import { MessagePermissionScreen } from '../screens/MessagePermissionScreen';
 // Stub or Reuse Screen
 const UserProfileScreen = ProfileScreen; // Reuse for now, ideally refactor later
 
+// Type definition for main stack navigation
+export type RootParamList = {
+    Tabs: undefined;
+    Search: undefined;
+    People: undefined;
+    UserProfile: { userId?: string };
+    ProfileGallery: undefined;
+    Settings: undefined;
+    InviteFriends: undefined;
+    AccountSettings: undefined;
+    EditProfileField: { field: string };
+    NotificationSettings: undefined;
+    MessagePermission: undefined;
+    Usage: undefined;
+    TermsOfService: undefined;
+    PrivacyPolicy: undefined;
+    ProfileSettings: undefined;
+    Activity: undefined;
+    PostFeed: { initialIndex?: number };
+    PostDetails: { postId: string };
+    ComposerEntry: undefined;
+    ComposerEditor: undefined;
+    ComposerPublish: undefined;
+    Figment: undefined;
+    ARViewer: undefined;
+    Chat: { userId: string };
+    TagPeople: undefined;
+    LocationPicker: undefined;
+    ARNavigation: undefined;
+    ArtifactViewer: undefined;
+};
+
 const Stack = createNativeStackNavigator();
 
 const AuthStack = () => (

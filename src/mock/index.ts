@@ -104,7 +104,8 @@ export const POSTS: Post[] = [
         date: '2-28',
         tags: ['fashion', 'gucci', 'style'],
         music: 'Gucci Gang - Lil Pump',
-        linkedArtifact: ARTIFACTS[0]
+        linkedArtifact: ARTIFACTS[0],
+        category: 'fashion'
     },
     {
         id: 'p2',
@@ -118,7 +119,8 @@ export const POSTS: Post[] = [
         date: 'Yesterday',
         tags: ['skate', 'tricks'],
         music: 'Original Sound',
-        linkedArtifact: ARTIFACTS[1]
+        linkedArtifact: ARTIFACTS[1],
+        category: 'sports'
     },
     {
         id: 'p3',
@@ -132,7 +134,8 @@ export const POSTS: Post[] = [
         date: 'Just now',
         tags: ['art', 'digital'],
         music: 'Lo-Fi Chill',
-        linkedArtifact: ARTIFACTS[2]
+        linkedArtifact: ARTIFACTS[2],
+        category: 'art'
     },
     {
         id: 'p4',
@@ -146,7 +149,8 @@ export const POSTS: Post[] = [
         date: 'Just now',
         tags: ['adventure', 'secret'],
         music: 'Mystery Track',
-        linkedArtifact: ARTIFACTS[3]
+        linkedArtifact: ARTIFACTS[3],
+        category: 'adventure'
     },
     {
         id: 'p5',
@@ -160,7 +164,8 @@ export const POSTS: Post[] = [
         date: '1h',
         tags: ['summer', 'vibes'],
         music: 'Sunroof',
-        linkedArtifact: ARTIFACTS[4]
+        linkedArtifact: ARTIFACTS[4],
+        category: 'lifestyle'
     },
     {
         id: 'p6',
@@ -174,7 +179,8 @@ export const POSTS: Post[] = [
         date: '2h',
         tags: ['glow', 'neon'],
         music: 'Blinding Lights',
-        linkedArtifact: ARTIFACTS[5]
+        linkedArtifact: ARTIFACTS[5],
+        category: 'lifestyle'
     }
 ];
 

@@ -197,6 +197,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                     sceneId: data.sceneId,
                     sceneData: data.sceneData,
                     isArtifact: data.isArtifact || false, // CRITICAL: Include artifact status for routing and UI
+                    portalSettings: data.portalSettings || null, // Portal gamification settings
                 } as Post);
             });
 
@@ -462,6 +463,8 @@ export const useAppStore = create<AppState>((set, get) => ({
                             bio: data.bio || '',
                             followers: data.followers || 0,
                             following: data.following || 0,
+                            friends: data.friends || 0,
+                            flames: data.flames || 0,
                             isVerified: data.isVerified || false,
                         } as User);
                     }

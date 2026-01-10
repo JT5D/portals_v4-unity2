@@ -3,8 +3,8 @@
  * Handles notification state and selection mode
  */
 import { create } from 'zustand';
-import { Notification } from '../types';
-import { NotificationService } from '../services/notifications';
+import { Notification } from '../../types';
+import { NotificationService } from '../../services/notifications';
 
 export interface NotificationsSlice {
     notifications: Notification[];

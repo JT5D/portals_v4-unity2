@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: theme.colors.text,
-        fontFamily: theme.typography.h1.fontFamily,
     },
     headerActions: {
         flexDirection: 'row',

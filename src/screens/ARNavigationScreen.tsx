@@ -291,7 +291,6 @@ export const ARNavigationScreen = () => {
         <View style={styles.container}>
             <ViroARSceneNavigator
                 autofocus={true}
-                geospatialAnchorProvider="arcore"
                 initialScene={{
                     scene: ARNavigationScene,
                 }}

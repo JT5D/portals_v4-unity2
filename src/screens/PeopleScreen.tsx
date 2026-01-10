@@ -322,23 +322,40 @@ export const PeopleScreen = () => {
                     <ActivityIndicator size="large" color={theme.colors.primary} />
                     <Text style={styles.loadingText}>Loading...</Text>
                 </View>
-            ) : (
+            ) : activeTab === 'Invites' ? (
                 <FlatList
-                    data={displayItems as any}
-                    renderItem={activeTab === 'Invites' ? renderInviteItem : renderUserItem}
+                    data={collabInvites}
+                    renderItem={renderInviteItem}
                     keyExtractor={item => item.id}
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Ionicons
-                                name={activeTab === 'Invites' ? 'mail-outline' : 'people-outline'}
+                                name="mail-outline"
                                 size={48}
                                 color={theme.colors.textDim}
                             />
                             <Text style={styles.emptyText}>
-                                {activeTab === 'Invites'
-                                    ? 'No pending invitations'
-                                    : `No ${activeTab.toLowerCase()} yet`}
+                                No pending invitations
+                            </Text>
+                        </View>
+                    }
+                />
+            ) : (
+                <FlatList
+                    data={displayItems as User[]}
+                    renderItem={renderUserItem}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.list}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Ionicons
+                                name="people-outline"
+                                size={48}
+                                color={theme.colors.textDim}
+                            />
+                            <Text style={styles.emptyText}>
+                                {`No ${activeTab.toLowerCase()} yet`}
                             </Text>
                         </View>
                     }

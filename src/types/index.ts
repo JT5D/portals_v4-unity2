@@ -1,7 +1,10 @@
+import { PortalSettings } from './portal';
+
 export interface User {
     id: string;
     username: string;
     email?: string;
+    phoneNumber?: string;
     name?: string;
     avatar: string;
     isVerified?: boolean;
@@ -93,7 +96,12 @@ export interface Post {
         username: string;
         avatar: string;
     };
+    /** Gamified portal settings (rarity, signal mode, temporal config) */
+    portalSettings?: PortalSettings;
 }
+
+// Re-export portal types for convenience
+export * from './portal';
 
 export interface Comment {
     id: string;
