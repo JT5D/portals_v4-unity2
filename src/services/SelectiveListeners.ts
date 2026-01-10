@@ -115,7 +115,7 @@ export function useThrottledListener<T>(
     const [loading, setLoading] = useState(true);
     const lastUpdateRef = useRef<number>(0);
     const pendingDataRef = useRef<T | null>(null);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (!docRef) {

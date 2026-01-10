@@ -3,8 +3,8 @@
  * Handles authentication state and user profile
  */
 import { create } from 'zustand';
-import { User } from '../types';
-import { CURRENT_USER } from '../mock';
+import { User } from '../../types';
+import { CURRENT_USER } from '../../mock';
 
 export interface AuthSlice {
     currentUser: User | null;

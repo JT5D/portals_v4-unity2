@@ -6,8 +6,10 @@ import { theme } from '../theme/theme';
 import MapView, { Marker, PROVIDER_DEFAULT, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useAppStore } from '../store';
 import { Post } from '../types';
+import { RARITY_COLORS } from '../types/portal';
 import LocationService, { GeoCoordinate } from '../services/LocationService';
 import FuelService from '../services/FuelService';
+import PortalService from '../services/PortalService';
 import { MapBottomSheet } from '../components/MapBottomSheet';
 import { useNavigation } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
@@ -42,12 +44,44 @@ export const MapScreen = () => {
     const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number, longitude: number }[]>([]);
     const [initialRegion, setInitialRegion] = useState<any>(null);
 
-    // Filter posts with location
-    const postsWithLocation = useMemo(() =>
-        feed.filter(p => p.locations && p.locations.length > 0),
-        [feed]);
+    // Filter posts with location - show all portals, visibility status shown in UI
+    const postsWithLocation = useMemo(() => {
+        return feed.filter(p => {
+            // Must have location
+            if (!p.locations || p.locations.length === 0) return false;
+            // Show all portals regardless of visibility (visibility status shown in list/markers)
+            return true;
+        });
+    }, [feed]);
 
-    // ... (fetchWalkingRoute kept as is)
+    /**
+     * Fetch walking directions from OSRM (free, no API key required)
+     */
+    const fetchWalkingRoute = async (
+        origin: { latitude: number; longitude: number },
+        destination: { latitude: number; longitude: number }
+    ): Promise<{ latitude: number, longitude: number }[]> => {
+        try {
+            const url = `https://router.project-osrm.org/route/v1/foot/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
+                // OSRM returns [lng, lat], we need {latitude, longitude}
+                return data.routes[0].geometry.coordinates.map((coord: [number, number]) => ({
+                    latitude: coord[1],
+                    longitude: coord[0]
+                }));
+            }
+
+            console.warn('[MapScreen] OSRM returned no route, using straight line');
+            return [origin, destination];
+        } catch (error) {
+            console.error('[MapScreen] Route fetch failed:', error);
+            return [origin, destination]; // Fallback to straight line
+        }
+    };
 
     // Initialize Services
     useEffect(() => {
@@ -94,7 +128,16 @@ export const MapScreen = () => {
         };
         LocationService.on('location_update', handleLocUpdate);
 
-        // ... (rest of listeners)
+        const handleFuelEarned = ({ amount }: { amount: number }) => {
+            setFuelEarnedSession(prev => prev + amount);
+        };
+        FuelService.on('fuel_earned', handleFuelEarned);
+
+        return () => {
+            LocationService.stopTracking();
+            LocationService.off('location_update', handleLocUpdate);
+            FuelService.off('fuel_earned', handleFuelEarned);
+        };
     }, [currentUser?.id]);
 
     // Handlers
@@ -150,28 +193,88 @@ export const MapScreen = () => {
                 initialRegion={initialRegion}
             >
                 {/* POI Markers */}
-                {postsWithLocation.map((post, index) => (
-                    <Marker
-                        key={`${post.id}-${index}`}
-                        coordinate={{
-                            latitude: post.locations![0].latitude,
-                            longitude: post.locations![0].longitude
-                        }}
-                        onPress={() => setSelectedPost(post)}
-                    >
-                        <View style={styles.markerContainer}>
-                            {post.isArtifact ? (
-                                // Diamond marker for artifacts
-                                <View style={[styles.markerDot, styles.artifactMarker, selectedPost?.id === post.id && styles.markerActive]}>
-                                    <Ionicons name="diamond" size={14} color="black" />
-                                </View>
-                            ) : (
-                                <View style={[styles.markerDot, selectedPost?.id === post.id && styles.markerActive]} />
-                            )}
-                            <View style={[styles.markerStem, post.isArtifact && styles.artifactStem]} />
-                        </View>
-                    </Marker>
-                ))}
+                {postsWithLocation.map((post, index) => {
+                    const rarity = post.portalSettings?.rarity || 'Common';
+                    const isMystery = post.portalSettings?.isMystery === true;
+
+                    // Calculate distance for mystery logic
+                    let distMeters = 9999;
+                    if (userLocation && post.locations?.[0]) {
+                        distMeters = LocationService.calculateDistance(
+                            userLocation.latitude, userLocation.longitude,
+                            post.locations[0].latitude,
+                            post.locations[0].longitude
+                        ) * 1000;
+                    }
+
+                    const mysteryUnlocked = isMystery ? PortalService.isMysteryUnlocked(distMeters) : false;
+                    const rarityColor = RARITY_COLORS[rarity];
+
+                    // Use distance-based color for locked mystery portals
+                    const markerColor = isMystery && !mysteryUnlocked
+                        ? PortalService.getMysteryColor(distMeters)
+                        : rarityColor;
+
+                    const isSelected = selectedPost?.id === post.id;
+
+                    return (
+                        <Marker
+                            key={`${post.id}-${index}`}
+                            coordinate={{
+                                latitude: post.locations![0].latitude,
+                                longitude: post.locations![0].longitude
+                            }}
+                            onPress={() => setSelectedPost(post)}
+                            tracksViewChanges={false} // Optimization
+                            zIndex={isSelected ? 999 : (isMystery ? 100 : 1)}
+                        >
+                            <View style={styles.markerContainer}>
+                                {isMystery && !mysteryUnlocked ? (
+                                    // Mystery Marker (Question Mark)
+                                    <View style={[
+                                        styles.markerDot,
+                                        {
+                                            borderColor: markerColor,
+                                            backgroundColor: '#000',
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: 16,
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            borderWidth: 2,
+                                        },
+                                        isSelected && styles.markerActive
+                                    ]}>
+                                        <Ionicons name="help" size={18} color={markerColor} />
+                                    </View>
+                                ) : post.isArtifact ? (
+                                    // Diamond marker for artifacts
+                                    <View style={[
+                                        styles.markerDot,
+                                        styles.artifactMarker,
+                                        { borderColor: markerColor },
+                                        isSelected && styles.markerActive
+                                    ]}>
+                                        <Ionicons name="diamond" size={14} color="black" />
+                                    </View>
+                                ) : (
+                                    <View style={[
+                                        styles.markerDot,
+                                        { borderColor: markerColor },
+                                        isSelected && styles.markerActive,
+                                        rarity === 'Mythic' && styles.markerMythic,
+                                        rarity === 'Anomaly' && styles.markerAnomaly,
+                                    ]} />
+                                )}
+                                <View style={[
+                                    styles.markerStem,
+                                    { backgroundColor: markerColor },
+                                    post.isArtifact && styles.artifactStem
+                                ]} />
+                            </View>
+                        </Marker>
+                    );
+                })}
 
                 {/* Navigation Route (Walking Directions) */}
                 {navTarget && routeCoordinates.length > 0 && (
@@ -370,5 +473,20 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
+    },
+    // Rarity-based marker effects
+    markerMythic: {
+        shadowColor: '#A855F7',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    markerAnomaly: {
+        shadowColor: '#F43F5E',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 10,
     },
 });

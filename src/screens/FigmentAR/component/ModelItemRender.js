@@ -1491,13 +1491,10 @@ var ModelItemRender = createReactClass({
         uuid,
         finalScale: JSON.stringify(finalScale),
         stateScale: JSON.stringify(this.state.scale),
-        willUpdateState: JSON.stringify(finalScale) !== JSON.stringify(this.state.scale),
       });
 
-      // CRITICAL FIX: Update React state to match visual scale
-      if (JSON.stringify(finalScale) !== JSON.stringify(this.state.scale)) {
-        this.setState({ scale: finalScale });
-      }
+      // FIX: Do NOT call setState here - it causes a duplicate scale jump
+      // The visual is already correct via setNativeProps, we just need to persist to Redux
 
       // Sync to Redux for data persistence
       if (this.props.onTransformUpdate) {

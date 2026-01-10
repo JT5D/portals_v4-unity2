@@ -3,9 +3,9 @@
  * Handles posts, likes, comments with pagination support
  */
 import { create } from 'zustand';
-import { Post, Comment, User } from '../types';
-import { POSTS, COMMENTS } from '../mock';
-import { db } from '../config/firebase';
+import { Post, Comment, User } from '../../types';
+import { POSTS, COMMENTS } from '../../mock';
+import { db } from '../../config/firebase';
 import {
     collection, query, orderBy, getDocs, limit, deleteDoc, doc,
     startAfter, DocumentSnapshot
@@ -56,11 +56,11 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
         }));
 
         try {
-            const { FeedService } = await import('../services/feed');
+            const { FeedService } = await import('../../services/feed');
             await FeedService.toggleLike(postId, currentUser.id, isLiked);
 
             if (!isLiked && post.userId !== currentUser.id) {
-                const { NotificationService } = await import('../services/notifications');
+                const { NotificationService } = await import('../../services/notifications');
                 await NotificationService.sendLikeNotification(currentUser, post);
             }
         } catch (error) {
@@ -127,12 +127,13 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
                     sceneId: data.sceneId,
                     sceneData: data.sceneData,
                     isArtifact: data.isArtifact || false,
+                    portalSettings: data.portalSettings || null, // Portal gamification settings
                 } as Post);
             });
 
             // Check like status
             if (currentUser && posts.length > 0) {
-                const { FeedService } = await import('../services/feed');
+                const { FeedService } = await import('../../services/feed');
                 await Promise.all(
                     posts.map(async (post) => {
                         post.isLiked = await FeedService.checkIsLiked(post.id, currentUser.id);
@@ -198,7 +199,7 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
         }));
 
         try {
-            const { FeedService } = await import('../services/feed');
+            const { FeedService } = await import('../../services/feed');
             await FeedService.addComment(
                 postId,
                 currentUser.id,
