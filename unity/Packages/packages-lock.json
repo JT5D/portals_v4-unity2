@@ -7,7 +7,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.0.2"
       },
-      "hash": "85198a07ea6cc0bb07fb6c5453d10a3b2cb0db19"
+      "hash": "4c9beaffdefadee03c07f00eb3e3b6c5294fc99d"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -325,7 +325,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.hands": {
-      "version": "1.7.1",
+      "version": "1.7.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
