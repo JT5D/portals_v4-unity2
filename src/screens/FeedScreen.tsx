@@ -21,6 +21,16 @@ const CategoryFeed = ({ category, isActive, onCommentPress, hideControls }: { ca
 
     // Filter feed based on category
     const categoryData = allFeed.filter(post => {
+        // Exclude map-only content (Mystery, Rarity, Signal) from standard feeds
+        const settings = post.portalSettings;
+        if (settings) {
+            if (settings.isMystery === true) return false;
+            // Note: If you want specific 'Rare' items to show in feed, remove the next line. 
+            // Currently assuming all rated items are map-only.
+            if (settings.rarity) return false;
+            if (settings.signalMode) return false;
+        }
+
         // Special case: Friends shows posts from followed users
         if (category === 'Friends') {
             return relationships.following.includes(post.userId);
