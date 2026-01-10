@@ -39,6 +39,49 @@ rm unity/Assets/XR/Temp.meta
 **Symptom**: Build script waits indefinitely
 **Fix**: Wait for Unity compilation to finish (check Unity Editor status bar)
 
+### 6. XR Subsystem Not Initialized (CRITICAL)
+**Symptom**:
+- "No active XRSessionSubsystem available"
+- "No active XRCameraSubsystem available"
+- "Call to StopSubsystems without an initialized manager"
+
+**Root Cause**: `XRGeneralSettings.asset` has `m_AutomaticLoading: 0` and `m_AutomaticRunning: 0` for iPhone Providers
+
+**Diagnosis**:
+```bash
+grep -A5 "iPhone Providers" unity/Assets/XR/XRGeneralSettings.asset
+# Should show: m_AutomaticLoading: 1, m_AutomaticRunning: 1
+```
+
+**Fix**: Edit `unity/Assets/XR/XRGeneralSettings.asset`:
+```yaml
+m_Name: iPhone Providers
+m_AutomaticLoading: 1   # Was 0
+m_AutomaticRunning: 1   # Was 0
+m_Loaders:
+- {fileID: 11400000, guid: 64f861632926f473fbf562868717c9e4, type: 2}
+```
+Then rebuild: `UNITY_CLEAN_BUILD=1 ./scripts/build_minimal.sh`
+
+### 7. App Install Fails Silently (xcodebuild)
+**Symptom**:
+- Build succeeds, xcodebuild says "install succeeded"
+- Launch fails with "application not installed"
+
+**Root Cause**: `xcodebuild install` doesn't always properly install to device
+
+**Diagnosis**:
+```bash
+xcrun devicectl device info apps --device <UDID> | grep -i portal
+```
+
+**Fix**: Use devicectl directly:
+```bash
+xcrun devicectl device install app --device <UDID> \
+  ~/Library/Developer/Xcode/DerivedData/Portals-*/Build/Products/Release-iphoneos/Portals.app
+xcrun devicectl device process launch --device <UDID> com.h3mai.portals
+```
+
 ---
 
 ## Unity-RN Bridge Issues

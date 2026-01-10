@@ -16,9 +16,7 @@ MonoBehaviour:
   Values:
   - featureSets:
     - com.microsoft.openxr.featureset.hololens
-  - featureSets:
-    - com.unity.openxr.featureset.meta
-  - featureSets:
-    - com.unity.openxr.featureset.meta
+  - featureSets: []
+  - featureSets: []
   m_vulkanAdditionalGraphicsQueue: 0
   m_vulkanOffscreenSwapchainNoMainDisplay: 1

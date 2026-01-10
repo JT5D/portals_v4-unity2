@@ -1,5 +1,39 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9026333819499308319
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 702bcde1762b6fd439c6021eef0e4b2f, type: 3}
+  m_Name: StarGlow
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.Toguchi.Rendering.StarGlow
+  active: 1
+  Threshold:
+    m_OverrideState: 1
+    m_Value: 0.8
+  Intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  Attenuation:
+    m_OverrideState: 1
+    m_Value: 0.95
+  Angle:
+    m_OverrideState: 1
+    m_Value: 0
+  StreakCount:
+    m_OverrideState: 1
+    m_Value: 4
+  Iteration:
+    m_OverrideState: 1
+    m_Value: 5
+  Divide:
+    m_OverrideState: 1
+    m_Value: 3
 --- !u!114 &-8340696664594798206
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -60,6 +94,70 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   balance:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-8112371271144442712
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38f3adaab4db4f8f9fbc58713914aa1b, type: 3}
+  m_Name: LightShaft
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.Toguchi.Rendering.LightShaft
+  active: 1
+  maxIterations:
+    m_OverrideState: 1
+    m_Value: 64
+  maxDistance:
+    m_OverrideState: 1
+    m_Value: 12
+  minDistance:
+    m_OverrideState: 1
+    m_Value: 0.4
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-7637034880478225375
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3d146ea0b8c76d47ba27a63f2f8d2e8, type: 3}
+  m_Name: GradientFog
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.Toguchi.Rendering.GradientFog
+  active: 1
+  gradientTexture:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-6140850533214546678
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78d7c23818ffd4448bf2fdd7e8eeae92, type: 3}
+  m_Name: Diffusion
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.Toguchi.Rendering.Diffusion
+  active: 1
+  contrast:
+    m_OverrideState: 1
+    m_Value: 1
+  intensity:
     m_OverrideState: 1
     m_Value: 0
 --- !u!114 &-5522256167178866083
@@ -149,6 +247,34 @@ MonoBehaviour:
   highlightsEnd:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &-1976836303181623308
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 012d3263da3d1234bb848967c99084f1, type: 3}
+  m_Name: GlitchVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.SleeplessOwl.URPPostProcessing.GlitchVolume
+  active: 1
+  Speed:
+    m_OverrideState: 1
+    m_Value: 10
+  BlockSize:
+    m_OverrideState: 1
+    m_Value: 0
+  BlockSizeJitter:
+    m_OverrideState: 1
+    m_Value: 0
+  MaxRGBSplitX:
+    m_OverrideState: 1
+    m_Value: 1
+  MaxRGBSplitY:
+    m_OverrideState: 1
+    m_Value: 1
 --- !u!114 &-1766795089362525463
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -205,6 +331,105 @@ MonoBehaviour:
   saturation:
     m_OverrideState: 1
     m_Value: 0
+--- !u!114 &-947600559648705499
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73c294a1a6c0c5a4ea29a9737b8b5977, type: 3}
+  m_Name: DrawingVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.SleeplessOwl.URPPostProcessing.DrawingVolume
+  active: 1
+  debugPass:
+    m_OverrideState: 1
+    m_Value: -1
+  drawingTex:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  shiftCycleTime:
+    m_OverrideState: 1
+    m_Value: 1
+  strength:
+    m_OverrideState: 1
+    m_Value: 0.5
+  tiling:
+    m_OverrideState: 1
+    m_Value: 10
+  smudge:
+    m_OverrideState: 1
+    m_Value: 1
+  depthThreshold:
+    m_OverrideState: 1
+    m_Value: 0.99
+  wobbTex:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  wobbScale:
+    m_OverrideState: 1
+    m_Value: 1
+  wobbPower:
+    m_OverrideState: 1
+    m_Value: 0.01
+  edgeSize:
+    m_OverrideState: 1
+    m_Value: 1
+  edgePower:
+    m_OverrideState: 1
+    m_Value: 3
+  paperTexA:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  paperScaleA:
+    m_OverrideState: 1
+    m_Value: 1
+  paperPowerA:
+    m_OverrideState: 1
+    m_Value: 1
+  paperTexB:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  paperScaleB:
+    m_OverrideState: 1
+    m_Value: 1
+  paperPowerB:
+    m_OverrideState: 1
+    m_Value: 1
+  paperTexC:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  paperScaleC:
+    m_OverrideState: 1
+    m_Value: 1
+  paperPowerC:
+    m_OverrideState: 1
+    m_Value: 1
+  edgeWidth:
+    m_OverrideState: 1
+    m_Value: 0.3
+  edgeColor:
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
+  backgroundFade:
+    m_OverrideState: 1
+    m_Value: 1
+  backgroundColor:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  SampleDistance:
+    m_OverrideState: 1
+    m_Value: 0
+  StrengthPow:
+    m_OverrideState: 1
+    m_Value: 30
 --- !u!114 &-336835985114733080
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -219,6 +444,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ChromaticAberration
   active: 1
   intensity:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-284814974410762444
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99afce47938ea244f9fa0cd3d0883cf3, type: 3}
+  m_Name: DepthLine
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.Toguchi.Rendering.DepthLine
+  active: 1
+  bias:
+    m_OverrideState: 1
+    m_Value: 3
+  maxWeight:
+    m_OverrideState: 1
+    m_Value: 10
+  samplingScale:
+    m_OverrideState: 1
+    m_Value: 5
+  lineWidth:
     m_OverrideState: 1
     m_Value: 0
 --- !u!114 &11400000
@@ -253,6 +503,19 @@ MonoBehaviour:
   - {fileID: 4865510326755936419}
   - {fileID: -1998710732275753107}
   - {fileID: 1520427624661863408}
+  - {fileID: -1976836303181623308}
+  - {fileID: -7637034880478225375}
+  - {fileID: 8897195563051001220}
+  - {fileID: 6162503276385035958}
+  - {fileID: -6140850533214546678}
+  - {fileID: 7060296134116286999}
+  - {fileID: -947600559648705499}
+  - {fileID: -8112371271144442712}
+  - {fileID: 8995507288886121966}
+  - {fileID: 4583435107917848309}
+  - {fileID: 5389092355213804710}
+  - {fileID: -284814974410762444}
+  - {fileID: -9026333819499308319}
 --- !u!114 &264584927621911526
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -553,6 +816,28 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
+--- !u!114 &4583435107917848309
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f21f170b640032a4ba47bfe9e6497f01, type: 3}
+  m_Name: WorldPositionVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.SleeplessOwl.URPPostProcessing.WorldPositionVolume
+  active: 1
+  ColorAddMode:
+    m_OverrideState: 1
+    m_Value: 1
+  GridSize:
+    m_OverrideState: 1
+    m_Value: 0
+  GridLineWidth:
+    m_OverrideState: 1
+    m_Value: 2
 --- !u!114 &4853133636796801689
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -686,6 +971,74 @@ MonoBehaviour:
   dirtIntensity:
     m_OverrideState: 1
     m_Value: 0
+--- !u!114 &5389092355213804710
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47dcf55aff9240159bb852ed4393989b, type: 3}
+  m_Name: SimpleRaymarch
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.Toguchi.Rendering.SimpleRaymarch
+  active: 1
+  maxIterations:
+    m_OverrideState: 1
+    m_Value: 64
+  maxDistance:
+    m_OverrideState: 1
+    m_Value: 100
+  minDistance:
+    m_OverrideState: 1
+    m_Value: 0.01
+  spherePos:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0, z: 0}
+  sphereRadius:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &6162503276385035958
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7443357ba9cb024f9e0f59d75c1c066, type: 3}
+  m_Name: HalfToneVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.SleeplessOwl.URPPostProcessing.HalfToneVolume
+  active: 1
+  _visibleInSceneview:
+    m_OverrideState: 1
+    m_Value: 1
+  _Density:
+    m_OverrideState: 1
+    m_Value: 0
+  _Radius:
+    m_OverrideState: 1
+    m_Value: 0.3
+  _SmoothEdge:
+    m_OverrideState: 1
+    m_Value: 0.2
+  _HalfToneFactor:
+    m_OverrideState: 1
+    m_Value: 0.5
+  _SourceFactor:
+    m_OverrideState: 1
+    m_Value: 0.5
+  _Lightness:
+    m_OverrideState: 1
+    m_Value: 1
+  _PointColor:
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
+  _ColorFactor:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &7028881348611873799
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -726,6 +1079,34 @@ MonoBehaviour:
   blueOutBlueIn:
     m_OverrideState: 1
     m_Value: 100
+--- !u!114 &7060296134116286999
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4fd7d3882af82046b3945e7a77b5ef3, type: 3}
+  m_Name: CloudShadowVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.SleeplessOwl.URPPostProcessing.CloudShadowVolume
+  active: 1
+  ShadowStrength:
+    m_OverrideState: 1
+    m_Value: 0
+  SmoothStepRange:
+    m_OverrideState: 1
+    m_Value: {x: 0.45, y: 0.55}
+  NoiseScale1:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1}
+  NoiseTime1:
+    m_OverrideState: 1
+    m_Value: 1
+  DebugMode:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &8181643673827061180
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -771,6 +1152,37 @@ MonoBehaviour:
   texture:
     m_OverrideState: 1
     m_Value: {fileID: 0}
+--- !u!114 &8897195563051001220
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c592f8609bbaa404b8c91d85a7293970, type: 3}
+  m_Name: Flare
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.Toguchi.Rendering.Flare
+  active: 1
+  flareColor:
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
+  flarePosition:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0}
+  flareSize:
+    m_OverrideState: 1
+    m_Value: 0
+  paraColor:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  paraPosition:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0}
+  paraSize:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &8937814601063738361
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -793,3 +1205,22 @@ MonoBehaviour:
   gain:
     m_OverrideState: 1
     m_Value: {x: 1, y: 1, z: 1, w: 0}
+--- !u!114 &8995507288886121966
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b634000b1fe567b4c94f944178b5e9a5, type: 3}
+  m_Name: OutlineVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Artngame.GIBLI.SleeplessOwl.URPPostProcessing.OutlineVolume
+  active: 1
+  SampleDistance:
+    m_OverrideState: 1
+    m_Value: 0
+  StrengthPow:
+    m_OverrideState: 1
+    m_Value: 30

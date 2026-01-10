@@ -150,17 +150,11 @@ public class BuildScript
         buildOptions.locationPathName = buildPath;
         buildOptions.target = BuildTarget.iOS;
 
-        // Use Append mode for incremental builds if export already exists
-        // Falls back to Replace (None) for first build or if UNITY_CLEAN_BUILD=1
-        bool useAppend = System.IO.Directory.Exists(buildPath)
-            && System.IO.File.Exists(System.IO.Path.Combine(buildPath, "Unity-iPhone.xcodeproj/project.pbxproj"))
-            && Environment.GetEnvironmentVariable("UNITY_CLEAN_BUILD") != "1";
+        // Always use Replace mode - never Append
+        // This ensures a completely fresh export each time
+        buildOptions.options = BuildOptions.None;
 
-        buildOptions.options = useAppend
-            ? BuildOptions.AcceptExternalModificationsToPlayer  // Append - incremental
-            : BuildOptions.None;                                 // Replace - clean build
-
-        Debug.Log($"iOS Build Mode: {(useAppend ? "Append (incremental)" : "Replace (clean)")}");
+        Debug.Log("iOS Build Mode: Replace (always clean)");
 
         var report = BuildPipeline.BuildPlayer(buildOptions);
 

@@ -70,12 +70,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4c3631f5e58749a59194e0cf6baf6d5, type: 3}
   m_Name: iPhone Providers
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   m_RequiresSettingsUpdate: 0
-  m_AutomaticLoading: 0
-  m_AutomaticRunning: 0
+  m_AutomaticLoading: 1
+  m_AutomaticRunning: 1
   m_Loaders:
-  - {fileID: 11400000, guid: 20bf1b0b7a603410881b56ab3e907540, type: 2}
+  - {fileID: 11400000, guid: 64f861632926f473fbf562868717c9e4, type: 2}
 --- !u!114 &-4513317593576149969
 MonoBehaviour:
   m_ObjectHideFlags: 0

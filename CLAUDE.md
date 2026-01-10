@@ -82,6 +82,10 @@ ccache --clear
 | `XR Simulation asset move failed` | Delete `Assets/XR/Temp/` folder and `.meta` |
 | `duplicate symbols` (Xcode 15+) | Uses `-Wl,-ld_classic` flag (handled by scripts) |
 | Unity shows but never initializes | **Fabric registration issue** - see "Fabric Component Fix" below |
+| `No active XRSessionSubsystem` | Enable ARKit in `XRGeneralSettings.asset` - set `m_AutomaticLoading: 1` and `m_AutomaticRunning: 1` for iPhone Providers |
+| App "not installed" after build | Use `xcrun devicectl device install app` directly instead of xcodebuild install |
+
+**Note**: BuildScript.cs now always uses Replace mode (never Append) for iOS exports to avoid stale artifact issues.
 
 ### Fabric Component Fix (Critical for New Architecture)
 
