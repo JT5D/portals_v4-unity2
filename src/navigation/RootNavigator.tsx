@@ -19,7 +19,7 @@ import { LocationPickerScreen } from '../screens/LocationPickerScreen';
 import { useAppStore } from '../store';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User } from '../types';
 import { theme } from '../theme/theme';
@@ -150,6 +150,16 @@ export const RootNavigator = () => {
                     const snap = await getDoc(docRef);
                     if (snap.exists()) {
                         const user = snap.data() as User;
+
+                        // Self-healing: If avatar is missing in Firestore/User object, but exists in Auth, use Auth
+                        if (!user.avatar && firebaseUser.photoURL) {
+                            console.log('[RootNavigator] Avatar missing in Firestore, using Auth photoURL:', firebaseUser.photoURL);
+                            user.avatar = firebaseUser.photoURL;
+                            // Optionally update Firestore to fix it permanently (fire and forget)
+                            updateDoc(docRef, { avatar: firebaseUser.photoURL }).catch(e => console.warn('Failed to heal avatar:', e));
+                        }
+
+                        console.log('[RootNavigator] Hydrated user:', user.id, 'Avatar:', user.avatar);
                         useAppStore.setState({ currentUser: user, isAuthenticated: true });
 
                         // Fetch following list for immediate follow status in feed

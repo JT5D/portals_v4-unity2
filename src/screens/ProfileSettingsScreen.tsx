@@ -54,7 +54,7 @@ export const ProfileSettingsScreen = () => {
 
         try {
             // Update Firestore
-            const { doc, updateDoc } = await import('firebase/firestore');
+            const { doc, setDoc } = await import('firebase/firestore');
             const { db, storage } = await import('../config/firebase');
 
             let finalAvatarUrl = currentUser.avatar;
@@ -62,21 +62,42 @@ export const ProfileSettingsScreen = () => {
             // Upload new avatar if selected
             if (newAvatarUri) {
                 const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-                const response = await fetch(newAvatarUri);
-                const blob = await response.blob();
+
+                // Use XHR to get Blob (More reliable in RN)
+                const blob: Blob = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.onload = function () { resolve(xhr.response); };
+                    xhr.onerror = function () { reject(new Error('Image load failed')); };
+                    xhr.responseType = 'blob';
+                    xhr.open('GET', newAvatarUri, true);
+                    xhr.send(null);
+                });
+
                 const fileRef = ref(storage, `avatars/${currentUser.id}_${Date.now()}`); // Unique name to force refresh
                 await uploadBytes(fileRef, blob);
                 finalAvatarUrl = await getDownloadURL(fileRef);
             }
 
-            const userRef = doc(db, 'users', currentUser.id);
-            await updateDoc(userRef, {
+            // Update Auth Profile as well for consistency
+            const { getAuth, updateProfile } = await import('firebase/auth');
+            const auth = getAuth();
+
+            if (!auth.currentUser) throw new Error("No authenticated user");
+
+            const userRef = doc(db, 'users', auth.currentUser.uid); // Ensure we write to the Auth user's doc
+            await setDoc(userRef, {
                 name: name.trim(),
                 username: username.trim(),
                 bio: bio.trim(),
                 isPrivate: isPrivate,
                 avatar: finalAvatarUrl
-            });
+            }, { merge: true });
+
+            if (auth.currentUser) {
+                await updateProfile(auth.currentUser, { photoURL: finalAvatarUrl, displayName: name.trim() });
+            }
+
+            console.log('[ProfileSettings] Avatar updated:', finalAvatarUrl);
 
             // Update Global Store
             const updatedUser = { ...currentUser, name, username, bio, isPrivate, avatar: finalAvatarUrl };
