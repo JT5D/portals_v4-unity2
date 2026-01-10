@@ -74,7 +74,7 @@
     "react-refresh": "^0.18.0",
     "react-timer-mixin": "^0.13.4",
     "redux": "^5.0.1",
-    "three": "^0.182.0",
+    "three": "^0.166.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
@@ -87,7 +87,7 @@
     "babel-preset-expo": "^54.0.8",
     "jest": "^30.2.0",
     "patch-package": "^8.0.1",
-    "react-test-renderer": "^19.1.0",
+    "react-test-renderer": "19.1.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   },
