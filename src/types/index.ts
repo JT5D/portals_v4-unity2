@@ -20,6 +20,34 @@ export interface User {
         dailyEarned: number;
         lastDailyReset: string; // ISO date
     };
+    notificationPreferences?: NotificationPreferences;
+    messagingPermission?: 'Everyone' | 'Following' | 'Off';
+    usage?: UsageStats;
+}
+
+export interface UsageStats {
+    scenes: {
+        used: number;
+        limit: number;
+        resetDate: string; // ISO date
+    };
+    locations: {
+        used: number;
+        limit: number;
+        resetDate: string; // ISO date
+    };
+    paidScenes?: number;
+    paidLocations?: number;
+}
+
+export type NotifyOption = 'Everyone' | 'Following' | 'Off';
+
+export interface NotificationPreferences {
+    likes: NotifyOption;
+    comments: NotifyOption;
+    mentions: NotifyOption;
+    remixes: NotifyOption;
+    follows: NotifyOption;
 }
 
 export interface Artifact {

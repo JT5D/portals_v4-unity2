@@ -1285,14 +1285,28 @@ var ModelItemRender = createReactClass({
    Drag handler - ViroReact provides dragToPos and source.
    ViroReact API: onDrag(dragToPos, source)
    - dragToPos: [x, y, z] array of the current drag position
-   - source: drag event source (ViroNode always sends 1, not distinct start/drag/end states)
+   - source: drag event source (ViroNode sends 1=start/drag, no distinct end state)
    
-   Since ViroNode doesn't send distinct drag states, we sync position on every drag event.
+   CRITICAL FIX: ViroNode's onDrag doesn't have a gesture end event (unlike onPinch/onRotate).
+   We use a timeout to detect when dragging has stopped and sync state.
    */
   _onDrag(dragToPos, source) {
-    console.log('[ModelItemRender] _onDrag:', { position: dragToPos, uuid: this.props.modelIDProps.uuid });
     if (!this._isMounted) return;
     if (!dragToPos || !Array.isArray(dragToPos)) return;
+
+    const now = Date.now();
+    const uuid = this.props.modelIDProps.uuid;
+
+    // Detect drag start (first event or gap > 300ms from last drag)
+    const isDragStart = !this._lastDragTime || (now - this._lastDragTime > 300);
+    if (isDragStart) {
+      console.log('[PSR-DEBUG] DRAG START:', {
+        uuid,
+        initialPosition: JSON.stringify(this.state.position),
+        pendingPosition: JSON.stringify(this._pendingPosition),
+      });
+    }
+    this._lastDragTime = now;
 
     // Store pending position for consistency with other gestures
     this._pendingPosition = dragToPos;
@@ -1302,9 +1316,45 @@ var ModelItemRender = createReactClass({
       this.arNodeRef.setNativeProps({ position: dragToPos });
     }
 
-    // Throttle Redux updates to avoid overwhelming the store
-    // Sync every 150ms at most (balance between performance and responsiveness)
-    const now = Date.now();
+    // Clear any pending drag end timeout
+    if (this._dragEndTimeout) {
+      clearTimeout(this._dragEndTimeout);
+    }
+
+    // CRITICAL FIX: Detect drag end using timeout since ViroNode doesn't fire drag end event
+    // This ensures React state stays in sync with visual position for subsequent gestures
+    this._dragEndTimeout = setTimeout(() => {
+      if (!this._isMounted) return;
+
+      const finalPosition = this._pendingPosition || dragToPos;
+      console.log('[PSR-DEBUG] DRAG END (timeout detected):', {
+        uuid,
+        finalPosition: JSON.stringify(finalPosition),
+        statePosition: JSON.stringify(this.state.position),
+        willUpdateState: JSON.stringify(finalPosition) !== JSON.stringify(this.state.position),
+      });
+
+      // CRITICAL: Update React state to match visual position
+      // This prevents desync between React state and native visual state
+      if (JSON.stringify(finalPosition) !== JSON.stringify(this.state.position)) {
+        this.setState({ position: finalPosition });
+      }
+
+      // Final sync to Redux
+      const currentScale = this._pendingScale || this.state.scale;
+      const currentRotation = this._pendingRotation || this.state.rotation;
+      if (this.props.onTransformUpdate) {
+        this.props.onTransformUpdate(uuid, {
+          scale: currentScale,
+          position: finalPosition,
+          rotation: currentRotation,
+        });
+      }
+
+      this._dragEndTimeout = null;
+    }, 150); // 150ms after last drag event = drag ended
+
+    // Throttle Redux updates during active drag to avoid overwhelming the store
     if (!this._lastDragSync || now - this._lastDragSync > 150) {
       this._lastDragSync = now;
 
@@ -1314,7 +1364,7 @@ var ModelItemRender = createReactClass({
 
       // Sync to Redux for serialization
       if (this.props.onTransformUpdate) {
-        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
+        this.props.onTransformUpdate(uuid, {
           scale: currentScale,
           position: dragToPos,
           rotation: currentRotation,
@@ -1327,30 +1377,55 @@ var ModelItemRender = createReactClass({
    Rotation should be relative to its current rotation *not* set to the absolute
    value of the given rotationFactor.
    Note: rotationFactor from ViroReact is the cumulative rotation since gesture start.
+   ROTATE STATES: 1=start, 2=ongoing, 3=end
    */
   _onRotate(rotateState, rotationFactor, source) {
-    console.log('[ModelItemRender] _onRotate:', { rotateState, rotationFactor, uuid: this.props.modelIDProps.uuid });
     if (!this._isMounted) return;
+    const uuid = this.props.modelIDProps.uuid;
+
+    // DEBUG: Detailed logging for rotation gesture lifecycle
+    if (rotateState === 1) {
+      console.log('[PSR-DEBUG] ROTATE START:', {
+        uuid,
+        rotationFactor,
+        stateRotation: JSON.stringify(this.state.rotation),
+        pendingRotation: JSON.stringify(this._pendingRotation),
+      });
+    }
 
     // State 1 or first event: Capture initial rotation
     // Use pending value if available (React state might be stale after previous gesture)
     if (rotateState === 1 || this._initialRotationY === null || this._initialRotationY === undefined) {
       const currentRotation = this._pendingRotation || this.state.rotation;
       this._initialRotationY = currentRotation[1];
+      console.log('[PSR-DEBUG] ROTATE captured initial Y:', this._initialRotationY);
     }
 
-    // State 3: Rotation Ended - just sync to Redux for data, don't touch visual
+    // State 3: Rotation Ended - sync to Redux AND update React state
     if (rotateState === 3) {
       // Use the last visual value we showed, or fall back to current state
       const finalRotation = this._pendingRotation || this.state.rotation;
-      // IMPORTANT: Use pending scale if a pinch is in progress
+      // IMPORTANT: Use pending values for scale and position
       const currentScale = this._pendingScale || this.state.scale;
+      const currentPosition = this._pendingPosition || this.state.position;
 
-      // Just sync to Redux for data persistence - NO setState, visual is already correct
+      console.log('[PSR-DEBUG] ROTATE END:', {
+        uuid,
+        finalRotation: JSON.stringify(finalRotation),
+        stateRotation: JSON.stringify(this.state.rotation),
+        willUpdateState: JSON.stringify(finalRotation) !== JSON.stringify(this.state.rotation),
+      });
+
+      // CRITICAL FIX: Update React state to match visual rotation
+      if (JSON.stringify(finalRotation) !== JSON.stringify(this.state.rotation)) {
+        this.setState({ rotation: finalRotation });
+      }
+
+      // Sync to Redux for data persistence
       if (this.props.onTransformUpdate) {
-        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
+        this.props.onTransformUpdate(uuid, {
           scale: currentScale,
-          position: this.state.position,
+          position: currentPosition,
           rotation: finalRotation,
         });
       }
@@ -1358,7 +1433,7 @@ var ModelItemRender = createReactClass({
       this._initialRotationY = null;
       // Keep _pendingRotation for next gesture start and overlapping gesture handlers
       this._pendingRotation = finalRotation;
-      this.props.onClickStateCallback(this.props.modelIDProps.uuid, rotateState, UIConstants.LIST_MODE_MODEL);
+      this.props.onClickStateCallback(uuid, rotateState, UIConstants.LIST_MODE_MODEL);
       return;
     }
 
@@ -1381,34 +1456,54 @@ var ModelItemRender = createReactClass({
    scale factor. So while the pinching is ongoing set scale through setNativeProps
    and multiply the state by that factor. At the end of a pinch event, set the state
    to the final value and store it in state.
+   PINCH STATES: 1=start, 2=ongoing, 3=end
    */
   _onPinch(pinchState, scaleFactor, source) {
-    console.log('[ModelItemRender] _onPinch:', { pinchState, scaleFactor, uuid: this.props.modelIDProps.uuid });
     if (!this._isMounted) return;
+    const uuid = this.props.modelIDProps.uuid;
+
+    // DEBUG: Detailed logging for pinch gesture lifecycle
+    if (pinchState === 1) {
+      console.log('[PSR-DEBUG] PINCH START:', {
+        uuid,
+        scaleFactor,
+        stateScale: JSON.stringify(this.state.scale),
+        pendingScale: JSON.stringify(this._pendingScale),
+      });
+    }
 
     // State 1 or first event: Capture initial scale
     // Use pending value if available (React state might be stale after previous gesture)
     if (pinchState === 1 || !this._initialPinchScale) {
       this._initialPinchScale = this._pendingScale || this.state.scale;
+      console.log('[PSR-DEBUG] PINCH captured initial scale:', JSON.stringify(this._initialPinchScale));
     }
 
-    // State 3: Pinch Ended - just sync to Redux for data, don't touch visual
+    // State 3: Pinch Ended - sync to Redux AND update React state
     if (pinchState === 3) {
       // Use the last visual value we showed, or fall back to current state
       const finalScale = this._pendingScale || this.state.scale;
-      // IMPORTANT: Use pending rotation if a rotate is in progress
+      // IMPORTANT: Use pending values for rotation and position
       const currentRotation = this._pendingRotation || this.state.rotation;
+      const currentPosition = this._pendingPosition || this.state.position;
 
-      console.log('[ModelItemRender] Pinch ENDED - syncing to Redux:', {
-        uuid: this.props.modelIDProps.uuid,
-        finalScale: finalScale,
+      console.log('[PSR-DEBUG] PINCH END:', {
+        uuid,
+        finalScale: JSON.stringify(finalScale),
+        stateScale: JSON.stringify(this.state.scale),
+        willUpdateState: JSON.stringify(finalScale) !== JSON.stringify(this.state.scale),
       });
 
-      // Just sync to Redux for data persistence - NO setState, visual is already correct
+      // CRITICAL FIX: Update React state to match visual scale
+      if (JSON.stringify(finalScale) !== JSON.stringify(this.state.scale)) {
+        this.setState({ scale: finalScale });
+      }
+
+      // Sync to Redux for data persistence
       if (this.props.onTransformUpdate) {
-        this.props.onTransformUpdate(this.props.modelIDProps.uuid, {
+        this.props.onTransformUpdate(uuid, {
           scale: finalScale,
-          position: this.state.position,
+          position: currentPosition,
           rotation: currentRotation,
         });
       }
@@ -1416,7 +1511,7 @@ var ModelItemRender = createReactClass({
       this._initialPinchScale = null;
       // Keep _pendingScale for next gesture start and overlapping gesture handlers
       this._pendingScale = finalScale;
-      this.props.onClickStateCallback(this.props.modelIDProps.uuid, pinchState, UIConstants.LIST_MODE_MODEL);
+      this.props.onClickStateCallback(uuid, pinchState, UIConstants.LIST_MODE_MODEL);
       return;
     }
 

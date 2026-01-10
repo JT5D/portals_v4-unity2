@@ -204,6 +204,8 @@ export const ActivityScreen = () => {
     const deleteSelectedNotifications = useAppStore(state => state.deleteSelectedNotifications);
     const deleteNotification = useAppStore(state => state.deleteNotification);
 
+    const relationships = useAppStore(state => state.relationships); // Get relationships for following check
+
     // Local state
     const [followedBackIds, setFollowedBackIds] = useState<Set<string>>(new Set());
     const [activeFilter, setActiveFilter] = useState<FilterType>('All');
@@ -244,9 +246,43 @@ export const ActivityScreen = () => {
 
     // Filtered notifications
     const filteredNotifications = notifications.filter(n => {
-        if (activeFilter === 'All') return true;
-        if (activeFilter === 'Collabs') return n.type === 'collab_invite';
-        if (activeFilter === 'Mentions') return n.type === 'mention' || n.type === 'like_comment';
+        // 1. First apply Category Tab filters
+        if (activeFilter === 'Collabs' && n.type !== 'collab_invite') return false;
+        if (activeFilter === 'Mentions' && (n.type !== 'mention' && n.type !== 'like_comment')) return false;
+
+        // 2. Apply User Preferences Logic
+        if (!currentUser?.notificationPreferences) return true; // Default to showing if no prefs
+
+        const prefs = currentUser.notificationPreferences;
+        let prefValue: 'Everyone' | 'Following' | 'Off' = 'Everyone';
+
+        switch (n.type) {
+            case 'like_post':
+            case 'like_comment':
+                prefValue = prefs.likes;
+                break;
+            case 'comment':
+                prefValue = prefs.comments;
+                break;
+            case 'mention':
+                prefValue = prefs.mentions;
+                break;
+            case 'follow':
+                prefValue = prefs.follows;
+                break;
+            // 'remixes' not yet implemented in backend types, but if added:
+            // case 'remix': prefValue = prefs.remixes; break;
+            default:
+                // For types not in prefs (e.g. messages, collab invites), always show
+                return true;
+        }
+
+        if (prefValue === 'Off') return false;
+        if (prefValue === 'Following') {
+            // Check if user is in following list
+            return relationships.following.includes(n.user.id);
+        }
+
         return true;
     });
 
