@@ -78,3 +78,4 @@ logs/
 
 # Large asset packages (exceed GitHub 100MB limit)
 unity/Assets/ARTnGAME/
+unity/Assets/ARTnGAME.meta
