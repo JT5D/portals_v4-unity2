@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Dimensions, StatusBar, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import { CommentsSheet } from '../components/CommentsSheet';
 import { LinearGradient } from 'expo-linear-gradient'; // Assuming available, or remove if error
 
 const { width, height } = Dimensions.get('window');
-const CATEGORIES = ["Live", "Feed", "Friends", "Artifacts", "Exclusive", "Creative", "Countdown", "Music", "Sports", "Entertainment"];
+const ALL_CATEGORIES = ["Live", "Feed", "Friends", "Artifacts", "Exclusive", "Creative", "Countdown", "Music", "Sports", "Entertainment"];
 
 // --- Category Feed Component ---
 const CategoryFeed = ({ category, isActive, onCommentPress, hideControls }: { category: string, isActive: boolean, onCommentPress: (id: string) => void, hideControls?: boolean }) => {
@@ -86,16 +86,37 @@ const CategoryFeed = ({ category, isActive, onCommentPress, hideControls }: { ca
 // --- Main Feed Screen ---
 export const FeedScreen = () => {
     const navigation = useNavigation<any>();
-    const [activeIndex, setActiveIndex] = useState(1); // Default to 'Friends' (index 1)
+    const [activeIndex, setActiveIndex] = useState(0); // Default to first visible tab (Live)
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const fetchFeed = useAppStore(state => state.fetchFeed);
     const pendingComment = useAppStore(state => state.pendingComment);
+    const allFeed = useAppStore(state => state.feed);
+    const relationships = useAppStore(state => state.relationships);
 
     const feedListRef = useRef<FlatList>(null);
     const tabsListRef = useRef<FlatList>(null);
 
     // Animation for video shrink when comments open
     const videoScale = useRef(new Animated.Value(1)).current;
+
+    // Calculate visible categories dynamically based on content availability
+    const visibleCategories = useMemo(() => {
+        // Always show Live
+        const visible: string[] = ["Live"];
+
+        ALL_CATEGORIES.slice(1).forEach(category => {
+            // Check if any posts exist for this category
+            const hasContent = allFeed.some(post => {
+                if (category === 'Friends') return relationships.following.includes(post.userId);
+                if (category === 'Artifacts') return post.isArtifact === true;
+                return (post.category || 'Feed') === category;
+            });
+            if (hasContent) visible.push(category);
+        });
+
+        return visible;
+    }, [allFeed, relationships.following]);
+
 
     // Fetch posts from Firestore on mount
     useEffect(() => {
@@ -155,8 +176,9 @@ export const FeedScreen = () => {
                 <View style={styles.topTabsContainer}>
                     <FlatList
                         ref={tabsListRef}
-                        data={CATEGORIES}
+                        data={visibleCategories}
                         horizontal
+                        scrollEnabled={visibleCategories.length > 1}
                         showsHorizontalScrollIndicator={false}
                         keyExtractor={item => item}
                         contentContainerStyle={styles.tabsContent}
@@ -185,7 +207,7 @@ export const FeedScreen = () => {
                                 viewPosition: 0.5
                             });
                         }}
-                        initialNumToRender={CATEGORIES.length}
+                        initialNumToRender={visibleCategories.length}
                         onScrollToIndexFailed={info => {
                             const wait = new Promise(resolve => setTimeout(resolve, 500));
                             wait.then(() => {
@@ -223,13 +245,14 @@ export const FeedScreen = () => {
                 {/* Horizontal Feed Pager */}
                 <FlatList
                     ref={feedListRef}
-                    data={CATEGORIES}
+                    data={visibleCategories}
                     horizontal
                     pagingEnabled
+                    scrollEnabled={visibleCategories.length > 1}
                     showsHorizontalScrollIndicator={false}
                     keyExtractor={item => item}
                     onMomentumScrollEnd={onMomentumScrollEnd}
-                    initialScrollIndex={1}
+                    initialScrollIndex={0}
                     getItemLayout={(data, index) => ({ length: width, offset: width * index, index })}
                     renderItem={({ item, index }) => (
                         <CategoryFeed
