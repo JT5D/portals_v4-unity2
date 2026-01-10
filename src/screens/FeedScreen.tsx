@@ -86,7 +86,7 @@ const CategoryFeed = ({ category, isActive, onCommentPress, hideControls }: { ca
 // --- Main Feed Screen ---
 export const FeedScreen = () => {
     const navigation = useNavigation<any>();
-    const [activeIndex, setActiveIndex] = useState(0); // Default to first visible tab (Live)
+    const [activeIndex, setActiveIndex] = useState(1); // Default to second visible tab (Feed)
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const fetchFeed = useAppStore(state => state.fetchFeed);
     const pendingComment = useAppStore(state => state.pendingComment);
@@ -101,10 +101,12 @@ export const FeedScreen = () => {
 
     // Calculate visible categories dynamically based on content availability
     const visibleCategories = useMemo(() => {
-        // Always show Live
-        const visible: string[] = ["Live"];
+        // Always show Live and Feed
+        const visible: string[] = ["Live", "Feed"];
 
-        ALL_CATEGORIES.slice(1).forEach(category => {
+        ALL_CATEGORIES.forEach(category => {
+            if (category === 'Live' || category === 'Feed') return;
+
             // Check if any posts exist for this category
             const hasContent = allFeed.some(post => {
                 if (category === 'Friends') return relationships.following.includes(post.userId);
@@ -252,7 +254,7 @@ export const FeedScreen = () => {
                     showsHorizontalScrollIndicator={false}
                     keyExtractor={item => item}
                     onMomentumScrollEnd={onMomentumScrollEnd}
-                    initialScrollIndex={0}
+                    initialScrollIndex={1}
                     getItemLayout={(data, index) => ({ length: width, offset: width * index, index })}
                     renderItem={({ item, index }) => (
                         <CategoryFeed

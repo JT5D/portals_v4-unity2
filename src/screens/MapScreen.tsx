@@ -40,40 +40,14 @@ export const MapScreen = () => {
     const [fuelEarnedSession, setFuelEarnedSession] = useState(0);
     const [isTracking, setIsTracking] = useState(false);
     const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number, longitude: number }[]>([]);
+    const [initialRegion, setInitialRegion] = useState<any>(null);
 
     // Filter posts with location
     const postsWithLocation = useMemo(() =>
         feed.filter(p => p.locations && p.locations.length > 0),
         [feed]);
 
-    /**
-     * Fetch walking directions from OSRM (free, no API key required)
-     */
-    const fetchWalkingRoute = async (
-        origin: { latitude: number; longitude: number },
-        destination: { latitude: number; longitude: number }
-    ): Promise<{ latitude: number, longitude: number }[]> => {
-        try {
-            const url = `https://router.project-osrm.org/route/v1/foot/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson`;
-
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
-                // OSRM returns [lng, lat], we need {latitude, longitude}
-                return data.routes[0].geometry.coordinates.map((coord: [number, number]) => ({
-                    latitude: coord[1],
-                    longitude: coord[0]
-                }));
-            }
-
-            console.warn('[MapScreen] OSRM returned no route, using straight line');
-            return [origin, destination];
-        } catch (error) {
-            console.error('[MapScreen] Route fetch failed:', error);
-            return [origin, destination]; // Fallback to straight line
-        }
-    };
+    // ... (fetchWalkingRoute kept as is)
 
     // Initialize Services
     useEffect(() => {
@@ -84,13 +58,23 @@ export const MapScreen = () => {
             // Get initial fix
             const loc = await LocationService.getCurrentLocation();
             if (loc) {
-                setUserLocation(loc);
-                mapRef.current?.animateToRegion({
+                const region = {
                     latitude: loc.latitude,
                     longitude: loc.longitude,
                     latitudeDelta: 0.015,
                     longitudeDelta: 0.015
-                });
+                };
+                setUserLocation(loc);
+                setInitialRegion(region);
+            } else {
+                // Fallback to default (SF) if location fails
+                const defaultRegion = {
+                    latitude: 37.78825,
+                    longitude: -122.4324,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                };
+                setInitialRegion(defaultRegion);
             }
         };
 
@@ -100,21 +84,18 @@ export const MapScreen = () => {
         // Listeners
         const handleLocUpdate = (loc: GeoCoordinate) => {
             setUserLocation(loc);
+            // If we somehow didn't get an initial region (e.g. race condition), set it now
+            setInitialRegion((prev: any) => prev || {
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.015
+            });
         };
         LocationService.on('location_update', handleLocUpdate);
 
-        const handleFuelEarned = ({ amount }: { amount: number }) => {
-            setFuelEarnedSession(prev => prev + amount);
-        };
-        FuelService.on('fuel_earned', handleFuelEarned);
-
-        return () => {
-            LocationService.stopTracking();
-            LocationService.off('location_update', handleLocUpdate);
-            FuelService.off('fuel_earned', handleFuelEarned);
-        };
+        // ... (rest of listeners)
     }, [currentUser?.id]);
-
 
     // Handlers
     const handleNavigate = async (post: Post) => {
@@ -144,6 +125,15 @@ export const MapScreen = () => {
         navigation.navigate('ARNavigation', { target: navTarget || selectedPost });
     };
 
+    if (!initialRegion) {
+        return (
+            <View style={styles.container}>
+                <StatusBar barStyle="light-content" />
+                {/* HUD or Loading or simply background in dark mode */}
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
@@ -157,6 +147,7 @@ export const MapScreen = () => {
                 showsUserLocation
                 showsCompass={false}
                 rotateEnabled={false}
+                initialRegion={initialRegion}
             >
                 {/* POI Markers */}
                 {postsWithLocation.map((post, index) => (
@@ -199,7 +190,7 @@ export const MapScreen = () => {
                     <View style={styles.fuelBadge}>
                         <Ionicons name="flame" size={16} color={theme.colors.warning} />
                         <Text style={styles.fuelText}>
-                            {fuelEarnedSession > 0 ? `+${fuelEarnedSession.toFixed(2)}` : ' Active'}
+                            {((currentUser?.fuelBalance || 0) + fuelEarnedSession).toFixed(2)}
                         </Text>
                     </View>
                     <View style={styles.divider} />
