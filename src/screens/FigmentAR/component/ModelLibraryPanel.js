@@ -19,12 +19,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { auth } from '../../../config/firebase';
+import { libraryService } from '../../../services/LibraryService';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import * as VideoThumbnails from 'expo-video-thumbnails';
-import { uploadToR2 } from '../../../services/storage/r2';
-import { auth, db } from '../../../config/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import * as VideoThumbnails from 'expo-video-thumbnails'; // Keep for thumbnail extraction if needed, though LibraryService handles upload. Service doesn't extract thumbnails yet though? 
+// Current LibraryService doesn't extract thumbnails automatically from URIs yet, it expects a thumbnailUri.
+// `ModelLibraryPanel` logic extracted it. I should keep that extraction logic in Panel and pass uri to Service.
+
 
 import * as ModelData from '../model/ModelItems';
 import { theme } from '../../../theme/theme';
@@ -95,90 +97,36 @@ class ModelLibraryPanel extends Component {
         }
     }
 
-    // Subscribe to all uploads (single collection with type field)
+    // Subscribe to all uploads
     subscribeToAllMedia = () => {
-        this.subscribeToUserModels();
-        this.subscribeToUploadsByType('video', 'videoItems', 'unsubscribeVideos');
-        this.subscribeToUploadsByType('images', 'imageItems', 'unsubscribeImages');
-        this.subscribeToUploadsByType('audio', 'audioItems', 'unsubscribeAudio');
-    };
-
-    // Subscribe to uploads filtered by type (all in users/{userId}/uploads)
-    subscribeToUploadsByType = (mediaType, stateKey, unsubKey) => {
         const user = auth.currentUser;
         if (!user) return;
 
-        // Unsubscribe from previous listener
-        if (this[unsubKey]) this[unsubKey]();
-
-        // Single collection: users/{userId}/uploads, filter by type
-        const uploadsRef = collection(db, "users", user.uid, "uploads");
-        const q = query(uploadsRef, where("type", "==", mediaType), orderBy("createdAt", "desc"));
-
-        this[unsubKey] = onSnapshot(q, (snapshot) => {
-            const items = [];
-            snapshot.forEach((doc) => {
-                items.push({ id: doc.id, ...doc.data() });
-            });
-            this.setState({ [stateKey]: items });
-        }, (error) => {
-            console.log(`[Library] ${mediaType} listener error:`, error);
-            // Fallback to unordered query if index missing
-            if (error.code === 'failed-precondition') {
-                const qSimple = query(uploadsRef, where("type", "==", mediaType));
-                this[unsubKey] = onSnapshot(qSimple, (snapshot) => {
-                    const items = [];
-                    snapshot.forEach((doc) => {
-                        items.push({ id: doc.id, ...doc.data() });
-                    });
-                    items.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                    this.setState({ [stateKey]: items });
-                });
-            }
+        // Models (type: '3d')
+        this.unsubscribeModels = libraryService.listenToLibrary(user.uid, '3d', (items) => {
+            // Map standard LibraryItem to what Panel expects (if fields differ).
+            // Panel expects: { id, name, url/uri, ... }
+            // LibraryItem has: { id, name, url, ... } - Matches well.
+            // Note: Panel used 'uri' for models in one place and 'url' elsewhere?
+            // Let's check usage. renderModelItem uses `model.uri` or object.
+            // LibraryItem has `url`. I should map `uri: item.url`.
+            const mapped = items.map(i => ({ ...i, uri: i.url }));
+            this.setState({ personalModels: mapped, isLoading: false });
         });
-    };
 
-    // Subscribe to user models (in uploads collection with type filter)
-    subscribeToUserModels = () => {
-        const user = auth.currentUser;
-        if (!user) return;
+        // Video (type: 'video')
+        this.unsubscribeVideos = libraryService.listenToLibrary(user.uid, 'video', (items) => {
+            this.setState({ videoItems: items });
+        });
 
-        // Unsubscribe from previous listener if exists
-        if (this.unsubscribeModels) {
-            this.unsubscribeModels();
-        }
+        // Images (type: 'image')
+        this.unsubscribeImages = libraryService.listenToLibrary(user.uid, 'image', (items) => {
+            this.setState({ imageItems: items });
+        });
 
-        this.setState({ isLoading: true });
-
-        // Single collection: users/{userId}/uploads, filter by type='3D_MODEL'
-        const uploadsRef = collection(db, "users", user.uid, "uploads");
-        const qParsed = query(uploadsRef, where("type", "==", "3D_MODEL"), orderBy("createdAt", "desc"));
-
-        // Setup listener
-        this.unsubscribeModels = onSnapshot(qParsed, (snapshot) => {
-            const models = [];
-            snapshot.forEach((doc) => {
-                models.push({ id: doc.id, ...doc.data() });
-            });
-            this.setState({ personalModels: models, isLoading: false });
-        }, (error) => {
-            console.log("Firestore Listener Error:", error);
-            // If index is missing, fallback to simple query
-            if (error.code === 'failed-precondition') {
-                console.log("Falling back to unordered query...");
-                const qSimple = query(uploadsRef, where("type", "==", "3D_MODEL"));
-                this.unsubscribeModels = onSnapshot(qSimple, (snapshot) => {
-                    const models = [];
-                    snapshot.forEach((doc) => {
-                        models.push({ id: doc.id, ...doc.data() });
-                    });
-                    // Sort client-side since index is missing
-                    models.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                    this.setState({ personalModels: models, isLoading: false });
-                });
-            } else {
-                this.setState({ isLoading: false });
-            }
+        // Audio (type: 'audio')
+        this.unsubscribeAudio = libraryService.listenToLibrary(user.uid, 'audio', (items) => {
+            this.setState({ audioItems: items });
         });
     };
 
@@ -210,12 +158,8 @@ class ModelLibraryPanel extends Component {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            console.log('[ModelLibrary] Deleting model:', model.id);
-                            await deleteDoc(doc(db, "users", user.uid, "uploads", model.id));
-                            console.log('[ModelLibrary] Model deleted from Firestore');
-                            // onSnapshot will automatically update the list
+                            await libraryService.deleteAssets(user.uid, [model.id]);
                         } catch (error) {
-                            console.error('[ModelLibrary] Delete failed:', error);
                             Alert.alert("Delete Failed", error.message);
                         }
                     }
@@ -232,85 +176,39 @@ class ModelLibraryPanel extends Component {
         }
 
         try {
-            console.log('[ModelLibrary] Starting file picker...');
             const result = await DocumentPicker.getDocumentAsync({
-                type: ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'text/plain'], // .glb, .gltf, .obj
+                type: ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream'], // .glb only for now basically
                 copyToCacheDirectory: true,
             });
 
-            if (result.canceled) {
-                console.log('[ModelLibrary] File picker canceled');
-                return;
-            }
+            if (result.canceled) return;
 
             const asset = result.assets[0];
-            const { uri, name, mimeType, size } = asset;
-            console.log('[ModelLibrary] File selected:', { name, mimeType, size, uri });
-
-            // Validate extension - GLB works with remote URLs, VRX for converted FBX
+            const { uri, name } = asset;
             const ext = name.split('.').pop().toLowerCase();
-            const allowed = ['glb', 'gltf', 'obj', 'vrx'];
 
-            // Special handling for FBX files
+            // Validation
             if (ext === 'fbx') {
-                Alert.alert(
-                    "FBX Requires Conversion",
-                    "FBX files must be converted to VRX format first.\n\nRun this command in your terminal:\n\n./node_modules/@reactvision/react-viro/bin/ViroFBX yourfile.fbx output.vrx\n\nThen upload the resulting .vrx file.",
-                    [{ text: "OK" }]
-                );
+                Alert.alert("FBX Requires Conversion", "Please convert to GLB or VRX first.");
                 return;
             }
-
-            if (!allowed.includes(ext)) {
-                Alert.alert(
-                    "Unsupported Format",
-                    "Please upload .glb, .gltf, .obj, or .vrx files.\n\nNote: FBX files must be converted to VRX format first.",
-                    [{ text: "OK" }]
-                );
+            if (!['glb', 'gltf', 'vrx'].includes(ext)) {
+                Alert.alert("Unsupported Format", "Please upload .glb, .gltf, .vrx");
                 return;
             }
 
             this.setState({ isUploading: true });
 
-            // 1. Upload to R2: portals/assets/models/{timestamp}_{filename}
-            const timestamp = Date.now();
-            const cleanName = name.replace(/[^a-zA-Z0-9.-]/g, '_');
-            const key = `portals/assets/models/${timestamp}_${cleanName}`;
-            const contentType = mimeType || 'application/octet-stream';
-
-            console.log('[ModelLibrary] Uploading to R2...');
-            console.log('[ModelLibrary] Key:', key);
-            console.log('[ModelLibrary] ContentType:', contentType);
-            console.log('[ModelLibrary] URI:', uri);
-
-            await uploadToR2(uri, key, contentType);
-            console.log('[ModelLibrary] R2 upload completed successfully');
-
-            // 2. Save metadata to Firestore subcollection: users/{userId}/models
-            const publicUrl = `${R2_PUBLIC_BASE}/${key}`;
-            console.log('[ModelLibrary] Saving to Firestore with URL:', publicUrl);
-
-            await addDoc(collection(db, "users", user.uid, "uploads"), {
-                name: name,
-                uri: publicUrl,
-                type: '3D_MODEL', // Generic type
-                extension: ext,
-                size: size,
-                createdAt: serverTimestamp(),
-            });
-
-            console.log('[ModelLibrary] Firestore save complete');
-
-            // No need to manually fetch, onSnapshot will pick it up
+            // Upload via service
+            await libraryService.uploadAsset(user.uid, uri, '3d', name);
 
             this.setState({ isUploading: false });
             Alert.alert("Success", "Model uploaded to your library.");
 
         } catch (error) {
             console.error("[ModelLibrary] Upload failed:", error);
-            console.error("[ModelLibrary] Error details:", error.message, error.stack);
             this.setState({ isUploading: false });
-            Alert.alert("Upload Failed", `Error: ${error.message || 'Unknown error'}`);
+            Alert.alert("Upload Failed", error.message);
         }
     };
 
@@ -404,9 +302,11 @@ class ModelLibraryPanel extends Component {
                 activeOpacity={0.7}
             >
                 <View style={styles.thumbnailContainer}>
-                    {/* Use local image for starter, generic icon for personal (unless we have thumb) */}
+                    {/* Use local image for starter, thumbnail for personal, or generic icon fallback */}
                     {type === 'starter' && model.icon_img ? (
                         <Image source={model.icon_img} style={styles.thumbnail} resizeMode="contain" />
+                    ) : model.thumbnailUrl ? (
+                        <Image source={{ uri: model.thumbnailUrl }} style={styles.thumbnail} resizeMode="cover" />
                     ) : (
                         <Ionicons name="cube" size={32} color="rgba(255,255,255,0.8)" />
                     )}
@@ -545,27 +445,29 @@ class ModelLibraryPanel extends Component {
                 return;
             }
 
+            // Map UI mediaType to LibraryAssetType
+            // UI uses: 'video', 'images', 'audio'
+            // Service uses: 'video', 'image', 'audio'
+            const serviceType = mediaType === 'images' ? 'image' : mediaType;
+
             let result;
-            let fileUri, fileName, mimeType;
+            let fileUri, fileName;
 
             if (mediaType === 'audio') {
-                // Use DocumentPicker for audio
                 result = await DocumentPicker.getDocumentAsync({
                     type: 'audio/*',
                     copyToCacheDirectory: true,
                 });
 
-                if (result.canceled || !result.assets || result.assets.length === 0) {
+                if (result.canceled) {
                     this.setState({ isUploading: false });
                     return;
                 }
-
                 const asset = result.assets[0];
                 fileUri = asset.uri;
-                fileName = asset.name || `audio_${Date.now()}.mp3`;
-                mimeType = asset.mimeType || 'audio/mpeg';
+                fileName = asset.name || `audio.mp3`;
+
             } else {
-                // Use ImagePicker for video/images
                 const mediaTypes = mediaType === 'video' ? 'videos' : 'images';
                 result = await ImagePicker.launchImageLibraryAsync({
                     mediaTypes: mediaTypes,
@@ -573,107 +475,37 @@ class ModelLibraryPanel extends Component {
                     quality: 1,
                 });
 
-                if (result.canceled || !result.assets || result.assets.length === 0) {
+                if (result.canceled) {
                     this.setState({ isUploading: false });
                     return;
                 }
-
                 const asset = result.assets[0];
                 fileUri = asset.uri;
-
-                // Preserve original file extension
-                let ext = mediaType === 'video' ? 'mp4' : 'jpg'; // fallback
-                if (asset.fileName) {
-                    const parts = asset.fileName.split('.');
-                    if (parts.length > 1) {
-                        ext = parts.pop().toLowerCase();
-                    }
-                } else if (fileUri) {
-                    // Try to get extension from URI
-                    const uriParts = fileUri.split('.');
-                    if (uriParts.length > 1) {
-                        const uriExt = uriParts.pop().toLowerCase().split('?')[0]; // remove query params
-                        if (['mp4', 'mov', 'webm', 'avi', 'png', 'jpg', 'jpeg', 'gif', 'webp'].includes(uriExt)) {
-                            ext = uriExt;
-                        }
-                    }
-                }
-
-                fileName = asset.fileName || `${mediaType}_${Date.now()}.${ext}`;
-
-                // Set mimeType based on actual extension
-                const mimeTypes = {
-                    mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', avi: 'video/x-msvideo',
-                    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp'
-                };
-                mimeType = asset.mimeType || mimeTypes[ext] || (mediaType === 'video' ? 'video/mp4' : 'image/jpeg');
-
-                // Store dimensions for aspect ratio preservation
-                this._uploadWidth = asset.width || 1;
-                this._uploadHeight = asset.height || 1;
+                fileName = asset.fileName || `${serviceType}_${Date.now()}.jpg`; // fallback
             }
 
-            console.log(`[Library] Uploading ${mediaType}:`, fileName);
-
-            // R2 path: portals/assets/{type}/{filename}
-            const r2PathMap = {
-                video: 'portals/assets/video',
-                images: 'portals/assets/images',
-                audio: 'portals/assets/audio',
-            };
-            const r2Key = `${r2PathMap[mediaType]}/${fileName}`;
-
-            // Upload to R2 - returns the key
-            const uploadedKey = await uploadToR2(fileUri, r2Key, mimeType);
-
-            if (!uploadedKey) {
-                throw new Error('Upload failed - no key returned');
-            }
-
-            // Construct public URL
-            const publicUrl = `${R2_PUBLIC_BASE}/${uploadedKey}`;
-
-            // For videos, extract and upload a thumbnail
-            let thumbnailUrl = null;
-            if (mediaType === 'video') {
+            // Optional: Extract thumbnail for video
+            let thumbnailUri = undefined;
+            if (mediaType === 'video' && fileUri) {
                 try {
-                    console.log('[Library] Extracting video thumbnail...');
-                    const { uri: thumbUri } = await VideoThumbnails.getThumbnailAsync(fileUri, {
-                        time: 500, // Get frame at 0.5 seconds
+                    const { uri: thumb } = await VideoThumbnails.getThumbnailAsync(fileUri, {
+                        time: 500,
                         quality: 0.7,
                     });
-
-                    // Upload thumbnail to R2
-                    const thumbFileName = `thumb_${Date.now()}.jpg`;
-                    const thumbKey = `portals/assets/thumbnails/${thumbFileName}`;
-                    const thumbUploadedKey = await uploadToR2(thumbUri, thumbKey, 'image/jpeg');
-
-                    if (thumbUploadedKey) {
-                        thumbnailUrl = `${R2_PUBLIC_BASE}/${thumbUploadedKey}`;
-                        console.log('[Library] Thumbnail uploaded:', thumbnailUrl);
-                    }
-                } catch (thumbError) {
-                    console.warn('[Library] Thumbnail extraction failed:', thumbError);
-                    // Continue without thumbnail - video will show placeholder
+                    thumbnailUri = thumb;
+                } catch (e) {
+                    console.warn('Failed to generate thumbnail', e);
                 }
             }
 
-            // Save to Firebase: users/{userId}/uploads
-            await addDoc(collection(db, "users", user.uid, "uploads"), {
-                name: fileName,
-                url: publicUrl,
-                thumbnailUrl: thumbnailUrl, // Video thumbnail or null
-                type: mediaType,
-                width: this._uploadWidth || 1,
-                height: this._uploadHeight || 1,
-                createdAt: serverTimestamp(),
-            });
+            await libraryService.uploadAsset(user.uid, fileUri, serviceType, fileName, thumbnailUri);
 
-            console.log(`[Library] ${mediaType} uploaded successfully`);
+            this.setState({ isUploading: false });
+            // onSnapshot will refresh
+
         } catch (error) {
             console.error(`[Library] ${mediaType} upload failed:`, error);
-            Alert.alert('Upload Failed', error.message || 'Please try again.');
-        } finally {
+            Alert.alert('Upload Failed', error.message);
             this.setState({ isUploading: false });
         }
     };
@@ -690,8 +522,9 @@ class ModelLibraryPanel extends Component {
         this.props.onClose();
     };
 
-    // Handle media deletion (subcollection: users/{userId}/{subCollection})
+    // Handle media deletion
     handleMediaDelete = async (item, subCollectionName) => {
+        // subCollectionName is ignored now, handled by Service
         const user = auth.currentUser;
         if (!user) return;
 
@@ -705,12 +538,9 @@ class ModelLibraryPanel extends Component {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            console.log(`[Library] Deleting from users/${user.uid}/${subCollectionName}:`, item.id);
-                            await deleteDoc(doc(db, "users", user.uid, "uploads", item.id));
-                            console.log('[Library] Item deleted');
+                            await libraryService.deleteAssets(user.uid, [item.id]);
                         } catch (error) {
-                            console.error('[Library] Delete failed:', error);
-                            Alert.alert('Error', 'Failed to delete. Please try again.');
+                            Alert.alert('Error', error.message);
                         }
                     }
                 }

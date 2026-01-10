@@ -1,6 +1,6 @@
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Credentials (In a real app, strict NO-NO. Prototype only.)
@@ -23,6 +23,24 @@ export const r2Client = new S3Client({
 });
 
 export const getBucketName = () => R2_BUCKET_NAME;
+
+/**
+ * Deletes an object from R2 bucket
+ * @param key The key of the object to delete
+ */
+export async function deleteFromR2(key: string) {
+    try {
+        const command = new DeleteObjectCommand({
+            Bucket: R2_BUCKET_NAME,
+            Key: key,
+        });
+        await r2Client.send(command);
+        console.log(`[R2] Deleted object: ${key}`);
+    } catch (error) {
+        console.error(`[R2] Error deleting object: ${key}`, error);
+        throw error;
+    }
+}
 
 /**
  * Generates a presigned URL for uploading a file to R2.

@@ -11,6 +11,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProfileGalleryScreen } from '../screens/ProfileGalleryScreen';
 import { ProfileSettingsScreen } from '../screens/ProfileSettingsScreen';
 import { ActivityScreen } from '../screens/ActivityScreen';
+import { AssetLibraryScreen } from '../screens/AssetLibraryScreen';
 import { PostFeedScreen } from '../screens/PostFeedScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { TagPeopleScreen } from '../screens/TagPeopleScreen';
@@ -56,6 +57,7 @@ export type RootParamList = {
     EditProfileField: { field: string };
     NotificationSettings: undefined;
     MessagePermission: undefined;
+    AssetLibrary: undefined;
     Usage: undefined;
     TermsOfService: undefined;
     PrivacyPolicy: undefined;
@@ -101,6 +103,7 @@ const MainStackScreen = () => (
         <MainStack.Screen name="InviteFriends" component={InviteFriendsScreen} />
         <MainStack.Screen name="AccountSettings" component={AccountSettingsScreen} />
         <MainStack.Screen name="EditProfileField" component={EditProfileFieldScreen} />
+        <MainStack.Screen name="AssetLibrary" component={AssetLibraryScreen} />
         <MainStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
         <MainStack.Screen name="MessagePermission" component={MessagePermissionScreen} />
         <MainStack.Screen name="Usage" component={UsageScreen} />

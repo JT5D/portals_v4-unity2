@@ -271,6 +271,22 @@ export const ProfileScreen = () => {
                                         </Text>
                                     </TouchableOpacity>
 
+                                    {/* Middle: Library Action (Self only) */}
+                                    {isSelf && (
+                                        <TouchableOpacity
+                                            style={[styles.groupButton, styles.groupButtonDivider]}
+                                            onPress={() => navigation.navigate('AssetLibrary')}
+                                        >
+                                            <Ionicons
+                                                name="library-outline"
+                                                size={20}
+                                                color="#fff"
+                                                style={{ marginRight: 8 }}
+                                            />
+                                            <Text style={styles.groupButtonText}>Library</Text>
+                                        </TouchableOpacity>
+                                    )}
+
                                     {/* Right: Gallery Action */}
                                     <TouchableOpacity
                                         style={styles.groupButton}
