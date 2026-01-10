@@ -331,14 +331,76 @@ export const RARITY_MULTIPLIERS: Record<PortalRarity, number> = {
 
 ## 📱 Future Enhancements
 
+### Visual & Audio Polish
 - [ ] Animated glow effects for Anomaly portals
 - [ ] Sound effects for discovering rare portals
 - [ ] Push notifications for Peak state transitions
-- [ ] Follower picker for Locked On mode
 - [ ] Portal visibility countdown timers
-- [ ] AR waypoint navigation to portals
-- [ ] Leaderboards for fuel collection
+
+### Access & Ownership
+- [ ] Follower picker for Locked On mode
 - [ ] Portal claiming/ownership mechanics
+
+### Navigation & Discovery
+- [ ] AR waypoint navigation to portals
+
+### Streaks & Urgency
+- [ ] "🔥 X explorers visited today" live activity counter
+- [ ] "First discovery bonus available" badge for new portals
+- [ ] "Chain bonus: Visit X more nearby portals" combo system
+
+### Social Pressure & Activity
+- [ ] Ghost activity layer (fading avatars of recent visitors)
+- [ ] "Ryan was here 9m ago" presence indicators
+- [ ] Per-portal leaderboard snippets:
+  - [ ] Fastest arrival
+  - [ ] Most remixes
+  - [ ] Most artifacts claimed
+- [ ] Global fuel collection leaderboards
+
+### Journey Gamification ("The Walk Is the Game")
+- [ ] "Run state" when user taps Start Journey
+  - [ ] Dimmer map, pulse line, ambient soundscape
+  - [ ] Find side signals along route
+  - [ ] Encounter random map events
+  - [ ] Stack multipliers if you don't quit
+- [ ] Environmental modifiers:
+  - [ ] Parks boost nature portals
+  - [ ] Urban density boosts social portals
+  - [ ] Elevation unlocks "overwatch" experiences
+  - [ ] Weather & time of day alter outcomes
+- [ ] Micro-interactions while moving:
+  - [ ] Tap floating nodes on the route
+  - [ ] Scan anomalies off-path
+  - [ ] Vote on world-state changes ("Stabilize / Corrupt")
+- [ ] Arrival payoff moment:
+  - [ ] Cinematic reveal animation
+  - [ ] Sound hit
+  - [ ] XP burst
+  - [ ] Bonus for walking (no fast travel)
+  - [ ] Bonus for "clean" route
+  - [ ] Bonus for bringing someone with you
+
+### Map as a Living System
+- [ ] Territories & influence:
+  - [ ] Areas change color/style based on usage over time
+  - [ ] Creators can "seed" regions
+  - [ ] Power users shape the map visually
+- [ ] World events (limited-time phenomena):
+  - [ ] "Signal Storms"
+  - [ ] "Artifact Surges"
+  - [ ] "Portal Collapses"
+  - [ ] Temporarily rewrite map behavior
+- [ ] Player identity & map roles:
+  - [ ] Scout (finds new locations)
+  - [ ] Architect (stabilizes portals)
+  - [ ] Curator (enhances experiences)
+  - [ ] Roles unlock map-only abilities
+- [ ] Hidden layers & filters:
+  - [ ] Infrared map
+  - [ ] Historical map
+  - [ ] Creator-only map
+  - [ ] Portals that exist only while moving
 
 ---
 

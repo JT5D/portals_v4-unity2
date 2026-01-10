@@ -1083,15 +1083,32 @@ var ModelItemRender = createReactClass({
             return (() => {
               // Build physics body config if dynamic
               const physicsData = this.props.physicsData || {};
-              const physicsBody = physicsData.isDynamic ? {
-                type: 'Dynamic',
-                mass: 1,
-                useGravity: (physicsData.gravity ?? 1) !== 0,
-                // Apply upward force if negative gravity
-                force: (physicsData.gravity ?? 1) < 0 ? [0, Math.abs(physicsData.gravity) * 15, 0] : undefined,
-                friction: 0.5,
-                restitution: 0.5, // Bounce factor
-              } : null;
+              let physicsBody = null;
+
+              if (physicsData.isDynamic) {
+                // Get scale for physics shape sizing
+                const scale = this.state.scale || [0.5, 0.5, 0.5];
+                const avgScale = (scale[0] + scale[1] + scale[2]) / 3;
+
+                physicsBody = {
+                  type: 'Dynamic',
+                  mass: 1,
+                  shape: {
+                    type: 'Sphere',
+                    params: [avgScale * 0.5], // Radius based on average scale
+                  },
+                  useGravity: (physicsData.gravity ?? 1) !== 0,
+                  friction: 0.5,
+                  restitution: 0.3, // Slight bounce
+                };
+
+                // Apply upward force if negative gravity - ViroReact force requires dictionary format
+                if ((physicsData.gravity ?? 1) < 0) {
+                  physicsBody.force = {
+                    value: [0, Math.abs(physicsData.gravity) * 15, 0],
+                  };
+                }
+              }
 
               return (
                 <Viro3DObject
@@ -1107,6 +1124,7 @@ var ModelItemRender = createReactClass({
                   onLoadStart={this._onObjectLoadStart(this.props.modelIDProps.uuid)}
                   onLoadEnd={this._onObjectLoadEnd(this.props.modelIDProps.uuid)}
                   lightReceivingBitMask={this.props.bitMask | 1}
+                  shadowCastingBitMask={this.props.bitMask | 1}
                   physicsBody={physicsBody}
                   viroTag={this.props.modelIDProps.uuid}
                   onCollision={physicsData.isDynamic ? (tag, point, normal) => {
