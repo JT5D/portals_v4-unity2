@@ -112,6 +112,17 @@ cp -R "$FRAMEWORK_PATH" "$DEST/"
 log "Framework synced"
 
 # =============================================================================
+# 4.5. CONVERT BINARY PLISTS TO XML
+# CocoaPods xcodeproj gem can't parse binary plists (invalid UTF-8 error)
+# =============================================================================
+log "Converting binary plists to XML..."
+find "$PROJECT_ROOT/unity" "$PROJECT_ROOT/node_modules" -name "Info.plist" -exec sh -c '
+    if file "$1" | grep -q "binary property list"; then
+        plutil -convert xml1 "$1" 2>/dev/null && echo "  Converted: $1"
+    fi
+' _ {} \; 2>/dev/null || true
+
+# =============================================================================
 # 5. POD INSTALL
 # =============================================================================
 log "Running pod install..."

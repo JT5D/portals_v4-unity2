@@ -4,6 +4,30 @@
 
 **Branch**: `react-unity`
 **Date**: 2026-01-09
+**Last Updated**: 2026-01-10
+
+---
+
+## Implementation Status
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 1. Create minimal AR scene | ✅ Complete | `ARTestScene.unity` created (1149 lines) |
+| 2. Add debug overlay GUI | ✅ Complete | `ARDebugOverlay.cs` with on-screen panel |
+| 3. Integrate BridgeTarget + AR events | ✅ Complete | `ARSessionLogger.cs` wired to bridge |
+| 4. Build to iPhone | ✅ Complete | Successfully deployed |
+| 5. Review logs & iterate | 🔄 In Progress | Testing AR features |
+
+**Current Active Scene**: `ARTestScene.unity` (Scene 0 in EditorBuildSettings)
+
+**Scene Components Implemented**:
+- ✅ ARSession
+- ✅ XR Origin (ARF XR Origin Set Up prefab)
+- ✅ ARPlaneManager
+- ✅ ARMeshManager
+- ✅ ARCameraManager + ARCameraBackground
+- ✅ Debug Canvas with overlay
+- ✅ BridgeTarget (auto-creates)
 
 ---
 
@@ -159,12 +183,12 @@ npx react-native log-ios | grep -E "UnityArView|AR"
 ```
 
 ### Success Criteria
-- [ ] No crash on launch
-- [ ] Camera permission granted
-- [ ] AR Session reaches "Running" state
+- [x] No crash on launch
+- [x] Camera permission granted
+- [x] AR Session reaches "Running" state
 - [ ] At least 1 plane detected on flat surface
-- [ ] Debug overlay shows live FPS
-- [ ] Bridge messages flowing (unity_ready → pong cycle)
+- [x] Debug overlay shows live FPS
+- [x] Bridge messages flowing (unity_ready → pong cycle)
 - [ ] No error logs in device console
 
 ### Common Issues & Fixes
@@ -198,9 +222,9 @@ npx react-native log-ios | grep -E "UnityArView|AR"
 1. Make changes in Unity Editor
 2. Save scene (Ctrl+S)
 3. Run: ./scripts/build_minimal.sh
-4. Wait ~15-20 min (first) or ~7 min (incremental)
+4. Wait ~5 min (incremental) or ~7 min (first)
 5. App auto-launches on device
-6. Check device logs: idevicesyslog | grep -E "Bridge|AR"
+6. Check device logs: ./scripts/capture_device_logs.sh 10 "Bridge|AR"
 7. If issues found, goto step 1
 ```
 

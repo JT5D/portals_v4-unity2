@@ -228,16 +228,19 @@ config.resolver.blockList = [
 ```
 unity/
   Assets/
-    Scenes/UnityTestScene.unity  # Main scene (BridgeTarget for RN communication)
+    Scenes/ARTestScene.unity     # Active AR test scene (Scene 0 in build)
+    Scenes/UnityTestScene.unity  # Legacy scene (BridgeTarget for RN communication)
     Scripts/BridgeTarget.cs      # React Native message handler
+    Scripts/ARDebugOverlay.cs    # On-screen AR debug panel
+    Prefabs/ARF XR Origin Set Up.prefab  # XR Origin with AR components
     Editor/BuildScript.cs        # Headless build methods
   builds/ios/
     UnityFramework.framework     # ~308MB (only this, not full 9GB export)
 ios/
   Portals.xcworkspace            # Main Xcode workspace
 scripts/
-  build_minimal.sh               # Fast fail-fast build (~15 min)
-  build_and_run_ios.sh           # Full build with all checks (~20 min)
+  build_minimal.sh               # Fast fail-fast build (~5 min)
+  build_and_run_ios.sh           # Full build with all checks (~7 min)
   debug_build_verbose.sh         # Verbose debug build with checkpoints
   common.sh                      # Shared utilities (process cleanup)
   find_xcode.py                  # Xcode version selector (prefers 16.4)

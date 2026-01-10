@@ -1,7 +1,11 @@
 # TODO - portals_v4
 
 ## Active Tasks
-- [ ] Test Unity incremental changes only (no clean build) to verify Append mode speedup
+- [x] Test Unity incremental changes only (no clean build) to verify Replace mode behavior
+- [ ] Document SimpleBrush.vfx and VFX system usage
+- [ ] Create Firebase schema documentation
+- [x] Document AR scene current state vs planned state
+- [ ] Add performance baselines (FPS, memory, network)
 
 ## ccache Investigation (2026-01-09)
 
@@ -51,15 +55,63 @@ cd ios && xcodebuild -workspace Portals.xcworkspace -scheme Portals \
 
 ---
 
-## Recent Test Results (2026-01-09)
+## Recent Test Results (2026-01-10)
 
 | Test | Result | Notes |
 |------|--------|-------|
 | Unity Append Mode | ✅ Working | Build showed "iOS Build Mode: Append (incremental)" |
-| ccache | ✅ Installed | First build warmed cache (0% → needs 2nd build to verify hits) |
-| Build Time | ~4 min | 8:45 AM → 8:49 AM (includes Unity export + Xcode build + install) |
+| ccache | ⚠️ Limited | RN 0.81+ uses prebuilt core - minimal C++ to cache |
+| Build Time | ~5 min | Incremental (Unity + Xcode + install) |
 | App Install | ✅ Success | `com.h3mai.portals` v1.0.0 deployed to device |
+| AR Session | ✅ Working | Reaches "Running" state on device |
+| Bridge Handshake | ✅ Working | `unity_ready` → UI enabled |
+| Debug Overlay | ✅ Working | FPS counter visible |
 
 ---
 
-*Last updated: 2026-01-09*
+---
+
+## Architecture Audit Findings (2026-01-10)
+
+**New Spec Docs Created**:
+- `specs/ARCHITECTURE_AUDIT_2026.md` - Comprehensive architecture overview
+- `specs/KNOWN_ISSUES_AND_FIXES.md` - Issue troubleshooting guide
+
+**Documentation Gaps Identified**:
+1. SimpleBrush.vfx and VFX system undocumented
+2. Firebase schema missing
+3. AR scene current state vs planned unclear
+4. Performance baselines not defined
+5. Sample assets (URP/VFX) purpose unclear
+
+**Component Inventory**:
+- 27 screen components
+- 13 shared components
+- 15+ services
+- 26 Unity packages
+- 58 npm dependencies
+
+---
+
+## Current AR Testing State (2026-01-10)
+
+**Active Scene**: `ARTestScene.unity` (Scene 0 in build)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| ARSession | ✅ Working | Reaches "Running" state |
+| ARMeshManager | ✅ Added | Mesh reconstruction |
+| ARPlaneManager | 🔄 Testing | Plane detection (horizontal) |
+| XR Origin | ✅ Working | `ARF XR Origin Set Up.prefab` |
+| Debug Overlay | ✅ Working | `ARDebugOverlay.cs` shows FPS |
+| BridgeTarget | ✅ Working | RN ↔ Unity messaging |
+
+**Remaining Phase 5 Criteria**:
+- [ ] Confirm plane detection on flat surface
+- [ ] Clear error logs in device console
+
+**Build Times** (optimized):
+- `build_minimal.sh`: ~5 min (incremental)
+- `build_and_run_ios.sh`: ~7 min (full)
+
+*Last updated: 2026-01-10*

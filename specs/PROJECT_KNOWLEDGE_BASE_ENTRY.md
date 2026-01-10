@@ -24,7 +24,21 @@
 
 ## 5. Key Documentation Links
 *   [Deep Strategy & Roadmap](./PORTALS_V4_DEEP_STRATEGY.md)
+*   [Architecture Audit 2026](./ARCHITECTURE_AUDIT_2026.md) - Complete system inventory
+*   [Known Issues & Fixes](./KNOWN_ISSUES_AND_FIXES.md) - Troubleshooting guide
 *   [Unity Integration Guide](./unity-integration.md) (Synced copy)
 *   [Tech Stack Integration](./tech-stack-integration.md) (Synced copy)
 
-*Last Updated: January 8, 2026*
+## 6. Quick Reference
+
+| Component | Count | Key Files |
+|-----------|-------|-----------|
+| RN Screens | 27 | `src/screens/*.tsx` |
+| RN Components | 13 | `src/components/*.tsx` |
+| RN Services | 15+ | `src/services/*.ts` |
+| Unity Packages | 26 | `unity/Packages/manifest.json` |
+| npm Dependencies | 58 | `package.json` |
+| Build Scripts | 19 | `scripts/*.sh` |
+| Spec Documents | 13 | `specs/*.md` |
+
+*Last Updated: January 10, 2026*
