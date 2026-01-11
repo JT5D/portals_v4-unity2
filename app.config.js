@@ -5,7 +5,7 @@ export default {
         name: "Portals",
         slug: "Portals",
         scheme: "portals",
-        version: "4.0.0",
+        version: "4.0.1",
         orientation: "portrait",
         icon: "./assets/icon.png",
         userInterfaceStyle: "light",
