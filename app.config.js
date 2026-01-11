@@ -5,7 +5,7 @@ export default {
         name: "Portals",
         slug: "Portals",
         scheme: "portals",
-        version: "4.0",
+        version: "4.0.0",
         orientation: "portrait",
         icon: "./assets/icon.png",
         userInterfaceStyle: "light",
@@ -62,6 +62,9 @@ export default {
             ]
         ],
         extra: {
+            eas: {
+                projectId: "0c1d664d-0a58-427c-b8e7-018119fb8e61"
+            },
             firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
             firebaseAuthDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
             firebaseProjectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,

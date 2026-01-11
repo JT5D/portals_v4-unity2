@@ -1,0 +1,31 @@
+{
+    "cli": {
+        "version": ">= 16.28.0",
+        "appVersionSource": "remote"
+    },
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal",
+            "env": {
+                "RCT_NEW_ARCH_ENABLED": "1"
+            }
+        },
+        "preview": {
+            "distribution": "internal",
+            "env": {
+                "RCT_NEW_ARCH_ENABLED": "1"
+            }
+        },
+        "production": {
+            "autoIncrement": true,
+            "env": {
+                "RCT_NEW_ARCH_ENABLED": "1",
+                "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+            }
+        }
+    },
+    "submit": {
+        "production": {}
+    }
+}
