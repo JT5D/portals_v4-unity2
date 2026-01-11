@@ -9,7 +9,7 @@ export default {
         name: "Portals",
         slug: "Portals",
         scheme: "portals",
-        version: "1.0.0",
+        version: "4.0.1",
         orientation: "portrait",
         icon: "./assets/icon.png",
         userInterfaceStyle: "light",
@@ -21,17 +21,18 @@ export default {
         },
         ios: {
             supportsTablet: true,
-            bundleIdentifier: "com.h3mai.portals",
+            bundleIdentifier: "com.h3m.portals",
             deploymentTarget: "17.0",
             developmentTeam: developmentTeam,
             infoPlist: {
+                ITSAppUsesNonExemptEncryption: false,
                 NSPhotoLibraryUsageDescription: "The app accesses your photos to let you import media into the AR scene.",
                 NSCameraUsageDescription: "The app uses your camera for AR.",
                 NSMicrophoneUsageDescription: "The app uses your microphone for recording AR videos."
             }
         },
         android: {
-            package: "com.h3mai.portals",
+            package: "com.h3m.portals",
             adaptiveIcon: {
                 foregroundImage: "./assets/adaptive-icon.png",
                 backgroundColor: "#ffffff"
@@ -67,6 +68,9 @@ export default {
             "./plugins/withUnity"
         ],
         extra: {
+            eas: {
+                projectId: "0c1d664d-0a58-427c-b8e7-018119fb8e61"
+            },
             firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
             firebaseAuthDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
             firebaseProjectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,

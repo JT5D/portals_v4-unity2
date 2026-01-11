@@ -1,7 +1,10 @@
+import { PortalSettings } from './portal';
+
 export interface User {
     id: string;
     username: string;
     email?: string;
+    phoneNumber?: string;
     name?: string;
     avatar: string;
     isVerified?: boolean;
@@ -20,6 +23,34 @@ export interface User {
         dailyEarned: number;
         lastDailyReset: string; // ISO date
     };
+    notificationPreferences?: NotificationPreferences;
+    messagingPermission?: 'Everyone' | 'Following' | 'Off';
+    usage?: UsageStats;
+}
+
+export interface UsageStats {
+    scenes: {
+        used: number;
+        limit: number;
+        resetDate: string; // ISO date
+    };
+    locations: {
+        used: number;
+        limit: number;
+        resetDate: string; // ISO date
+    };
+    paidScenes?: number;
+    paidLocations?: number;
+}
+
+export type NotifyOption = 'Everyone' | 'Following' | 'Off';
+
+export interface NotificationPreferences {
+    likes: NotifyOption;
+    comments: NotifyOption;
+    mentions: NotifyOption;
+    remixes: NotifyOption;
+    follows: NotifyOption;
 }
 
 export interface Artifact {
@@ -65,7 +96,12 @@ export interface Post {
         username: string;
         avatar: string;
     };
+    /** Gamified portal settings (rarity, signal mode, temporal config) */
+    portalSettings?: PortalSettings;
 }
+
+// Re-export portal types for convenience
+export * from './portal';
 
 export interface Comment {
     id: string;

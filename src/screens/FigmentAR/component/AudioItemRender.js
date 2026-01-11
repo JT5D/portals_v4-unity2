@@ -276,7 +276,7 @@ var AudioItemRender = createReactClass({
                 <ViroSound
                     source={audioItem.source}
                     loop={true}
-                    paused={false}
+                    paused={this.props.paused || audioItem.paused || false}
                     volume={1.0}
                     onError={(event) => {
                         console.log('[AudioItemRender] ViroSound Error:',

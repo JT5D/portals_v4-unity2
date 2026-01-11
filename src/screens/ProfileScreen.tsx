@@ -88,6 +88,43 @@ export const ProfileScreen = () => {
         }
     };
 
+    const handleMessagePress = async () => {
+        if (!currentUser || !profileUser) return;
+
+        const permission = profileUser.messagingPermission || 'Everyone';
+
+        if (permission === 'Everyone') {
+            navigation.navigate('Chat', { userId: profileUser.id });
+            return;
+        }
+
+        if (permission === 'Off') {
+            Alert.alert(
+                "Message not sent",
+                `${profileUser.name || profileUser.username} is not accepting new messages right now.`
+            );
+            return;
+        }
+
+        if (permission === 'Following') {
+            // Check if profileUser follows currentUser
+            // We verify if they are in my followers list, OR check DB if needed.
+            // Using AuthService for authoritative check: checkIsFollowing(followerId, followingId)
+            // checkIsFollowing(A, B) checks if A follows B.
+            // We want to know if profileUser follows currentUser.
+            const isFollower = await AuthService.checkIsFollowing(profileUser.id, currentUser.id);
+
+            if (isFollower) {
+                navigation.navigate('Chat', { userId: profileUser.id });
+            } else {
+                Alert.alert(
+                    "Message not sent",
+                    `${profileUser.name || profileUser.username} only accepts messages from people they follow. You need to connect with them first.`
+                );
+            }
+        }
+    };
+
     if (!profileUser) return (
         <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
             <LinearGradient
@@ -129,7 +166,7 @@ export const ProfileScreen = () => {
                 {isSelf && <View style={{ flex: 1 }} />}
                 {isSelf && (
                     <View style={{ flexDirection: 'row', gap: 12 }}>
-                        <TouchableOpacity style={styles.glassIconBtn} onPress={() => navigation.navigate('ProfileSettings')}>
+                        <TouchableOpacity style={styles.glassIconBtn} onPress={() => navigation.navigate('Settings')}>
                             <Ionicons name="settings-outline" size={24} color={theme.colors.white} />
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.glassIconBtn} onPress={() => navigation.navigate('Activity')}>
@@ -191,7 +228,7 @@ export const ProfileScreen = () => {
                                     </TouchableOpacity>
 
                                     {/* Secondary: Message */}
-                                    <TouchableOpacity style={styles.secondaryCircleBtn} onPress={() => navigation.navigate('Chat', { userId: profileUser.id })}>
+                                    <TouchableOpacity style={styles.secondaryCircleBtn} onPress={handleMessagePress}>
                                         <Ionicons name="chatbubble-outline" size={22} color={theme.colors.white} />
                                     </TouchableOpacity>
                                 </View>
@@ -233,6 +270,22 @@ export const ProfileScreen = () => {
                                             {isSelf ? (profileUser.worldSceneId ? 'Edit World' : 'Create World') : 'Enter World'}
                                         </Text>
                                     </TouchableOpacity>
+
+                                    {/* Middle: Library Action (Self only) */}
+                                    {isSelf && (
+                                        <TouchableOpacity
+                                            style={[styles.groupButton, styles.groupButtonDivider]}
+                                            onPress={() => navigation.navigate('AssetLibrary')}
+                                        >
+                                            <Ionicons
+                                                name="library-outline"
+                                                size={20}
+                                                color="#fff"
+                                                style={{ marginRight: 8 }}
+                                            />
+                                            <Text style={styles.groupButtonText}>Library</Text>
+                                        </TouchableOpacity>
+                                    )}
 
                                     {/* Right: Gallery Action */}
                                     <TouchableOpacity

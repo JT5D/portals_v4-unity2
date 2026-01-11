@@ -1,0 +1,51 @@
+# Node modules (EAS installs dependencies on the server)
+node_modules/
+
+# OS files
+.DS_Store
+*.log
+
+# Local environment
+.env.local
+.env.*.local
+
+# Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+
+# Expo
+.expo/
+
+# Build artifacts
+*.ipa
+*.apk
+*.aab
+
+# Reference/documentation files
+_ref/
+
+# Test files
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Coverage
+coverage/
+
+# Xcode DerivedData (local builds)
+ios/DerivedData/
+
+# Android build cache
+android/build/
+android/.gradle/
+
+# Temporary files
+*.tmp
+*.temp

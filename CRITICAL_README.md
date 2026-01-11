@@ -343,4 +343,155 @@ If the app still fails:
 
 ---
 
-*Last updated: January 9, 2026*
+## 📦 For TestFlight / Production Builds
+
+The patches are automatically applied during the build process:
+
+1. ✅ `patch-package` is in devDependencies
+2. ✅ `postinstall` script applies patches after `npm install`
+3. ✅ **Commit the `patches/` directory to git**
+
+No manual intervention needed for CI/CD builds.
+
+---
+
+## 🔗 Related Files
+
+| File | Purpose |
+|------|---------|
+| `package.json` | ViroReact version + postinstall script |
+| `patches/@reactvision+react-viro+2.43.6.patch` | AssetRegistry fix |
+| `ios/Podfile` | CocoaPods configuration |
+| `ios/Podfile.lock` | Locked pod versions |
+
+---
+
+## 🌍 Cross-Platform & Geospatial Configuration
+
+### Expo Plugin
+ViroReact's Expo plugin is configured in `app.config.js`:
+```json
+["@reactvision/react-viro", {
+  "android": { "xRMode": ["AR"] }
+}]
+```
+
+### Geospatial Features (Future)
+To enable Cloud Anchors or Geospatial API, add your Google Cloud API key:
+```json
+["@reactvision/react-viro", {
+  "googleCloudApiKey": "YOUR_ARCORE_API_KEY",
+  "geospatialAnchorProvider": "arcore",
+  "cloudAnchorProvider": "arcore",
+  "android": { "xRMode": ["AR"] }
+}]
+```
+
+Get an API key from [Google Cloud Console](https://console.cloud.google.com/apis/credentials) and enable the ARCore API.
+
+### Android Build
+For Android, run `npx expo prebuild` then build through Android Studio or:
+```bash
+npx expo run:android --device
+```
+
+### iOS Bundle Identifier
+Set in `app.config.js`: `com.h3m.portals`
+Update this if deploying to App Store.
+
+---
+
+## 🚀 EAS Build & TestFlight Deployment (CRITICAL)
+
+### Understanding Native vs Config Values
+
+When you have a native `ios/` directory, **EAS ignores `app.config.js`** for certain values and reads directly from native files:
+
+| Config Property | Native File Location |
+|-----------------|---------------------|
+| `ios.bundleIdentifier` | `ios/Portals.xcodeproj/project.pbxproj` |
+| `version` | `ios/Portals/Info.plist` → `CFBundleShortVersionString` |
+| `buildNumber` | `ios/Portals/Info.plist` → `CFBundleVersion` |
+
+**To update these values**, modify the native files directly, not `app.config.js`.
+
+---
+
+### White Screen on TestFlight (Common Issue)
+
+**Symptom**: App builds successfully, uploads to TestFlight, but shows a blank white screen on launch.
+
+**Root Cause**: Missing environment variables on EAS Build servers.
+
+**Solution**: Add Firebase environment variables to EAS:
+
+```bash
+# Use eas env:create for each variable
+eas env:create --name EXPO_PUBLIC_FIREBASE_API_KEY --value "your-api-key" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN --value "your-auth-domain" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_PROJECT_ID --value "your-project-id" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET --value "your-bucket" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID --value "your-sender-id" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_APP_ID --value "your-app-id" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID --value "your-measurement-id" --environment production --visibility plaintext --force --non-interactive
+```
+
+Get values from your local `.env` file.
+
+---
+
+### EAS Build Configuration (`eas.json`)
+
+Required settings for production builds:
+
+```json
+{
+  "build": {
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
+    }
+  }
+}
+```
+
+- **`RCT_NEW_ARCH_ENABLED`**: Required by ViroReact (Podfile will fail without it)
+- **`NPM_CONFIG_LEGACY_PEER_DEPS`**: Bypasses peer dependency conflicts with `expo-three`
+
+---
+
+### Reducing Upload Size
+
+Create `.easignore` to exclude unnecessary files:
+
+```
+node_modules/
+.git/
+.expo/
+_ref/
+android/build/
+ios/DerivedData/
+```
+
+This reduces upload size from ~1.7GB to ~100MB.
+
+---
+
+### Build Command
+
+```bash
+eas build --platform ios --profile production
+```
+
+After successful build, submit to TestFlight:
+
+```bash
+eas submit --platform ios
+```
+
+---
+
+*Last updated: January 11, 2026*

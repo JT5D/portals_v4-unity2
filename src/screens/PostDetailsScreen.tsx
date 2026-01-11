@@ -6,6 +6,16 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store';
 import { Post } from '../types';
+import {
+    PortalRarity,
+    SignalMode,
+    PortalSettings,
+    RARITY_COLORS,
+    SIGNAL_MODE_LABELS,
+    FaintSignalConfig,
+    DistortingConfig,
+    LockedOnConfig,
+} from '../types/portal';
 import { uploadVideo } from '../api/client';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -22,6 +32,19 @@ export const PostDetailsScreen = () => {
 
     const [tagInput, setTagInput] = useState('');
     const [isPublishing, setIsPublishing] = useState(false);
+
+    // Portal Settings State
+    const [rarity, setRarity] = useState<PortalRarity>('Common');
+    const [signalMode, setSignalMode] = useState<SignalMode>('AlwaysOn');
+    const [faintConfig, setFaintConfig] = useState<FaintSignalConfig>({ dailyDurationMinutes: 60 });
+    const [distortingConfig, setDistortingConfig] = useState<DistortingConfig>({ intervalsPerDay: 12 });
+    const [lockedOnConfig, setLockedOnConfig] = useState<LockedOnConfig>({
+        lockTrigger: 'proximity',
+        lockDuration: 'permanent',
+        maxConcurrentLocks: 0,
+        allowedUserIds: [],
+    });
+    const [isMystery, setIsMystery] = useState(false);
 
     const coverImage = route.params?.coverImage;
     const remixedFrom = route.params?.remixedFrom; // Remix attribution if this is a remix
@@ -150,6 +173,28 @@ export const PostDetailsScreen = () => {
                 finalCoverUri = await StorageService.uploadFile(coverImage, path);
             }
 
+            // Build portal settings if locations are set
+            // Note: Firestore doesn't accept undefined values, so we conditionally add config fields
+            let portalSettings: PortalSettings | null = null;
+            if (locations.length > 0) {
+                const baseSettings: PortalSettings = {
+                    rarity,
+                    signalMode,
+                    createdAt: new Date().toISOString(),
+                    randomSeed: Math.random(),
+                    isMystery, // Mystery mode - hides details until user is within unlock distance
+                };
+                // Only add config for the selected signal mode
+                if (signalMode === 'FaintSignal') {
+                    baseSettings.faintSignalConfig = faintConfig;
+                } else if (signalMode === 'Distorting') {
+                    baseSettings.distortingConfig = distortingConfig;
+                } else if (signalMode === 'LockedOn') {
+                    baseSettings.lockedOnConfig = lockedOnConfig;
+                }
+                portalSettings = baseSettings;
+            }
+
             const newPostData = {
                 userId: currentUser.id,
                 user: currentUser,
@@ -171,10 +216,17 @@ export const PostDetailsScreen = () => {
                 isArtifact: hasArtifact, // Save artifact status for feed/gallery filtering
                 isAIGenerated: isAIGenerated, // Flag for AI-generated content
                 remixedFrom: remixedFrom || null, // Save remix attribution if present
+                portalSettings: portalSettings, // NEW: Portal gamification settings
                 createdAt: serverTimestamp()
             };
 
-            // Debug log for artifact status
+            // Debug log for portal settings
+            console.log('[PostDetails] Portal Settings being saved:', {
+                rarity,
+                signalMode,
+                portalSettings: JSON.stringify(portalSettings),
+                locationsCount: locations.length,
+            });
             console.log('[PostDetails] Saving post with isArtifact:', hasArtifact);
 
             // Save to Firestore
@@ -379,6 +431,180 @@ export const PostDetailsScreen = () => {
                     <Ionicons name="chevron-forward" size={20} color={theme.colors.textDim} style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
 
+                {/* Portal Settings - Only show when locations are set */}
+                {locations.length > 0 && (
+                    <>
+                        <View style={styles.divider} />
+
+                        <View style={styles.portalSettingsSection}>
+                            <Text style={styles.portalSectionTitle}>Portal Settings</Text>
+                            <Text style={styles.portalSectionSubtitle}>Configure how this portal appears on the map</Text>
+
+                            {/* Rarity Selector */}
+                            <Text style={styles.portalLabel}>Rarity Tier</Text>
+                            <View style={styles.portalChipsRow}>
+                                {(['Common', 'Rare', 'Mythic', 'Anomaly'] as PortalRarity[]).map((tier) => (
+                                    <TouchableOpacity
+                                        key={tier}
+                                        style={[
+                                            styles.portalChip,
+                                            rarity === tier && {
+                                                backgroundColor: RARITY_COLORS[tier],
+                                                borderColor: RARITY_COLORS[tier],
+                                            }
+                                        ]}
+                                        onPress={() => setRarity(tier)}
+                                    >
+                                        <Text style={[
+                                            styles.portalChipText,
+                                            rarity === tier && { color: tier === 'Common' ? '#333' : '#fff' }
+                                        ]}>
+                                            {tier}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            {/* Signal Mode Selector */}
+                            <Text style={styles.portalLabel}>Signal Mode</Text>
+                            <View style={styles.portalChipsRow}>
+                                {(['AlwaysOn', 'FaintSignal', 'Distorting', 'LockedOn'] as SignalMode[]).map((mode) => (
+                                    <TouchableOpacity
+                                        key={mode}
+                                        style={[
+                                            styles.portalChip,
+                                            signalMode === mode && styles.portalChipActive
+                                        ]}
+                                        onPress={() => setSignalMode(mode)}
+                                    >
+                                        <Text style={[
+                                            styles.portalChipText,
+                                            signalMode === mode && { color: '#000' }
+                                        ]}>
+                                            {SIGNAL_MODE_LABELS[mode]}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            {/* Faint Signal Config */}
+                            {signalMode === 'FaintSignal' && (
+                                <View style={styles.portalConfigBox}>
+                                    <Text style={styles.portalConfigLabel}>Daily Duration</Text>
+                                    <View style={styles.portalChipsRow}>
+                                        {[30, 60, 120].map((mins) => (
+                                            <TouchableOpacity
+                                                key={mins}
+                                                style={[
+                                                    styles.portalMiniChip,
+                                                    faintConfig.dailyDurationMinutes === mins && styles.portalMiniChipActive
+                                                ]}
+                                                onPress={() => setFaintConfig({ dailyDurationMinutes: mins as 30 | 60 | 120 })}
+                                            >
+                                                <Text style={[
+                                                    styles.portalMiniChipText,
+                                                    faintConfig.dailyDurationMinutes === mins && { color: '#000' }
+                                                ]}>
+                                                    {mins === 30 ? '30m' : mins === 60 ? '1hr' : '2hrs'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                    <Text style={styles.portalConfigHint}>Appears randomly for this duration daily</Text>
+                                </View>
+                            )}
+
+                            {/* Distorting Config */}
+                            {signalMode === 'Distorting' && (
+                                <View style={styles.portalConfigBox}>
+                                    <Text style={styles.portalConfigLabel}>Daily Intervals</Text>
+                                    <View style={styles.portalChipsRow}>
+                                        {[6, 12, 24].map((intervals) => (
+                                            <TouchableOpacity
+                                                key={intervals}
+                                                style={[
+                                                    styles.portalMiniChip,
+                                                    distortingConfig.intervalsPerDay === intervals && styles.portalMiniChipActive
+                                                ]}
+                                                onPress={() => setDistortingConfig({ intervalsPerDay: intervals as 6 | 12 | 24 })}
+                                            >
+                                                <Text style={[
+                                                    styles.portalMiniChipText,
+                                                    distortingConfig.intervalsPerDay === intervals && { color: '#000' }
+                                                ]}>
+                                                    {intervals}x
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                    <Text style={styles.portalConfigHint}>Appears for 20 min at each interval</Text>
+                                </View>
+                            )}
+
+                            {/* Locked On Config */}
+                            {signalMode === 'LockedOn' && (
+                                <View style={styles.portalConfigBox}>
+                                    <Text style={styles.portalConfigLabel}>Lock Duration</Text>
+                                    <View style={styles.portalChipsRow}>
+                                        {(['24h', '7d', 'permanent'] as const).map((duration) => (
+                                            <TouchableOpacity
+                                                key={duration}
+                                                style={[
+                                                    styles.portalMiniChip,
+                                                    lockedOnConfig.lockDuration === duration && styles.portalMiniChipActive
+                                                ]}
+                                                onPress={() => setLockedOnConfig({ ...lockedOnConfig, lockDuration: duration })}
+                                            >
+                                                <Text style={[
+                                                    styles.portalMiniChipText,
+                                                    lockedOnConfig.lockDuration === duration && { color: '#000' }
+                                                ]}>
+                                                    {duration === '24h' ? '24hrs' : duration === '7d' ? '7 days' : 'Forever'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                    <Text style={styles.portalConfigHint}>Only locked users can see this portal</Text>
+                                </View>
+                            )}
+
+                            {/* Mystery Mode Toggle */}
+                            <View style={styles.mysteryToggleRow}>
+                                <View style={styles.mysteryToggleInfo}>
+                                    <Text style={styles.portalLabel}>🔮 Mystery Mode</Text>
+                                    <Text style={styles.portalConfigHint}>
+                                        Hides portal details until user is within ~20 yards
+                                    </Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.mysteryToggle,
+                                        isMystery && styles.mysteryToggleActive
+                                    ]}
+                                    onPress={() => setIsMystery(!isMystery)}
+                                >
+                                    <Text style={[
+                                        styles.mysteryToggleText,
+                                        isMystery && styles.mysteryToggleTextActive
+                                    ]}>
+                                        {isMystery ? 'ON' : 'OFF'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                            {isMystery && (
+                                <View style={styles.mysteryInfoBox}>
+                                    <Text style={styles.mysteryInfoText}>
+                                        📍 Shows as "Unknown Artifact Detected" on map{'\n'}
+                                        👤 Creator name hidden until unlocked{'\n'}
+                                        🎨 Color changes as users get closer{'\n'}
+                                        ✨ Reveals at ~20 yards proximity
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    </>
+                )}
+
             </ScrollView>
         </SafeAreaView>
     );
@@ -563,5 +789,140 @@ const styles = StyleSheet.create({
         color: 'rgb(247, 255, 168)',
         fontWeight: '600',
         fontSize: 14,
+    },
+    // Portal Settings Styles
+    portalSettingsSection: {
+        padding: theme.spacing.m,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        marginHorizontal: theme.spacing.m,
+        borderRadius: 16,
+        marginTop: theme.spacing.m,
+        marginBottom: theme.spacing.m,
+    },
+    portalSectionTitle: {
+        color: theme.colors.text,
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    portalSectionSubtitle: {
+        color: theme.colors.textDim,
+        fontSize: 12,
+        marginBottom: 16,
+    },
+    portalLabel: {
+        color: theme.colors.textDim,
+        fontSize: 12,
+        fontWeight: '600',
+        marginBottom: 8,
+        marginTop: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    portalChipsRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    portalChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
+    },
+    portalChipActive: {
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
+    },
+    portalChipText: {
+        color: theme.colors.textDim,
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    portalConfigBox: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        padding: 12,
+        borderRadius: 12,
+        marginTop: 12,
+    },
+    portalConfigLabel: {
+        color: theme.colors.text,
+        fontSize: 13,
+        fontWeight: '600',
+        marginBottom: 10,
+    },
+    portalConfigHint: {
+        color: theme.colors.textDim,
+        fontSize: 11,
+        marginTop: 10,
+        fontStyle: 'italic',
+    },
+    portalMiniChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    portalMiniChipActive: {
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
+    },
+    portalMiniChipText: {
+        color: theme.colors.textDim,
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    // Mystery Mode Styles
+    mysteryToggleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 20,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.1)',
+    },
+    mysteryToggleInfo: {
+        flex: 1,
+        marginRight: 16,
+    },
+    mysteryToggle: {
+        width: 60,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    mysteryToggleActive: {
+        backgroundColor: '#A855F7',
+        borderColor: '#A855F7',
+    },
+    mysteryToggleText: {
+        color: theme.colors.textDim,
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    mysteryToggleTextActive: {
+        color: '#fff',
+    },
+    mysteryInfoBox: {
+        backgroundColor: 'rgba(168, 85, 247, 0.15)',
+        padding: 12,
+        borderRadius: 12,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(168, 85, 247, 0.3)',
+    },
+    mysteryInfoText: {
+        color: theme.colors.textDim,
+        fontSize: 12,
+        lineHeight: 20,
     },
 });

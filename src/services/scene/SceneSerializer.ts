@@ -5,8 +5,10 @@
  * saved manifests back into Redux-compatible state.
  */
 
-import * as ModelData from '../../screens/FigmentAR/model/ModelItems';
-import * as PortalData from '../../screens/FigmentAR/model/PortalItems';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ModelData = require('../../screens/FigmentAR/model/ModelItems');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const PortalData = require('../../screens/FigmentAR/model/PortalItems');
 
 // Schema version for future migrations
 const MANIFEST_FORMAT = 'portals-v1';
@@ -25,7 +27,7 @@ export function serializeScene(reduxState: any, sceneSettings: any = {}): SceneM
             if (model.hidden) return; // Skip hidden items
 
             const isStarterAsset = model.index >= 0;
-            const modelDef = isStarterAsset ? ModelData.getModelArray()[model.index] : null;
+            const modelDef = isStarterAsset ? ModelData.getModelArray()?.[model.index] : null;
 
             objects.push({
                 id: model.uuid,
@@ -53,7 +55,7 @@ export function serializeScene(reduxState: any, sceneSettings: any = {}): SceneM
         Object.values(portalItems).forEach((portal: any) => {
             if (portal.hidden) return;
 
-            const portalDef = PortalData.getPortalArray()[portal.index];
+            const portalDef = PortalData.getPortalArray()?.[portal.index];
 
             objects.push({
                 id: portal.uuid,

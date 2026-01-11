@@ -3,10 +3,10 @@
  * Handles relationships, following, team, and collaboration
  */
 import { create } from 'zustand';
-import { User } from '../types';
-import { db } from '../config/firebase';
+import { User } from '../../types';
+import { db } from '../../config/firebase';
 import { collection, getDocs, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { NotificationService } from '../services/notifications';
+import { NotificationService } from '../../services/notifications';
 
 export interface Relationships {
     team: string[];
@@ -133,6 +133,8 @@ export const createSocialSlice = (set: any, get: any): SocialSlice => ({
                             bio: data.bio || '',
                             followers: data.followers || 0,
                             following: data.following || 0,
+                            friends: data.friends || 0,
+                            flames: data.flames || 0,
                             isVerified: data.isVerified || false,
                         } as User);
                     }

@@ -3,9 +3,9 @@
  * Handles posts, likes, comments with pagination support
  */
 import { create } from 'zustand';
-import { Post, Comment, User } from '../types';
-import { POSTS, COMMENTS } from '../mock';
-import { db } from '../config/firebase';
+import { Post, Comment, User } from '../../types';
+import { POSTS, COMMENTS } from '../../mock';
+import { db } from '../../config/firebase';
 import {
     collection, query, orderBy, getDocs, limit, deleteDoc, doc,
     startAfter, DocumentSnapshot
@@ -56,11 +56,11 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
         }));
 
         try {
-            const { FeedService } = await import('../services/feed');
+            const { FeedService } = await import('../../services/feed');
             await FeedService.toggleLike(postId, currentUser.id, isLiked);
 
             if (!isLiked && post.userId !== currentUser.id) {
-                const { NotificationService } = await import('../services/notifications');
+                const { NotificationService } = await import('../../services/notifications');
                 await NotificationService.sendLikeNotification(currentUser, post);
             }
         } catch (error) {
@@ -127,12 +127,13 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
                     sceneId: data.sceneId,
                     sceneData: data.sceneData,
                     isArtifact: data.isArtifact || false,
+                    portalSettings: data.portalSettings || null, // Portal gamification settings
                 } as Post);
             });
 
             // Check like status
             if (currentUser && posts.length > 0) {
-                const { FeedService } = await import('../services/feed');
+                const { FeedService } = await import('../../services/feed');
                 await Promise.all(
                     posts.map(async (post) => {
                         post.isLiked = await FeedService.checkIsLiked(post.id, currentUser.id);
@@ -140,15 +141,44 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
                 );
             }
 
+            // Filter out mystery portals, posts with rarity tiers, and posts with signal modes
+            // These are map-only experiences and should not appear in the regular feed
+            const filteredPosts = posts.filter((post) => {
+                const settings = post.portalSettings;
+                if (!settings) return true; // No portal settings = regular post, show in feed
+
+                // Exclude mystery posts
+                if (settings.isMystery === true) {
+                    console.log(`[FeedSlice] Filtering out mystery post: ${post.id}`);
+                    return false;
+                }
+
+                // Exclude posts with rarity tiers (these are map portals)
+                if (settings.rarity) {
+                    console.log(`[FeedSlice] Filtering out portal with rarity: ${post.id} (${settings.rarity})`);
+                    return false;
+                }
+
+                // Exclude posts with signal modes (these are map portals)
+                if (settings.signalMode) {
+                    console.log(`[FeedSlice] Filtering out portal with signal mode: ${post.id} (${settings.signalMode})`);
+                    return false;
+                }
+
+                return true; // Show in feed
+            });
+
+            console.log(`[FeedSlice] Filtered ${posts.length - filteredPosts.length} portal posts from feed`);
+
             const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
             const hasMore = querySnapshot.docs.length === PAGE_SIZE;
 
-            console.log(`[FeedSlice] Fetched ${posts.length} posts. Has more: ${hasMore}`);
+            console.log(`[FeedSlice] Fetched ${filteredPosts.length} posts (${posts.length} total, ${posts.length - filteredPosts.length} filtered). Has more: ${hasMore}`);
 
             if (cursor) {
                 // Append to existing feed
                 set((s: any) => ({
-                    feed: [...s.feed, ...posts],
+                    feed: [...s.feed, ...filteredPosts],
                     feedCursor: lastDoc,
                     hasMorePosts: hasMore,
                     isLoadingFeed: false
@@ -156,7 +186,7 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
             } else {
                 // Replace feed
                 set({
-                    feed: posts.length > 0 ? posts : get().feed,
+                    feed: filteredPosts.length > 0 ? filteredPosts : get().feed,
                     feedCursor: lastDoc,
                     hasMorePosts: hasMore,
                     isLoadingFeed: false
@@ -198,7 +228,7 @@ export const createFeedSlice = (set: any, get: any): FeedSlice => ({
         }));
 
         try {
-            const { FeedService } = await import('../services/feed');
+            const { FeedService } = await import('../../services/feed');
             await FeedService.addComment(
                 postId,
                 currentUser.id,

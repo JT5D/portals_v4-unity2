@@ -286,6 +286,22 @@ export class App extends Component {
   }
 
   componentDidMount() {
+    // Add navigation listeners for focus/blur to pause/resume audio
+    if (this.props.navigation) {
+      this._navFocusListener = this.props.navigation.addListener('focus', () => {
+        console.log('[App] Screen focused - Resuming Audio');
+        this.setState(prevState => ({
+          viroAppProps: { ...prevState.viroAppProps, paused: false }
+        }));
+      });
+
+      this._navBlurListener = this.props.navigation.addListener('blur', () => {
+        console.log('[App] Screen blurred - Pausing Audio');
+        this.setState(prevState => ({
+          viroAppProps: { ...prevState.viroAppProps, paused: true }
+        }));
+      });
+    }
     // Check if draft data was passed via navigation params
     const { route } = this.props;
     const draftData = route?.params?.draftData;
@@ -469,6 +485,8 @@ export class App extends Component {
   }
 
   componentWillUnmount() {
+    if (this._navFocusListener) this._navFocusListener();
+    if (this._navBlurListener) this._navBlurListener();
     // IMPORTANT: Do NOT call dispatchRemoveAll() here!
     // ViroReact native components are already being deallocated during unmount.
     // Triggering Redux state updates that try to remove AR objects causes a race condition

@@ -31,9 +31,12 @@ class EffectItemRender extends Component {
   // renders the selected effect from the list of effectItems
   render() {
     var j = this.props.index;
+    const effectResult = this.props.effectItem.effect();
+    console.log('[EffectItemRender] Rendering effect index:', j, 'name:', this.props.effectItem.name);
+    console.log('[EffectItemRender] Effect function result:', effectResult, 'type:', typeof effectResult, 'length:', Array.isArray(effectResult) ? effectResult.length : 'N/A');
     return (
       <ViroNode key={j} >
-        {this.props.effectItem.effect()}
+        {effectResult}
       </ViroNode>
     );
   }

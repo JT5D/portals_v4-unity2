@@ -24,16 +24,19 @@ const WAV_RECORDING_OPTIONS = {
         sampleRate: 16000,
         numberOfChannels: 1,
         bitRate: 256000,
+        audioQuality: 127, // Max quality
     },
     android: {
         extension: '.wav',
         sampleRate: 16000,
+        outputFormat: 'default',
+        audioEncoder: 'default',
     },
-};
+} as any; // Bypass incomplete expo-audio type definitions
 
 export const VoiceService = {
     audioRecorder: null as AudioRecorderType | null,
-    meteringInterval: null as NodeJS.Timeout | null,
+    meteringInterval: null as ReturnType<typeof setInterval> | null,
 
     async requestPermissions() {
         const { status } = await requestRecordingPermissionsAsync();
