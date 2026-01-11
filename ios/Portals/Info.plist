@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>portals</string>
-          <string>com.h3mai.portals</string>
+          <string>com.h3m.portals</string>
         </array>
       </dict>
       <dict>

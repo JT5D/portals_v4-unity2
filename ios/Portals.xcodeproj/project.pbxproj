@@ -383,7 +383,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.h3mai.portals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.h3m.portals;
 				PRODUCT_NAME = Portals;
 				SWIFT_OBJC_BRIDGING_HEADER = "Portals/Portals-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -419,7 +419,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.h3mai.portals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.h3m.portals;
 				PRODUCT_NAME = Portals;
 				SWIFT_OBJC_BRIDGING_HEADER = "Portals/Portals-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
