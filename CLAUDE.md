@@ -216,6 +216,25 @@ config.resolver.blockList = [
 **Full guide**: [docs/FAST_ITERATION.md](docs/FAST_ITERATION.md)
 -->
 
+### Build Verification (Timestamp)
+
+**How to verify Unity was rebuilt** without logging in:
+- Look at the AR debug overlay stats line (top of screen)
+- Shows `Build: MM/DD HH:MM` in light green
+- Timestamp changes each time Unity is rebuilt
+
+**Implementation** (`unity/Assets/Scripts/BuildInfo.cs`):
+```csharp
+// Compile-time timestamp baked into IL2CPP output
+private static readonly DateTime CompileTime = DateTime.Now;
+public static string TimestampShort => CompileTime.ToString("MM/dd HH:mm");
+```
+
+**Displayed in**:
+- ARDebugOverlay stats line (always visible)
+- unity_ready message sent to React Native
+- Startup logs in `Documents/ar_debug_log.txt`
+
 ### Verification
 ```bash
 ./scripts/verify_device_logs.sh    # Live Device Logs
@@ -236,6 +255,7 @@ unity/
     Scenes/UnityTestScene.unity  # Legacy scene (BridgeTarget for RN communication)
     Scripts/BridgeTarget.cs      # React Native message handler
     Scripts/ARDebugOverlay.cs    # On-screen AR debug panel
+    Scripts/BuildInfo.cs         # Compile-time build timestamp
     Prefabs/ARF XR Origin Set Up.prefab  # XR Origin with AR components
     Editor/BuildScript.cs        # Headless build methods
   builds/ios/
