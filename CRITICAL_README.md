@@ -181,3 +181,100 @@ npx expo run:android --device
 ### iOS Bundle Identifier
 Set in `app.json`: `com.portals.app`
 Update this if deploying to App Store.
+
+---
+
+## 🚀 EAS Build & TestFlight Deployment (CRITICAL)
+
+### Understanding Native vs Config Values
+
+When you have a native `ios/` directory, **EAS ignores `app.config.js`** for certain values and reads directly from native files:
+
+| Config Property | Native File Location |
+|-----------------|---------------------|
+| `ios.bundleIdentifier` | `ios/Portals.xcodeproj/project.pbxproj` |
+| `version` | `ios/Portals/Info.plist` → `CFBundleShortVersionString` |
+| `buildNumber` | `ios/Portals/Info.plist` → `CFBundleVersion` |
+
+**To update these values**, modify the native files directly, not `app.config.js`.
+
+---
+
+### White Screen on TestFlight (Common Issue)
+
+**Symptom**: App builds successfully, uploads to TestFlight, but shows a blank white screen on launch.
+
+**Root Cause**: Missing environment variables on EAS Build servers.
+
+**Solution**: Add Firebase environment variables to EAS:
+
+```bash
+# Use eas env:create for each variable
+eas env:create --name EXPO_PUBLIC_FIREBASE_API_KEY --value "your-api-key" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN --value "your-auth-domain" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_PROJECT_ID --value "your-project-id" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET --value "your-bucket" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID --value "your-sender-id" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_APP_ID --value "your-app-id" --environment production --visibility plaintext --force --non-interactive
+eas env:create --name EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID --value "your-measurement-id" --environment production --visibility plaintext --force --non-interactive
+```
+
+Get values from your local `.env` file.
+
+---
+
+### EAS Build Configuration (`eas.json`)
+
+Required settings for production builds:
+
+```json
+{
+  "build": {
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
+    }
+  }
+}
+```
+
+- **`RCT_NEW_ARCH_ENABLED`**: Required by ViroReact (Podfile will fail without it)
+- **`NPM_CONFIG_LEGACY_PEER_DEPS`**: Bypasses peer dependency conflicts with `expo-three`
+
+---
+
+### Reducing Upload Size
+
+Create `.easignore` to exclude unnecessary files:
+
+```
+node_modules/
+.git/
+.expo/
+_ref/
+android/build/
+ios/DerivedData/
+```
+
+This reduces upload size from ~1.7GB to ~100MB.
+
+---
+
+### Build Command
+
+```bash
+eas build --platform ios --profile production
+```
+
+After successful build, submit to TestFlight:
+
+```bash
+eas submit --platform ios
+```
+
+---
+
+*Last updated: January 10, 2026*
