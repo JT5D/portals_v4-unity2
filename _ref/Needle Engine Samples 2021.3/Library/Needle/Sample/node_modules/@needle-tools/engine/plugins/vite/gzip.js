@@ -1,6 +1,0 @@
-
-// import { existsSync } from 'fs';
-
-export function useGzip(config) {
-    return config?.gzip ? true : false;
-}

@@ -1,8 +1,0 @@
-import { Texture } from "three";
-import { type GLTFLoaderPlugin, GLTFParser } from "three/examples/jsm/loaders/GLTFLoader.js";
-export declare class EXT_texture_exr implements GLTFLoaderPlugin {
-    get name(): string;
-    private parser;
-    constructor(parser: GLTFParser);
-    loadTexture(textureIndex: any): Promise<Texture> | null;
-}

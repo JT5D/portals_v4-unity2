@@ -1,2 +1,0 @@
-export {};
-//# sourceMappingURL=XRRig.js.map

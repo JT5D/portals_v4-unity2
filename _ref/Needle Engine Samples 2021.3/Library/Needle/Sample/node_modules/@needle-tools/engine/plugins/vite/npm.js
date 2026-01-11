@@ -1,8 +1,0 @@
-import { ensureNpmDirectoryExists } from '../common/npm.js';
-
-/**
- * @param {import('../types').userSettings} userSettings
- */
-export const needleNPM = (command, config, userSettings) => {
-    ensureNpmDirectoryExists();
-}

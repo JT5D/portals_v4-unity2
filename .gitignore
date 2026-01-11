@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# Reference materials (not part of build)
+_ref/
+
 # Expo
 .expo/
 dist/

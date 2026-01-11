@@ -1,9 +1,0 @@
-import type { IComponent } from "../engine_types.js";
-
-
-export interface IXRRig extends Pick<IComponent, "gameObject"> {
-    isXRRig(): boolean;
-    get isActive(): boolean;
-    /** The rig with the highest priority will be chosen */
-    priority?: number;
-}

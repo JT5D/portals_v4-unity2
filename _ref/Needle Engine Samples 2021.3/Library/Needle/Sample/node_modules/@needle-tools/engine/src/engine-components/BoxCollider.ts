@@ -1,2 +1,0 @@
-import { BoxCollider } from "./Collider.js";
-export default BoxCollider;

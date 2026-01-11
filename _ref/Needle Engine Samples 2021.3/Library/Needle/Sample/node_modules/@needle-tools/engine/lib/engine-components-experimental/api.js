@@ -1,5 +1,0 @@
-/**
- * @module Experimental Components
- */
-export * from "./networking/PlayerSync.js";
-//# sourceMappingURL=api.js.map

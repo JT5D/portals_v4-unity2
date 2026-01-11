@@ -1,7 +1,0 @@
-/** @internal */
-export declare function __isExporting(state: boolean): void;
-/**
- * Returns whether an export process is currently running.
- * @returns True if an export process is currently running, false otherwise.
- */
-export declare function isExporting(): boolean;

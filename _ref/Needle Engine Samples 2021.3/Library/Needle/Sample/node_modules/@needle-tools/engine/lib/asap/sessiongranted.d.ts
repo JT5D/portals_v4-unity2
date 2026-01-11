@@ -1,3 +1,0 @@
-export declare function handleSessionGrantedASAP(opts: {
-    debug: boolean;
-}): void;

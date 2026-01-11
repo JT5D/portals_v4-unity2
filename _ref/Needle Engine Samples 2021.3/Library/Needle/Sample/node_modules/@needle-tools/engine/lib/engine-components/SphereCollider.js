@@ -1,3 +1,0 @@
-import { SphereCollider } from "./Collider.js";
-export default SphereCollider;
-//# sourceMappingURL=SphereCollider.js.map

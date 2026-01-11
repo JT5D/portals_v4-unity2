@@ -1,4 +1,0 @@
-import { getParam } from "./engine_utils.js";
-export const showGizmos = getParam("gizmos");
-export const debugExtension = getParam("debugextension");
-//# sourceMappingURL=engine_default_parameters.js.map

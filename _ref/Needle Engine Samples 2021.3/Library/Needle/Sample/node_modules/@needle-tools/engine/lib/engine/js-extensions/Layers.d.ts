@@ -1,6 +1,0 @@
-import { Object3D } from "three";
-/**
- * Sets the visibility of a single object without affecting the visibility of the child hierarchy
- */
-export declare function setCustomVisibility(obj: Object3D, visible: boolean): void;
-export declare function patchLayers(): void;

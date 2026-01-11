@@ -1,2 +1,0 @@
-export * from "./debug.js";
-export * from "./debug_console.js";

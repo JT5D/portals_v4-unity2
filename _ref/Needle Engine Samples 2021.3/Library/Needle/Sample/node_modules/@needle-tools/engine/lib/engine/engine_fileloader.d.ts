@@ -1,2 +1,0 @@
-/** @internal */
-export function loadFileAsync(url: any): Promise<any>;

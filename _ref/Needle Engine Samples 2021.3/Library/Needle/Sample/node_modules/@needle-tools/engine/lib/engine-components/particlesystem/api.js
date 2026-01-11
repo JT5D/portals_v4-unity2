@@ -1,3 +1,0 @@
-export { ParticleSystemBaseBehaviour } from "./ParticleSystem.js";
-export { ParticleSystemShapeType } from "./ParticleSystemModules.js";
-//# sourceMappingURL=api.js.map

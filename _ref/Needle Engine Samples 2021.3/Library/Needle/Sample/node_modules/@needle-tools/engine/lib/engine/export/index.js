@@ -1,3 +1,0 @@
-export * from "./gltf/index.js";
-export { isExporting } from "./state.js";
-//# sourceMappingURL=index.js.map

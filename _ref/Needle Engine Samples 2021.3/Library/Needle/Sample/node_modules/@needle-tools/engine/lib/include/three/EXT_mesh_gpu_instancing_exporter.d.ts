@@ -1,6 +1,0 @@
-export default class GLTFMeshGPUInstancingExtension {
-    constructor(writer: any);
-    writer: any;
-    name: string;
-    writeNode(node: any, nodeDef: any): void;
-}

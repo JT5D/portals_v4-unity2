@@ -1,5 +1,0 @@
-import type { IUSDExporterExtension } from "../Extension.js";
-export declare class DocumentExtension implements IUSDExporterExtension {
-    get extensionName(): string;
-    onAfterBuildDocument(_context: any): void;
-}

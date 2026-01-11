@@ -1,4 +1,0 @@
-export function needleEngineHasLoaded() {
-    return typeof globalThis["Needle"] == "object";
-}
-//# sourceMappingURL=utils.js.map

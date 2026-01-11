@@ -1,2 +1,0 @@
-import { Context } from "../../../../engine/engine_setup.js";
-export declare function ensureQuicklookLinkIsCreated(context: Context, supportsQuickLook: boolean): HTMLAnchorElement;

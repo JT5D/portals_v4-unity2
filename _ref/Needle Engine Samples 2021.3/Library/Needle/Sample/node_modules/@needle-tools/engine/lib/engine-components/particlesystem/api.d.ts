@@ -1,2 +1,0 @@
-export { ParticleSystemBaseBehaviour, type QParticle, type QParticleBehaviour, type QTrailParticle } from "./ParticleSystem.js";
-export { ParticleSystemShapeType } from "./ParticleSystemModules.js";

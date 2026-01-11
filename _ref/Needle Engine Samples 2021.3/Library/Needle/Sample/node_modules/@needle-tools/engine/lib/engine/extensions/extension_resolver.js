@@ -1,2 +1,0 @@
-export {};
-//# sourceMappingURL=extension_resolver.js.map
