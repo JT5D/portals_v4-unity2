@@ -114,6 +114,8 @@ public class ARDebugOverlay : MonoBehaviour
         if (_planeManager == null)
             Log("[ARDebug] WARNING: No ARPlaneManager found in scene");
 
+        // Log build info prominently so user can verify rebuild
+        Log($"[ARDebug] BUILD: {BuildInfo.TimestampFull}");
         Log($"[ARDebug] Platform: {Application.platform}");
         Log($"[ARDebug] Unity: {Application.unityVersion}");
         Log($"[ARDebug] Device: {SystemInfo.deviceModel}");
@@ -142,11 +144,14 @@ public class ARDebugOverlay : MonoBehaviour
 
         var sb = new StringBuilder();
 
+        // Build timestamp (always show first so user can verify rebuild)
+        sb.Append($"<color=#88ff88>Build: {BuildInfo.TimestampShort}</color>");
+
         // FPS
         if (showFPS)
         {
             var fpsColor = _fps >= 55 ? "green" : (_fps >= 30 ? "yellow" : "red");
-            sb.Append($"<color={fpsColor}>FPS: {_fps:F0}</color>");
+            sb.Append($"  |  <color={fpsColor}>FPS: {_fps:F0}</color>");
         }
 
         // AR State

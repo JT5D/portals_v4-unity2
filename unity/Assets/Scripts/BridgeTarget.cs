@@ -223,11 +223,14 @@ public class BridgeTarget : MonoBehaviour
         // Initial delay to let RN register
         yield return new WaitForSeconds(0.5f);
 
+        // Build the unity_ready payload with build timestamp for RN to display
+        var readyPayload = $"{{\"type\":\"unity_ready\",\"source\":\"unity\",\"note\":\"Portals v4 Reality Engine Loaded\",{BuildInfo.ToJSON()}}}";
+
         // Send ready message with retries
         for (int i = 0; i < 5; i++)
         {
-            LogDebug($"TX unity_ready (attempt {i + 1}/5)");
-            SendToMobileApp(BuildJSON("unity_ready", "Portals v4 Reality Engine Loaded"));
+            LogDebug($"TX unity_ready (attempt {i + 1}/5) - Build: {BuildInfo.Timestamp}");
+            SendToMobileApp(readyPayload);
             yield return new WaitForSeconds(1.0f);
         }
         LogDebug("Ready sequence complete - listening for messages");
